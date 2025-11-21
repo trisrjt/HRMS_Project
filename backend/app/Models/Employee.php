@@ -22,9 +22,10 @@ class Employee extends Model
 
     // Relationship: Employee → User
     public function user()
-    {
-        return $this->belongsTo(User::class);
-    }
+{
+    return $this->belongsTo(User::class, 'user_id');
+}
+
 
     // Relationship: Employee → Department
     public function department()

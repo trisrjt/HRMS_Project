@@ -61,11 +61,37 @@ Route::middleware(['auth:sanctum', 'role:1,2'])->group(function () {
 Route::post('/change-password', [UserController::class, 'changePassword']);
 
 
-    // Attendance
+    // =====================================
+// Attendance — HR/Admin/SuperAdmin
+// =====================================
+Route::middleware(['auth:sanctum', 'role:1,2,3'])->group(function () {
+
+    // View all attendance
     Route::get('/attendances', [AttendanceController::class, 'index']);
-    Route::post('/attendances', [AttendanceController::class, 'store']);
+
+    // View single attendance
     Route::get('/attendances/{id}', [AttendanceController::class, 'show']);
+
+    // Mark attendance manually (Admin/HR)
+    Route::post('/attendances', [AttendanceController::class, 'store']);
+
+    // Update disabled but endpoint exists
     Route::put('/attendances/{id}', [AttendanceController::class, 'update']);
+});
+// =====================================
+// ATTENDANCE — EMPLOYEE SELF CHECK-IN / CHECK-OUT
+// =====================================
+Route::middleware(['auth:sanctum', 'role:4'])->group(function () {
+
+    // Employee check-in
+    Route::post('/my-attendance/check-in', [AttendanceController::class, 'employeeCheckIn']);
+
+    // Employee check-out
+    Route::post('/my-attendance/check-out', [AttendanceController::class, 'employeeCheckOut']);
+
+    // Employee view own attendance
+    Route::get('/my-attendance', [AttendanceController::class, 'myAttendance']);
+});
 
     // Salaries
     Route::get('/salaries', [SalaryController::class, 'index']);
