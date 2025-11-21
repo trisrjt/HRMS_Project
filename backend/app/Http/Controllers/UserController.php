@@ -13,9 +13,9 @@ class UserController extends Controller
         return User::orderByDesc('id')->get();
     }
 
+    // ❗ This should only be used for Admin/SuperAdmin — not employees
     public function store(Request $request)
     {
-        // Validation
         $validated = $request->validate([
             'name'   => ['required', 'string', 'max:255'],
             'email'  => ['required', 'email', 'unique:users,email'],
@@ -23,13 +23,12 @@ class UserController extends Controller
             'temp_password' => ['required', 'string', 'min:4'],
         ]);
 
-        // Create user
         $user = User::create([
             'name'  => $validated['name'],
             'email' => $validated['email'],
             'role_id' => $validated['role_id'],
-            'password' => Hash::make($validated['temp_password']),
-            'temp_password' => true,
+            'password' => Hash::make($validated['temp_password']),          // hashed password
+            'temp_password' => $validated['temp_password'],                 // raw temp password
         ]);
 
         return response()->json([
@@ -56,6 +55,7 @@ class UserController extends Controller
 
         if (isset($validated['temp_password'])) {
             $validated['password'] = Hash::make($validated['temp_password']);
+            $validated['temp_password'] = $validated['temp_password']; // store raw
         }
 
         $user->update($validated);
@@ -63,6 +63,34 @@ class UserController extends Controller
         return response()->json([
             'message' => 'User updated successfully',
             'user' => $user
+        ]);
+    }
+
+    // ⭐ IMPORTANT FEATURE — Admin/SuperAdmin sets employee temp password
+    public function setTempPassword(Request $request, $id)
+    {
+        if (!in_array(auth()->user()->role_id, [1, 2])) {
+            return response()->json(['message' => 'Unauthorized'], 403);
+        }
+
+        $request->validate([
+            'temp_password' => 'required|min:4'
+        ]);
+
+        $user = User::findOrFail($id);
+
+        // Update temp password
+        $user->temp_password = $request->temp_password;
+        $user->password = Hash::make($request->temp_password);
+        $user->save();
+
+        return response()->json([
+            'message' => 'Temporary password updated successfully',
+            'user' => [
+                'id' => $user->id,
+                'email' => $user->email,
+                'temp_password' => $user->temp_password
+            ]
         ]);
     }
 

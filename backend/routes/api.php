@@ -39,28 +39,25 @@ Route::get('/user', function (Request $request) {
     return $request->user();
 });
 
-    
-    // Employees
+// =========================
+// HR + Admin + SuperAdmin can VIEW employees
+// =========================
+Route::middleware(['auth:sanctum', 'role:1,2,3'])->group(function () {
     Route::get('/employees', [EmployeeController::class, 'index']);
-   // Route::post('/employees', [EmployeeController::class, 'store']);
-
-   Route::middleware(['auth:sanctum', 'role:1,2'])->group(function () {
-    Route::post('/employees', [EmployeeController::class, 'store']);      // Create employee
-    Route::put('/employees/{id}', [EmployeeController::class, 'update']); // Update employee
-    Route::delete('/employees/{id}', [EmployeeController::class, 'destroy']); // Delete
-
-    Route::middleware(['auth:sanctum', 'role:1,2'])->group(function () {
-    
-    // Set employee temp password
-    Route::put('/users/{id}/set-temp-password', [UserController::class, 'setTempPassword']);
-    
-});
-
-});
-
     Route::get('/employees/{id}', [EmployeeController::class, 'show']);
+});
+
+// =========================
+// ONLY Admin + SuperAdmin can CREATE / UPDATE / DELETE employee
+// =========================
+Route::middleware(['auth:sanctum', 'role:1,2'])->group(function () {
+    Route::post('/employees', [EmployeeController::class, 'store']);
     Route::put('/employees/{id}', [EmployeeController::class, 'update']);
     Route::delete('/employees/{id}', [EmployeeController::class, 'destroy']);
+
+    // Set employee temp password
+    Route::put('/users/{id}/set-temp-password', [UserController::class, 'setTempPassword']);
+});
 
     // Attendance
     Route::get('/attendances', [AttendanceController::class, 'index']);
