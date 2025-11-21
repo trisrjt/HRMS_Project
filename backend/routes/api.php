@@ -160,10 +160,21 @@ Route::middleware(['auth:sanctum', 'role:1,2'])->group(function () {
     // Performance Reviews
     Route::apiResource('performance-reviews', PerformanceReviewController::class);
 
-    // Settings
+    // ======================================
+// SETTINGS API
+// ======================================
+
+// SuperAdmin + Admin can view
+Route::middleware(['role:1,2'])->group(function () {
     Route::get('/settings', [SettingController::class, 'index']);
+});
+
+// Only SuperAdmin can update
+Route::middleware(['role:1'])->group(function () {
     Route::put('/settings', [SettingController::class, 'update']);
     Route::post('/settings/logo', [SettingController::class, 'uploadLogo']);
+});
+
 });
 
 Route::get('/test-admin', function () {
