@@ -94,11 +94,22 @@ Route::middleware(['auth:sanctum', 'role:4'])->group(function () {
 });
 
     // Salaries
+    // ======================================
+// SALARY API
+// ======================================
+
+// Only Admin + SuperAdmin can manage salary
+Route::middleware(['role:1,2'])->group(function () {
     Route::get('/salaries', [SalaryController::class, 'index']);
     Route::post('/salaries', [SalaryController::class, 'store']);
-    Route::get('/salaries/{id}', [SalaryController::class, 'show']);
     Route::put('/salaries/{id}', [SalaryController::class, 'update']);
-    Route::delete('/salaries/{id}', [SalaryController::class, 'destroy']);
+});
+
+// Employee can only see own salary
+Route::middleware(['role:4'])->group(function () {
+    Route::get('/salary/{id}', [SalaryController::class, 'show']);
+});
+
 
     // Leaves
     // =====================================
@@ -132,11 +143,23 @@ Route::middleware(['auth:sanctum', 'role:1,2'])->group(function () {
 
 
 
-    // Payslips
-    Route::get('/payslips', [PayslipController::class, 'index']);
-    Route::post('/payslips', [PayslipController::class, 'store']);
+// ======================================
+// PAYSLIP ROUTES
+// ======================================
+
+// Admin + SuperAdmin
+Route::middleware('role:1,2')->group(function () {
+    Route::get('/payslips', [PayslipController::class, 'index']);      // View all
+    Route::post('/payslips', [PayslipController::class, 'store']);     // Generate
+    Route::delete('/payslips/{id}', [PayslipController::class, 'destroy']); // Delete
+    Route::get('/payslips/{id}', [PayslipController::class, 'show']);  // View single
+});
+
+// Employee can view OWN payslip only
+Route::middleware('role:4')->group(function () {
     Route::get('/payslips/{id}', [PayslipController::class, 'show']);
-    Route::delete('/payslips/{id}', [PayslipController::class, 'destroy']);
+});
+
 
     // Departments
     Route::apiResource('departments', DepartmentController::class);

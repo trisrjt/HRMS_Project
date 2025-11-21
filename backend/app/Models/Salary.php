@@ -19,8 +19,10 @@ class Salary extends Model
     ];
 
     // Relationship: Each salary belongs to one employee
+    
     public function employee()
-    {
-        return $this->belongsTo(Employee::class);
-    }
+{
+    return $this->belongsTo(Employee::class);
+}
+
 }
