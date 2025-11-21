@@ -12,7 +12,6 @@ class Employee extends Model
     protected $fillable = [
         'user_id',
         'department_id',
-        'role_id',
         'employee_code',
         'phone',
         'address',
@@ -21,21 +20,15 @@ class Employee extends Model
         'salary',
     ];
 
-    // Return ONLY id, name, email to match frontend expectations
+    // Relationship: Employee → User
     public function user()
     {
-        return $this->belongsTo(User::class)->select('id', 'name', 'email');
+        return $this->belongsTo(User::class);
     }
 
-    // Only return id + name
+    // Relationship: Employee → Department
     public function department()
     {
-        return $this->belongsTo(Department::class)->select('id', 'name');
-    }
-
-    // Only return id + name
-    public function role()
-    {
-        return $this->belongsTo(Role::class)->select('id', 'name');
+        return $this->belongsTo(Department::class);
     }
 }

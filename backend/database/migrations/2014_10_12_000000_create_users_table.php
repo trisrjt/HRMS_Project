@@ -6,34 +6,25 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
-    /**
-     * Run the migrations.
-     */
     public function up(): void
     {
         Schema::create('users', function (Blueprint $table) {
             $table->id();
+
             $table->string('name');
             $table->string('email')->unique();
-            $table->timestamp('email_verified_at')->nullable();
             $table->string('password');
 
-            // ✅ Default role = Employee (3)
+            // Role (1=SuperAdmin,2=Admin,3=HR,4=Employee)
             $table->foreignId('role_id')
-                ->default(3) // 👈 Default role assigned automatically
+                ->default(4)
                 ->constrained('roles')
                 ->onDelete('cascade');
 
-            // ✅ Department optional (null allowed)
-            $table->foreignId('department_id')
-                ->nullable()
-                ->constrained('departments')
-                ->onDelete('set null');
+            // Temp password (for employee first login)
+            $table->boolean('temp_password')->default(0);
 
-            // ✅ Optional HR fields
-            $table->string('phone')->nullable();
-            $table->string('employee_code')->nullable();
-            $table->date('join_date')->nullable();
+            // Account enabled/disabled
             $table->boolean('is_active')->default(true);
 
             $table->rememberToken();
@@ -41,9 +32,6 @@ return new class extends Migration
         });
     }
 
-    /**
-     * Reverse the migrations.
-     */
     public function down(): void
     {
         Schema::dropIfExists('users');
