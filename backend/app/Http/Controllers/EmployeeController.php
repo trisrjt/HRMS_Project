@@ -14,13 +14,19 @@ class EmployeeController extends Controller
     // GET /api/employees
     // ==============================
     public function index()
-    {
-        return Employee::with([
-            'department',
-            'role',
-            'user:id,name,email'
-        ])->orderByDesc('id')->get();
+{
+    // Only SuperAdmin (1), Admin (2), HR (3)
+    if (!in_array(auth()->user()->role_id, [1, 2, 3])) {
+        return response()->json(['message' => 'Unauthorized'], 403);
     }
+
+    return Employee::with([
+        'department',
+        'role',
+        'user:id,name,email'
+    ])->orderByDesc('id')->get();
+}
+
 
     // ==============================
     // POST /api/employees
@@ -84,16 +90,26 @@ class EmployeeController extends Controller
     // GET /api/employees/{id}
     // ==============================
     public function show($id)
-    {
-        $employee = Employee::with(['department', 'role', 'user:id,name,email'])->findOrFail($id);
-        return $employee;
+{
+    if (!in_array(auth()->user()->role_id, [1, 2, 3])) {
+        return response()->json(['message' => 'Unauthorized'], 403);
     }
+
+    $employee = Employee::with(['department', 'role', 'user:id,name,email'])->findOrFail($id);
+    return $employee;
+}
+
 
     // ==============================
     // PUT /api/employees/{id}
     // ==============================
     public function update(Request $request, $id)
     {
+        // Only SuperAdmin & Admin
+        if (!in_array(auth()->user()->role_id, [1, 2])) {
+    return response()->json(['message' => 'Unauthorized'], 403);
+}
+
         $employee = Employee::findOrFail($id);
 
         $validated = $request->validate([
@@ -117,11 +133,17 @@ class EmployeeController extends Controller
     // ==============================
     // DELETE /api/employees/{id}
     // ==============================
-    public function destroy($id)
-    {
-        $employee = Employee::findOrFail($id);
-        $employee->delete();
-
-        return response()->json(['message' => 'Employee deleted']);
+public function destroy($id)
+{
+    if (!in_array(auth()->user()->role_id, [1, 2])) {
+        return response()->json(['message' => 'Unauthorized'], 403);
     }
+
+    $employee = Employee::findOrFail($id);
+    $employee->delete();
+
+    return response()->json(['message' => 'Employee deleted']);
+}
+
+
 }

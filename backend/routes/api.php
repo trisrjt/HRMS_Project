@@ -58,6 +58,8 @@ Route::middleware(['auth:sanctum', 'role:1,2'])->group(function () {
     // Set employee temp password
     Route::put('/users/{id}/set-temp-password', [UserController::class, 'setTempPassword']);
 });
+Route::post('/change-password', [UserController::class, 'changePassword']);
+
 
     // Attendance
     Route::get('/attendances', [AttendanceController::class, 'index']);

@@ -67,49 +67,38 @@ class AuthController extends Controller
     // User Login
     // ==============================
     public function login(Request $request)
-    {
-        $validated = $request->validate([
-            'email'    => 'required|email',
-            'password' => 'required|string'
-        ]);
+{
+    $request->validate([
+        'email' => 'required|email',
+        'password' => 'required'
+    ]);
 
-        $user = User::where('email', $validated['email'])->first();
+    $user = User::where('email', $request->email)->first();
 
-        if (!$user) {
-            throw ValidationException::withMessages([
-                'email' => ['User does not exist.']
-            ]);
-        }
+    if (!$user || !Hash::check($request->password, $user->password)) {
+        return response()->json(['message' => 'Invalid credentials'], 401);
+    }
 
-        if (!Hash::check($validated['password'], $user->password)) {
-            throw ValidationException::withMessages([
-                'password' => ['Incorrect password.']
-            ]);
-        }
+    // Create API token
+    $token = $user->createToken('auth_token')->plainTextToken;
 
-        if (!$user->is_active) {
-            return response()->json(['message' => 'Account disabled'], 403);
-        }
-
-        // Remove old tokens
-        $user->tokens()->delete();
-
-        // Create new token
-        $token = $user->createToken('api_token')->plainTextToken;
-
+    // FORCE PASSWORD CHANGE FOR EMPLOYEE IF TEMP PASSWORD EXISTS
+    if ($user->role_id == 4 && $user->temp_password !== null) {
         return response()->json([
-            'message'      => 'Login successful',
-            'access_token' => $token,
-            'token_type'   => 'Bearer',
-            'user'         => [
-                'id'          => $user->id,
-                'name'        => $user->name,
-                'email'       => $user->email,
-                'role_id'     => $user->role_id,
-                'department_id' => $user->department_id,
-            ]
+            'message' => 'Password change required',
+            'force_password_change' => true,
+            'user_id' => $user->id,
+            'token' => $token
         ], 200);
     }
+
+    return response()->json([
+        'message' => 'Login successful',
+        'force_password_change' => false,
+        'token' => $token,
+        'user' => $user
+    ], 200);
+}
 
     // ==============================
     // Authenticated User Info
