@@ -16,19 +16,22 @@ class Leave extends Model
         'end_date',
         'reason',
         'status',
-        'approved_by',
+        'approved_by'
     ];
 
+    // Employee who applied leave
     public function employee()
     {
         return $this->belongsTo(Employee::class);
     }
 
+    // Type of leave (sick, casual etc.)
     public function leaveType()
     {
         return $this->belongsTo(LeaveType::class);
     }
 
+    // Approver (HR/Admin/SuperAdmin)
     public function approver()
     {
         return $this->belongsTo(User::class, 'approved_by');

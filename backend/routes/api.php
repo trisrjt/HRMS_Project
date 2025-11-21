@@ -101,11 +101,36 @@ Route::middleware(['auth:sanctum', 'role:4'])->group(function () {
     Route::delete('/salaries/{id}', [SalaryController::class, 'destroy']);
 
     // Leaves
-    Route::get('/leaves', [LeaveController::class, 'index']);
+    // =====================================
+// EMPLOYEE LEAVE — APPLY + VIEW OWN
+// =====================================
+Route::middleware(['auth:sanctum', 'role:4'])->group(function () {
+
+    // Employee apply leave
     Route::post('/leaves', [LeaveController::class, 'store']);
+
+    // Employee view own leaves
+    Route::get('/my-leaves', [LeaveController::class, 'myLeaves']); // New method we will add
+});
+// =====================================
+// LEAVE MANAGEMENT — HR, Admin, SuperAdmin
+// =====================================
+Route::middleware(['auth:sanctum', 'role:1,2,3'])->group(function () {
+
+    // View all leaves
+    Route::get('/leaves', [LeaveController::class, 'index']);
+
+    // View one leave
     Route::get('/leaves/{id}', [LeaveController::class, 'show']);
+
+    // Approve/Reject
     Route::put('/leaves/{id}', [LeaveController::class, 'update']);
+});
+Route::middleware(['auth:sanctum', 'role:1,2'])->group(function () {
     Route::delete('/leaves/{id}', [LeaveController::class, 'destroy']);
+});
+
+
 
     // Payslips
     Route::get('/payslips', [PayslipController::class, 'index']);

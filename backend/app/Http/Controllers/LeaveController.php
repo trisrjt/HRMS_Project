@@ -143,4 +143,26 @@ class LeaveController extends Controller
 
         return response()->json(['message' => 'Leave deleted successfully']);
     }
+    public function myLeaves()
+{
+    $user = auth()->user();
+
+    if ($user->role_id != 4) {
+        return response()->json(['message' => 'Unauthorized'], 403);
+    }
+
+    $employee = $user->employee;
+
+    if (!$employee) {
+        return response()->json(['message' => 'Employee profile not found'], 404);
+    }
+
+    return response()->json(
+        Leave::with(['leaveType'])
+            ->where('employee_id', $employee->id)
+            ->orderByDesc('start_date')
+            ->get()
+    );
+}
+
 }
