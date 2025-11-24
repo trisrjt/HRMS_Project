@@ -1,6 +1,7 @@
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import LoginPage from "../pages/LoginPage";
 import DashboardPage from "../pages/DashboardPage";
+import Dashboard from "../pages/Dashboard";
 import EmployeesPage from "../pages/EmployeesPage";
 import DepartmentsPage from "../pages/DepartmentsPage";
 import DesignationsPage from "../pages/DesignationsPage";
@@ -15,6 +16,8 @@ import AnnouncementsPage from "../pages/AnnouncementsPage";
 import SettingsPage from "../pages/SettingsPage";
 import ProtectedRoute from "./ProtectedRoute";
 import ProtectedLayout from "../layouts/ProtectedLayout";
+import EmployeeLayout from "../components/EmployeeLayout";
+import DashboardWrapper from "../components/DashboardWrapper";
 
 const AppRouter = () => (
   <BrowserRouter>
@@ -36,9 +39,7 @@ const AppRouter = () => (
         path="/dashboard"
         element={
           <ProtectedRoute>
-            <ProtectedLayout>
-              <DashboardPage />
-            </ProtectedLayout>
+            <DashboardWrapper />
           </ProtectedRoute>
         }
       />
