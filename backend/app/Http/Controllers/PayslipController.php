@@ -124,4 +124,29 @@ class PayslipController extends Controller
 
         return response()->json(['message' => 'Payslip deleted successfully']);
     }
+
+    // ======================================
+    // EMPLOYEE VIEW OWN PAYSLIPS
+    // ======================================
+    public function myPayslips()
+    {
+        $user = auth()->user();
+
+        if ($user->role_id != 4) {
+            return response()->json(['message' => 'Unauthorized'], 403);
+        }
+
+        $employee = $user->employee;
+
+        if (!$employee) {
+            return response()->json(['message' => 'Employee profile not found'], 404);
+        }
+
+        $payslips = Payslip::where('employee_id', $employee->id)
+            ->orderByDesc('year')
+            ->orderByDesc('month')
+            ->get();
+
+        return response()->json($payslips);
+    }
 }

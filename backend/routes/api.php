@@ -108,7 +108,9 @@ Route::middleware(['role:1,2'])->group(function () {
 // Employee can only see own salary
 Route::middleware(['role:4'])->group(function () {
     Route::get('/salary/{id}', [SalaryController::class, 'show']);
+    Route::get('/my-salary', [SalaryController::class, 'mySalary']);
 });
+
 
 
     // Leaves
@@ -158,6 +160,7 @@ Route::middleware('role:1,2')->group(function () {
 // Employee can view OWN payslip only
 Route::middleware('role:4')->group(function () {
     Route::get('/payslips/{id}', [PayslipController::class, 'show']);
+    Route::get('/my-payslips', [PayslipController::class, 'myPayslips']);
 });
 
 

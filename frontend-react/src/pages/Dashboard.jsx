@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import api from "../api/axios";
 import { useAuth } from "../context/AuthContext";
 
-// Simple Toast Component (since shadcn/ui not installed)
+// Simple Toast Component
 const Toast = ({ message, type, onClose }) => {
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -13,7 +13,7 @@ const Toast = ({ message, type, onClose }) => {
   }, [onClose]);
 
   const bgColor = type === "success" ? "#10b981" : "#ef4444";
-  
+
   return (
     <div
       style={{
@@ -38,28 +38,70 @@ const Toast = ({ message, type, onClose }) => {
 const Dashboard = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
-  
+
   const [userInfo, setUserInfo] = useState(null);
   const [attendance, setAttendance] = useState(null);
   const [announcements, setAnnouncements] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [isCheckingIn, setIsCheckingIn] = useState(false);
   const [isCheckingOut, setIsCheckingOut] = useState(false);
   const [toast, setToast] = useState(null);
 
-  // Fetch user info
-  const fetchUserInfo = async () => {
-    try {
-      const { data } = await api.get("/user");
-      setUserInfo(data);
-    } catch (err) {
-      console.error("Failed to fetch user info:", err);
-    }
-  };
+  // Fetch all required data
+  useEffect(() => {
+    const loadData = async () => {
+      setIsLoading(true);
+      setError(null);
+      try {
+        // 1. Fetch User Info
+        const userRes = await api.get("/user");
+        setUserInfo(userRes.data);
 
-  // Fetch today's attendance
-  const fetchTodayAttendance = async () => {
+        // 2. Fetch Attendance
+        const attendanceRes = await api.get("/my-attendance");
+        const today = new Date().toISOString().split("T")[0];
+        // Find today's record if it exists
+        const todayRecord = Array.isArray(attendanceRes.data)
+          ? attendanceRes.data.find((record) => {
+            const recordDate = new Date(record.date).toISOString().split("T")[0];
+            return recordDate === today;
+          })
+          : null;
+        setAttendance(todayRecord);
+
+        // 3. Fetch Announcements
+        const announcementsRes = await api.get("/announcements");
+        // Get latest 3 announcements
+        const latest = Array.isArray(announcementsRes.data)
+          ? announcementsRes.data.slice(0, 3)
+          : [];
+        setAnnouncements(latest);
+
+      } catch (err) {
+        console.error("Dashboard data fetch error:", err);
+        // If /user fails (401), axios interceptor handles redirect, but we can double check
+        if (err.response && err.response.status === 401) {
+          navigate("/login");
+          return;
+        }
+        setError("Failed to load dashboard data. Please try refreshing.");
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    loadData();
+  }, [navigate]);
+
+  // Check In Handler
+  const handleCheckIn = async () => {
     try {
+      setIsCheckingIn(true);
+      await api.post("/my-attendance/check-in");
+      setToast({ message: "Check-in successful!", type: "success" });
+
+      // Refresh attendance data
       const { data } = await api.get("/my-attendance");
       const today = new Date().toISOString().split("T")[0];
       const todayRecord = data.find((record) => {
@@ -67,62 +109,33 @@ const Dashboard = () => {
         return recordDate === today;
       });
       setAttendance(todayRecord || null);
-    } catch (err) {
-      console.error("Failed to fetch attendance:", err);
-    }
-  };
 
-  // Fetch announcements
-  const fetchAnnouncements = async () => {
-    try {
-      const { data } = await api.get("/announcements");
-      // Get latest 3 announcements
-      const latest = Array.isArray(data) ? data.slice(0, 3) : [];
-      setAnnouncements(latest);
     } catch (err) {
-      console.error("Failed to fetch announcements:", err);
-    }
-  };
-
-  useEffect(() => {
-    const loadData = async () => {
-      setIsLoading(true);
-      await Promise.all([
-        fetchUserInfo(),
-        fetchTodayAttendance(),
-        fetchAnnouncements(),
-      ]);
-      setIsLoading(false);
-    };
-    loadData();
-  }, []);
-
-  // Check In
-  const handleCheckIn = async () => {
-    try {
-      setIsCheckingIn(true);
-      const { data } = await api.post("/my-attendance/check-in");
-      setToast({ message: "Check-in successful!", type: "success" });
-      await fetchTodayAttendance();
-    } catch (err) {
-      const message =
-        err?.response?.data?.message || "Failed to check in. Please try again.";
+      const message = err?.response?.data?.message || "Failed to check in.";
       setToast({ message, type: "error" });
     } finally {
       setIsCheckingIn(false);
     }
   };
 
-  // Check Out
+  // Check Out Handler
   const handleCheckOut = async () => {
     try {
       setIsCheckingOut(true);
-      const { data } = await api.post("/my-attendance/check-out");
+      await api.post("/my-attendance/check-out");
       setToast({ message: "Check-out successful!", type: "success" });
-      await fetchTodayAttendance();
+
+      // Refresh attendance data
+      const { data } = await api.get("/my-attendance");
+      const today = new Date().toISOString().split("T")[0];
+      const todayRecord = data.find((record) => {
+        const recordDate = new Date(record.date).toISOString().split("T")[0];
+        return recordDate === today;
+      });
+      setAttendance(todayRecord || null);
+
     } catch (err) {
-      const message =
-        err?.response?.data?.message || "Failed to check out. Please try again.";
+      const message = err?.response?.data?.message || "Failed to check out.";
       setToast({ message, type: "error" });
     } finally {
       setIsCheckingOut(false);
@@ -131,18 +144,45 @@ const Dashboard = () => {
 
   if (isLoading) {
     return (
-      <div style={{ padding: "2rem", textAlign: "center" }}>
-        <p>Loading dashboard...</p>
+      <div style={{ padding: "2rem", textAlign: "center", color: "#6b7280" }}>
+        <h2>Loading Dashboard...</h2>
       </div>
     );
   }
 
-  const today = new Date().toLocaleDateString("en-US", {
+  if (error) {
+    return (
+      <div style={{ padding: "2rem", textAlign: "center", color: "#ef4444" }}>
+        <h2>Error</h2>
+        <p>{error}</p>
+        <button
+          onClick={() => window.location.reload()}
+          style={{
+            marginTop: "1rem",
+            padding: "8px 16px",
+            backgroundColor: "#3b82f6",
+            color: "white",
+            border: "none",
+            borderRadius: "4px",
+            cursor: "pointer"
+          }}
+        >
+          Retry
+        </button>
+      </div>
+    );
+  }
+
+  const todayDate = new Date().toLocaleDateString("en-US", {
     weekday: "long",
     year: "numeric",
     month: "long",
     day: "numeric",
   });
+
+  // Fallback for user name if userInfo is not yet set (though isLoading should prevent this)
+  const displayName = userInfo?.name || user?.name || "Employee";
+  const displayEmail = userInfo?.email || user?.email || "";
 
   return (
     <div style={{ padding: "1.5rem", maxWidth: "1200px", margin: "0 auto" }}>
@@ -164,13 +204,13 @@ const Dashboard = () => {
           border: "1px solid #e5e7eb",
         }}
       >
-        <h1 style={{ fontSize: "24px", fontWeight: "600", marginBottom: "0.5rem" }}>
-          Welcome, {userInfo?.name || user?.name || "Employee"}!
+        <h1 style={{ fontSize: "24px", fontWeight: "600", marginBottom: "0.5rem", color: "#111827" }}>
+          Welcome, {displayName}!
         </h1>
         <p style={{ color: "#6b7280", marginBottom: "0.5rem" }}>
-          {userInfo?.email || user?.email}
+          {displayEmail}
         </p>
-        <p style={{ color: "#6b7280", fontSize: "14px" }}>{today}</p>
+        <p style={{ color: "#6b7280", fontSize: "14px" }}>{todayDate}</p>
       </div>
 
       {/* Attendance Section */}
@@ -184,7 +224,7 @@ const Dashboard = () => {
           boxShadow: "0 1px 3px rgba(0,0,0,0.1)",
         }}
       >
-        <h2 style={{ fontSize: "20px", fontWeight: "600", marginBottom: "1rem" }}>
+        <h2 style={{ fontSize: "20px", fontWeight: "600", marginBottom: "1rem", color: "#111827" }}>
           Today's Attendance
         </h2>
 
@@ -201,7 +241,7 @@ const Dashboard = () => {
               <p style={{ fontSize: "14px", color: "#6b7280", marginBottom: "0.25rem" }}>
                 Check In
               </p>
-              <p style={{ fontSize: "18px", fontWeight: "600" }}>
+              <p style={{ fontSize: "18px", fontWeight: "600", color: "#111827" }}>
                 {attendance.check_in || "N/A"}
               </p>
             </div>
@@ -209,7 +249,7 @@ const Dashboard = () => {
               <p style={{ fontSize: "14px", color: "#6b7280", marginBottom: "0.25rem" }}>
                 Check Out
               </p>
-              <p style={{ fontSize: "18px", fontWeight: "600" }}>
+              <p style={{ fontSize: "18px", fontWeight: "600", color: "#111827" }}>
                 {attendance.check_out || "Not checked out"}
               </p>
             </div>
@@ -289,18 +329,18 @@ const Dashboard = () => {
               color: "white",
               backgroundColor:
                 isCheckingIn ||
-                isCheckingOut ||
-                !attendance?.check_in ||
-                attendance?.check_out
+                  isCheckingOut ||
+                  !attendance?.check_in ||
+                  attendance?.check_out
                   ? "#9ca3af"
                   : "#3b82f6",
               border: "none",
               borderRadius: "8px",
               cursor:
                 isCheckingIn ||
-                isCheckingOut ||
-                !attendance?.check_in ||
-                attendance?.check_out
+                  isCheckingOut ||
+                  !attendance?.check_in ||
+                  attendance?.check_out
                   ? "not-allowed"
                   : "pointer",
               transition: "background-color 0.2s",
@@ -341,7 +381,7 @@ const Dashboard = () => {
           boxShadow: "0 1px 3px rgba(0,0,0,0.1)",
         }}
       >
-        <h2 style={{ fontSize: "20px", fontWeight: "600", marginBottom: "1rem" }}>
+        <h2 style={{ fontSize: "20px", fontWeight: "600", marginBottom: "1rem", color: "#111827" }}>
           Latest Announcements
         </h2>
 
@@ -363,7 +403,7 @@ const Dashboard = () => {
                   border: "1px solid #e5e7eb",
                 }}
               >
-                <h3 style={{ fontSize: "16px", fontWeight: "600", marginBottom: "0.5rem" }}>
+                <h3 style={{ fontSize: "16px", fontWeight: "600", marginBottom: "0.5rem", color: "#1f2937" }}>
                   {announcement.title || announcement.message?.substring(0, 50)}
                 </h3>
                 <p
@@ -397,4 +437,3 @@ const Dashboard = () => {
 };
 
 export default Dashboard;
-

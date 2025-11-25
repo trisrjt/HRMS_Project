@@ -130,4 +130,30 @@ class SalaryController extends Controller
             'message' => 'Deleting salary records is not allowed'
         ], 403);
     }
+
+    // ======================================
+    // EMPLOYEE VIEW OWN SALARY
+    // ======================================
+    public function mySalary()
+    {
+        $user = auth()->user();
+
+        if ($user->role_id != 4) {
+            return response()->json(['message' => 'Unauthorized'], 403);
+        }
+
+        $employee = $user->employee;
+
+        if (!$employee) {
+            return response()->json(['message' => 'Employee profile not found'], 404);
+        }
+
+        $salary = Salary::where('employee_id', $employee->id)->first();
+
+        if (!$salary) {
+            return response()->json(['message' => 'Salary record not found'], 404);
+        }
+
+        return response()->json($salary);
+    }
 }

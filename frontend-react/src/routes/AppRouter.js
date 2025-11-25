@@ -14,6 +14,7 @@ import RecruitmentPage from "../pages/RecruitmentPage";
 import PerformanceReviewsPage from "../pages/PerformanceReviewsPage";
 import AnnouncementsPage from "../pages/AnnouncementsPage";
 import SettingsPage from "../pages/SettingsPage";
+import ProfilePage from "../pages/ProfilePage";
 import ProtectedRoute from "./ProtectedRoute";
 import ProtectedLayout from "../layouts/ProtectedLayout";
 import EmployeeLayout from "../components/EmployeeLayout";
@@ -171,6 +172,17 @@ const AppRouter = () => (
           <ProtectedRoute>
             <ProtectedLayout>
               <SettingsPage />
+            </ProtectedLayout>
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/profile"
+        element={
+          <ProtectedRoute>
+            <ProtectedLayout>
+              <ProfilePage />
             </ProtectedLayout>
           </ProtectedRoute>
         }

@@ -2,7 +2,7 @@ import { Navigate, useLocation } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 
 const routeRoleMap = {
-  "/dashboard": [1, 2, 3],
+  "/dashboard": [1, 2, 3, 4],
   "/employees": [1, 2, 3],
   "/departments": [1],
   "/designations": [1],
