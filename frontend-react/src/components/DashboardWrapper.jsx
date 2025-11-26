@@ -1,6 +1,6 @@
 import { useAuth } from "../context/AuthContext";
 import Dashboard from "../pages/Dashboard";
-import DashboardPage from "../pages/DashboardPage";
+import DashboardPage from "../pages/admin/DashboardPage";
 import ProtectedLayout from "../layouts/ProtectedLayout";
 import EmployeeLayout from "./EmployeeLayout";
 

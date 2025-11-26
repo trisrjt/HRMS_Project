@@ -8,10 +8,10 @@ const EmployeeSidebar = () => {
   const menuItems = [
     { key: "dashboard", label: "Dashboard", to: "/dashboard" },
     { key: "profile", label: "My Profile", to: "/profile" },
-    { key: "attendance", label: "Attendance", to: "/my-attendance" },
-    { key: "leaves", label: "Leaves", to: "/my-leaves" },
-    { key: "salary", label: "Salary", to: "/my-salary" },
-    { key: "payslips", label: "Payslips", to: "/my-payslips" },
+    { key: "attendance", label: "Attendance", to: "/attendance" },
+    { key: "leaves", label: "Leaves", to: "/leaves" },
+    { key: "salary", label: "Salary", to: "/salary" },
+    { key: "payslips", label: "Payslips", to: "/payslips" },
     { key: "announcements", label: "Announcements", to: "/announcements" },
   ];
 

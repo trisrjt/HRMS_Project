@@ -1,4 +1,4 @@
-import EmployeesPage from "./employees/EmployeesPage";
+import EmployeesPage from "../employees/EmployeesPage";
 
 export default EmployeesPage;
 

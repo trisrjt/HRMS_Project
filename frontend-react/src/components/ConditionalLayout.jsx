@@ -2,7 +2,7 @@ import { useAuth } from "../context/AuthContext";
 import ProtectedLayout from "../layouts/ProtectedLayout";
 import EmployeeLayout from "./EmployeeLayout";
 import Dashboard from "../pages/Dashboard";
-import DashboardPage from "../pages/DashboardPage";
+import DashboardPage from "../pages/admin/DashboardPage";
 
 // This component renders different layouts based on user role
 const ConditionalLayout = ({ children }) => {

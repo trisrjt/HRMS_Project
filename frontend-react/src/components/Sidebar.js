@@ -2,18 +2,19 @@ import { NavLink } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 
 const baseItems = [
-  { key: "dashboard", label: "Dashboard", to: "/dashboard", roles: [1, 2, 3] },
+  { key: "dashboard", label: "Dashboard", to: "/dashboard", roles: [1, 2, 3, 4] },
+  { key: "profile", label: "My Profile", to: "/profile", roles: [1, 2, 3, 4] },
   { key: "employees", label: "Employees", to: "/employees", roles: [1, 2, 3] },
   { key: "departments", label: "Departments", to: "/departments", roles: [1] },
   { key: "designations", label: "Designations", to: "/designations", roles: [1] },
-  { key: "attendance", label: "Attendance", to: "/attendance", roles: [1, 2, 3] },
-  { key: "leaves", label: "Leaves", to: "/leaves", roles: [1, 2, 3] },
-  { key: "salaries", label: "Salaries", to: "/salaries", roles: [1, 2] },
-  { key: "payslips", label: "Payslips", to: "/payslips", roles: [1, 2] },
+  { key: "attendance", label: "Attendance", to: "/attendance", roles: [1, 2, 3, 4] },
+  { key: "leaves", label: "Leaves", to: "/leaves", roles: [1, 2, 3, 4] },
+  { key: "salaries", label: "Salaries", to: "/salaries", roles: [1, 2, 4] },
+  { key: "payslips", label: "Payslips", to: "/payslips", roles: [1, 2, 4] },
   { key: "documents", label: "Documents", to: "/documents", roles: [1, 2, 3] },
   { key: "recruitment", label: "Recruitment", to: "/recruitment", roles: [1, 2, 3] },
   { key: "performance", label: "Performance Reviews", to: "/performance-reviews", roles: [1, 2] },
-  { key: "announcements", label: "Announcements", to: "/announcements", roles: [1] },
+  { key: "announcements", label: "Announcements", to: "/announcements", roles: [1, 4] },
   { key: "settings", label: "Settings", to: "/settings", roles: [1] },
 ];
 
