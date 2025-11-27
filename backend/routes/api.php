@@ -212,6 +212,12 @@ Route::middleware(['auth:sanctum'])->prefix('superadmin')->group(function () {
     Route::get('/stats', [App\Http\Controllers\SuperAdminDashboardController::class, 'stats']);
     Route::get('/activity-log', [App\Http\Controllers\SuperAdminDashboardController::class, 'activityLog']);
     Route::get('/system-health', [App\Http\Controllers\SuperAdminDashboardController::class, 'systemHealth']);
+
+    // Employee Management
+    Route::get('/employees', [App\Http\Controllers\SuperAdminEmployeeController::class, 'index']);
+    Route::post('/employees', [App\Http\Controllers\SuperAdminEmployeeController::class, 'store']);
+    Route::put('/employees/{id}', [App\Http\Controllers\SuperAdminEmployeeController::class, 'update']);
+    Route::delete('/employees/{id}', [App\Http\Controllers\SuperAdminEmployeeController::class, 'destroy']);
 });
 
 // Notifications Routes

@@ -22,15 +22,12 @@ const SuperAdminLayout = ({ children }) => {
             {/* Sidebar */}
             <div
                 style={{
-                    display: "none",
+                    display: "block",
                 }}
                 className="sidebar-desktop"
             >
                 <SuperAdminSidebar />
             </div>
-
-            {/* Simple responsive: show sidebar always for now */}
-            <SuperAdminSidebar />
 
             {/* Main area */}
             <div style={{ flex: 1, display: "flex", flexDirection: "column" }}>

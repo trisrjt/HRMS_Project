@@ -29,7 +29,6 @@ class EmployeeController extends Controller
 
     return Employee::with([
         'department',
-        'role',
         'user:id,name,email'
     ])->orderByDesc('id')->get();
 }
@@ -111,7 +110,7 @@ class EmployeeController extends Controller
         return response()->json(['message' => 'Unauthorized'], 403);
     }
 
-    $employee = Employee::with(['department', 'role', 'user:id,name,email'])->findOrFail($id);
+    $employee = Employee::with(['department', 'user:id,name,email'])->findOrFail($id);
     return $employee;
 }
 
@@ -142,7 +141,7 @@ class EmployeeController extends Controller
 
         return response()->json([
             'message'  => 'Employee updated successfully.',
-            'employee' => $employee->fresh()->load(['department', 'role', 'user:id,name,email'])
+            'employee' => $employee->fresh()->load(['department', 'user:id,name,email'])
         ]);
     }
 
