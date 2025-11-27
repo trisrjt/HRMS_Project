@@ -4,9 +4,16 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\Leave;
+use App\Services\NotificationService;
 
 class LeaveController extends Controller
 {
+    protected $notifications;
+
+    public function __construct(NotificationService $notifications)
+    {
+        $this->notifications = $notifications;
+    }
     // ======================================
     // GET ALL LEAVES (HR, Admin, SuperAdmin)
     // Employee cannot see everyone's leaves
@@ -62,6 +69,15 @@ class LeaveController extends Controller
             'approved_by'   => null,
         ]);
 
+        // Notify Admins & HR
+        $this->notifications->sendToRoles(
+            [2, 3],
+            "New Leave Request",
+            "{$employee->user->name} applied for {$leave->leaveType->name} leave",
+            "leave",
+            "/admin/leaves"
+        );
+
         return response()->json([
             'message' => 'Leave request submitted successfully',
             'leave'   => $leave
@@ -114,6 +130,15 @@ class LeaveController extends Controller
             'status'      => $request->status,
             'approved_by' => $user->id,
         ]);
+
+        // Notify Employee
+        $this->notifications->sendToUser(
+            $leave->employee->user_id,
+            "Leave {$request->status}",
+            "Your leave request from {$leave->start_date} to {$leave->end_date} has been {$request->status}.",
+            "leave",
+            "/employee/leaves"
+        );
 
         return response()->json([
             'message' => "Leave {$request->status} successfully",

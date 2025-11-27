@@ -1,10 +1,13 @@
 import AppRouter from "./routes/AppRouter";
 import { AuthProvider } from "./context/AuthContext";
+import { NotificationProvider } from "./context/NotificationContext";
 
 const App = () => {
   return (
     <AuthProvider>
-      <AppRouter />
+      <NotificationProvider>
+        <AppRouter />
+      </NotificationProvider>
     </AuthProvider>
   );
 };

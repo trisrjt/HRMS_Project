@@ -213,3 +213,15 @@ Route::middleware(['auth:sanctum'])->prefix('superadmin')->group(function () {
     Route::get('/activity-log', [App\Http\Controllers\SuperAdminDashboardController::class, 'activityLog']);
     Route::get('/system-health', [App\Http\Controllers\SuperAdminDashboardController::class, 'systemHealth']);
 });
+
+// Notifications Routes
+Route::middleware("auth:sanctum")->group(function () {
+    Route::get("/notifications", [App\Http\Controllers\NotificationController::class, "index"]);
+    Route::get("/notifications/unread-count", [App\Http\Controllers\NotificationController::class, "unreadCount"]);
+    Route::post("/notifications/mark-read/{id}", [App\Http\Controllers\NotificationController::class, "markRead"]);
+    Route::post("/notifications/mark-all-read", [App\Http\Controllers\NotificationController::class, "markAllRead"]);
+
+    // Admin + SuperAdmin only
+    Route::post("/notifications/send", [App\Http\Controllers\NotificationController::class, "send"])
+        ->middleware("role:1,2");
+});

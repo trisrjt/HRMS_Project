@@ -9,10 +9,21 @@ const SuperAdminSidebar = () => {
         { key: "dashboard", label: "Dashboard", to: "/superadmin/dashboard" },
         { key: "employees", label: "Employees", to: "/superadmin/employees" },
         { key: "departments", label: "Departments", to: "/superadmin/departments" },
+        { key: "designations", label: "Designations", to: "/superadmin/designations" },
         { key: "attendance", label: "Attendance", to: "/superadmin/attendance" },
         { key: "leaves", label: "Leaves", to: "/superadmin/leaves" },
+        { key: "salaries", label: "Salaries", to: "/superadmin/salaries" },
+        { key: "payslips", label: "Payslips", to: "/superadmin/payslips" },
+        { key: "documents", label: "Documents", to: "/superadmin/documents" },
         { key: "recruitment", label: "Recruitment", to: "/superadmin/recruitment" },
-        { key: "settings", label: "Settings", to: "/superadmin/settings" },
+        { key: "performance-reviews", label: "Performance Reviews", to: "/superadmin/performance-reviews" },
+        { key: "announcements", label: "Announcements", to: "/superadmin/announcements" },
+        { key: "settings", label: "System Settings", to: "/superadmin/settings" },
+        { key: "system-controls", label: "System Controls", to: "/superadmin/system-controls" },
+        { key: "notifications", label: "Notifications", to: "/superadmin/notifications" },
+        { key: "activity-log", label: "Activity Log", to: "/superadmin/activity-log" },
+        { key: "users", label: "User Management", to: "/superadmin/users" },
+        { key: "reports", label: "Reports / Analytics", to: "/superadmin/reports" },
     ];
 
     const handleLogout = () => {

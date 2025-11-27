@@ -1,6 +1,7 @@
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import EmployeeSidebar from "../components/EmployeeSidebar";
+import NotificationBell from "../components/NotificationBell";
 
 const EmployeeLayout = ({ children }) => {
     const { user, logout } = useAuth();
@@ -43,30 +44,33 @@ const EmployeeLayout = ({ children }) => {
                             {user?.name || "Employee"}
                         </span>
                     </div>
-                    <button
-                        onClick={handleLogout}
-                        style={{
-                            padding: "0.5rem 1rem",
-                            fontSize: "14px",
-                            fontWeight: "500",
-                            color: "#dc2626",
-                            backgroundColor: "transparent",
-                            border: "1px solid #dc2626",
-                            borderRadius: "6px",
-                            cursor: "pointer",
-                            transition: "all 0.2s",
-                        }}
-                        onMouseEnter={(e) => {
-                            e.target.style.backgroundColor = "#dc2626";
-                            e.target.style.color = "white";
-                        }}
-                        onMouseLeave={(e) => {
-                            e.target.style.backgroundColor = "transparent";
-                            e.target.style.color = "#dc2626";
-                        }}
-                    >
-                        Logout
-                    </button>
+                    <div style={{ display: "flex", alignItems: "center", gap: "1rem" }}>
+                        <NotificationBell />
+                        <button
+                            onClick={handleLogout}
+                            style={{
+                                padding: "0.5rem 1rem",
+                                fontSize: "14px",
+                                fontWeight: "500",
+                                color: "#dc2626",
+                                backgroundColor: "transparent",
+                                border: "1px solid #dc2626",
+                                borderRadius: "6px",
+                                cursor: "pointer",
+                                transition: "all 0.2s",
+                            }}
+                            onMouseEnter={(e) => {
+                                e.target.style.backgroundColor = "#dc2626";
+                                e.target.style.color = "white";
+                            }}
+                            onMouseLeave={(e) => {
+                                e.target.style.backgroundColor = "transparent";
+                                e.target.style.color = "#dc2626";
+                            }}
+                        >
+                            Logout
+                        </button>
+                    </div>
                 </header>
 
                 {/* Page Content */}

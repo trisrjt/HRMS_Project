@@ -4,9 +4,16 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\Department;
+use App\Services\NotificationService;
 
 class DepartmentController extends Controller
 {
+    protected $notifications;
+
+    public function __construct(NotificationService $notifications)
+    {
+        $this->notifications = $notifications;
+    }
     // Get all departments
     public function index()
     {
@@ -22,6 +29,15 @@ class DepartmentController extends Controller
         ]);
 
         $department = Department::create($request->all());
+
+        // Notify Admins
+        $this->notifications->sendToRoles(
+            [2],
+            "New Department Created",
+            "Department {$department->name} has been added.",
+            "admin-action",
+            "/admin/departments"
+        );
 
         return response()->json([
             'message' => 'Department created successfully!',

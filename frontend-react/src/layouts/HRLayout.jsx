@@ -1,6 +1,7 @@
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import HRSidebar from "../components/HRSidebar";
+import NotificationBell from "../components/NotificationBell";
 
 const HRLayout = ({ children }) => {
     const { user, logout } = useAuth();
@@ -49,19 +50,22 @@ const HRLayout = ({ children }) => {
                         <span style={{ fontWeight: "500" }}>Welcome, </span>
                         <span style={{ fontWeight: "600" }}>{user?.name || "HR"}</span>
                     </div>
-                    <button
-                        onClick={handleLogout}
-                        style={{
-                            padding: "0.35rem 0.75rem",
-                            fontSize: "0.85rem",
-                            borderRadius: "0.375rem",
-                            border: "1px solid #e5e7eb",
-                            backgroundColor: "#f9fafb",
-                            cursor: "pointer",
-                        }}
-                    >
-                        Logout
-                    </button>
+                    <div style={{ display: "flex", alignItems: "center", gap: "1rem" }}>
+                        <NotificationBell />
+                        <button
+                            onClick={handleLogout}
+                            style={{
+                                padding: "0.35rem 0.75rem",
+                                fontSize: "0.85rem",
+                                borderRadius: "0.375rem",
+                                border: "1px solid #e5e7eb",
+                                backgroundColor: "#f9fafb",
+                                cursor: "pointer",
+                            }}
+                        >
+                            Logout
+                        </button>
+                    </div>
                 </header>
 
                 {/* Page content */}

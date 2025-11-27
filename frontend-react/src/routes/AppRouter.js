@@ -3,6 +3,7 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 // AUTH
 import LoginPage from "../pages/LoginPage";
 import ProtectedRoute from "./ProtectedRoute";
+import NotificationsPage from "../pages/common/NotificationsPage";
 
 // LAYOUTS
 import EmployeeLayout from "../layouts/EmployeeLayout";
@@ -49,12 +50,25 @@ import SuperAdminDepartments from "../pages/superadmin/DepartmentsPage";
 import SuperAdminAttendance from "../pages/superadmin/AttendancePage";
 import SuperAdminLeaves from "../pages/superadmin/LeavesPage";
 import SuperAdminRecruitment from "../pages/superadmin/RecruitmentPage";
+import SuperAdminDesignations from "../pages/superadmin/DesignationsPage";
+import SuperAdminDocuments from "../pages/superadmin/DocumentsPage";
+import SuperAdminSalaries from "../pages/superadmin/SalariesPage";
+import SuperAdminPayslips from "../pages/superadmin/PayslipsPage";
+import SuperAdminPerformanceReviews from "../pages/superadmin/PerformanceReviewsPage";
+import SuperAdminAnnouncements from "../pages/superadmin/AnnouncementsPage";
+import SuperAdminActivityLog from "../pages/superadmin/ActivityLogPage";
+import SuperAdminUserManagement from "../pages/superadmin/UserManagementPage";
+import SuperAdminReports from "../pages/superadmin/ReportsPage";
+import SuperAdminSystemControls from "../pages/superadmin/SystemControlsPage";
 
 const AppRouter = () => (
   <BrowserRouter>
     <Routes>
       {/* LOGIN */}
       <Route path="/login" element={<LoginPage />} />
+
+      {/* COMMON PROTECTED ROUTES */}
+      <Route path="/notifications" element={<ProtectedRoute><NotificationsPage /></ProtectedRoute>} />
 
       {/* EMPLOYEE PORTAL (Role 4) */}
       <Route
@@ -267,6 +281,106 @@ const AppRouter = () => (
           <ProtectedRoute roles={[1]}>
             <SuperAdminLayout>
               <SuperAdminRecruitment />
+            </SuperAdminLayout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/superadmin/designations"
+        element={
+          <ProtectedRoute roles={[1]}>
+            <SuperAdminLayout>
+              <SuperAdminDesignations />
+            </SuperAdminLayout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/superadmin/documents"
+        element={
+          <ProtectedRoute roles={[1]}>
+            <SuperAdminLayout>
+              <SuperAdminDocuments />
+            </SuperAdminLayout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/superadmin/salaries"
+        element={
+          <ProtectedRoute roles={[1]}>
+            <SuperAdminLayout>
+              <SuperAdminSalaries />
+            </SuperAdminLayout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/superadmin/payslips"
+        element={
+          <ProtectedRoute roles={[1]}>
+            <SuperAdminLayout>
+              <SuperAdminPayslips />
+            </SuperAdminLayout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/superadmin/performance-reviews"
+        element={
+          <ProtectedRoute roles={[1]}>
+            <SuperAdminLayout>
+              <SuperAdminPerformanceReviews />
+            </SuperAdminLayout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/superadmin/announcements"
+        element={
+          <ProtectedRoute roles={[1]}>
+            <SuperAdminLayout>
+              <SuperAdminAnnouncements />
+            </SuperAdminLayout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/superadmin/activity-log"
+        element={
+          <ProtectedRoute roles={[1]}>
+            <SuperAdminLayout>
+              <SuperAdminActivityLog />
+            </SuperAdminLayout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/superadmin/users"
+        element={
+          <ProtectedRoute roles={[1]}>
+            <SuperAdminLayout>
+              <SuperAdminUserManagement />
+            </SuperAdminLayout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/superadmin/reports"
+        element={
+          <ProtectedRoute roles={[1]}>
+            <SuperAdminLayout>
+              <SuperAdminReports />
+            </SuperAdminLayout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/superadmin/system-controls"
+        element={
+          <ProtectedRoute roles={[1]}>
+            <SuperAdminLayout>
+              <SuperAdminSystemControls />
             </SuperAdminLayout>
           </ProtectedRoute>
         }

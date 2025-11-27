@@ -5,9 +5,16 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\Attendance;
 use App\Models\Employee;
+use App\Services\NotificationService;
 
 class AttendanceController extends Controller
 {
+    protected $notifications;
+
+    public function __construct(NotificationService $notifications)
+    {
+        $this->notifications = $notifications;
+    }
     // =====================================
     // GET /api/attendances
     // HR + Admin + SuperAdmin
@@ -120,6 +127,15 @@ class AttendanceController extends Controller
             'status'      => 'Present',
         ]);
 
+        // Notify HR
+        $this->notifications->sendToRoles(
+            [3],
+            "Employee Checked In",
+            "{$employee->user->name} checked in at {$attendance->check_in}",
+            "attendance",
+            "/hr/attendance"
+        );
+
         return response()->json([
             'message' => 'Check-in successful',
             'attendance' => $attendance
@@ -152,6 +168,15 @@ class AttendanceController extends Controller
         $attendance->update([
             'check_out' => now()->format('H:i:s'),
         ]);
+
+        // Notify HR
+        $this->notifications->sendToRoles(
+            [3],
+            "Employee Checked Out",
+            "{$employee->user->name} checked out at {$attendance->check_out}",
+            'attendance',
+            "/hr/attendance"
+        );
 
         return response()->json([
             'message' => 'Check-out successful',

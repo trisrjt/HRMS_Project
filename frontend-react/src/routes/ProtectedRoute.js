@@ -36,8 +36,23 @@ const routeRoleMap = {
 
   // SuperAdmin routes (role 1)
   "/superadmin/dashboard": [1],
+  "/superadmin/employees": [1],
+  "/superadmin/departments": [1],
+  "/superadmin/designations": [1],
+  "/superadmin/attendance": [1],
+  "/superadmin/leaves": [1],
+  "/superadmin/salaries": [1],
+  "/superadmin/payslips": [1],
+  "/superadmin/documents": [1],
+  "/superadmin/recruitment": [1],
+  "/superadmin/performance-reviews": [1],
+  "/superadmin/announcements": [1],
   "/superadmin/settings": [1],
   "/superadmin/system-controls": [1],
+  "/superadmin/notifications": [1],
+  "/superadmin/activity-log": [1],
+  "/superadmin/users": [1],
+  "/superadmin/reports": [1],
 };
 
 const ProtectedRoute = ({ children, roles }) => {

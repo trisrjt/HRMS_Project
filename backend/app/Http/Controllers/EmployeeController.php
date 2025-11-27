@@ -7,9 +7,16 @@ use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 use Illuminate\Support\Facades\Hash;   
+use App\Services\NotificationService;
 
 class EmployeeController extends Controller
 {
+    protected $notifications;
+
+    public function __construct(NotificationService $notifications)
+    {
+        $this->notifications = $notifications;
+    }
     // ==============================
     // GET /api/employees
     // ==============================
@@ -76,6 +83,15 @@ class EmployeeController extends Controller
         'address' => $request->address,
         'date_of_joining' => $request->date_of_joining,
     ]);
+
+    // Notify HR
+    $this->notifications->sendToRoles(
+        [3],
+        "New Employee Added",
+        "{$user->name} has joined as {$employee->designation}",
+        "hr-action",
+        "/hr/employees"
+    );
 
     // Step 4: Response
     return response()->json([
