@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import api from "../../api/axios";
-import { formatTime, calculateHours } from "../../utils/dateUtils";
+import { formatTime, calculateHours, calculateWeeklyStats } from "../../utils/dateUtils";
 
 // --- UI Components ---
 
@@ -175,6 +175,8 @@ const AttendancePage = () => {
     const isCheckedInToday = !!todayRecord?.check_in;
     const isCheckedOutToday = !!todayRecord?.check_out;
 
+    const weeklyStats = calculateWeeklyStats(attendance);
+
     if (isLoading) {
         return (
             <div style={{ padding: "2rem", textAlign: "center", color: "#6b7280" }}>
@@ -222,6 +224,26 @@ const AttendancePage = () => {
                     <Alert variant="error">
                         {error}
                     </Alert>
+                )}
+            </div>
+
+            {/* Weekly Summary Row */}
+            <div style={{ marginBottom: "1.5rem", padding: "1rem", backgroundColor: "#f9fafb", borderRadius: "8px", border: "1px solid #e5e7eb", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                <div>
+                    <span style={{ fontWeight: "600", color: "#374151", marginRight: "0.5rem" }}>This Week:</span>
+                    {weeklyStats.hours === 0 && weeklyStats.minutes === 0 ? (
+                        <span style={{ color: "#6b7280" }}>0h (No attendance this week)</span>
+                    ) : (
+                        <>
+                            <span style={{ fontWeight: "700", color: "#111827", fontSize: "16px" }}>{weeklyStats.formatted}</span>
+                            <span style={{ color: "#6b7280", fontSize: "14px", marginLeft: "0.5rem" }}>({weeklyStats.daysWorked} working days)</span>
+                        </>
+                    )}
+                </div>
+                {weeklyStats.daysWorked > 0 && (
+                    <div style={{ fontSize: "14px", color: "#6b7280" }}>
+                        Daily Avg: <span style={{ fontWeight: "600", color: "#374151" }}>{weeklyStats.average}</span>
+                    </div>
                 )}
             </div>
 
