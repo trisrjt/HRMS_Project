@@ -59,8 +59,15 @@ const LoginPage = () => {
           localStorage.setItem("user", JSON.stringify(data.user));
           // Update AuthContext state
           login(data.token, data.user);
-          // Redirect to dashboard
-          navigate("/dashboard", { replace: true });
+          // Redirect based on role
+          const roleId = data.user.role_id;
+          let targetPath = "/dashboard"; // Default for Employee (Role 4)
+
+          if (roleId === 1) targetPath = "/superadmin/dashboard";
+          else if (roleId === 2) targetPath = "/admin/dashboard";
+          else if (roleId === 3) targetPath = "/hr/dashboard";
+
+          navigate(targetPath, { replace: true });
         } else {
           setError("Invalid response from server.");
         }

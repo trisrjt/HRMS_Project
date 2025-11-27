@@ -18,7 +18,7 @@ class AuthController extends Controller
             'name'        => 'required|string|max:255',
             'email'       => 'required|email|unique:users,email',
             'password'    => 'required|string|min:4',
-            'role_id'     => 'required|exists:roles,id', 
+            // 'role_id'     => 'required|exists:roles,id', // <-- REMOVED: Public users cannot choose role
             'department_id' => 'nullable|exists:departments,id',
         ]);
 
@@ -26,7 +26,7 @@ class AuthController extends Controller
             'name'        => $validated['name'],
             'email'       => $validated['email'],
             'password'    => Hash::make($validated['password']),
-            'role_id'     => $validated['role_id'],        // <-- Role saved here
+            'role_id'     => 4, // <-- ALWAYS FORCE EMPLOYEE (Role 4)
             'department_id' => $validated['department_id'] ?? null,
             'is_active'   => true,
         ]);

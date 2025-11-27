@@ -6,16 +6,11 @@ const HRSidebar = () => {
     const navigate = useNavigate();
 
     const menuItems = [
-        { key: "dashboard", label: "Dashboard", to: "/admin/dashboard" },
-        { key: "profile", label: "My Profile", to: "/admin/profile" },
-        { key: "employees", label: "Employees", to: "/admin/employees" },
-        { key: "attendance", label: "Attendance", to: "/admin/attendance" },
-        { key: "leaves", label: "Leaves", to: "/admin/leaves" },
-        { key: "salaries", label: "Salaries", to: "/admin/salaries" },
-        { key: "payslips", label: "Payslips", to: "/admin/payslips" },
-        { key: "documents", label: "Documents", to: "/admin/documents" },
-        { key: "recruitment", label: "Recruitment", to: "/admin/recruitment" },
-        { key: "performance", label: "Performance Reviews", to: "/admin/performance-reviews" },
+        { key: "dashboard", label: "Dashboard", to: "/hr/dashboard" },
+        { key: "employees", label: "Employees", to: "/hr/employees" },
+        { key: "attendance", label: "Attendance", to: "/hr/attendance" },
+        { key: "leaves", label: "Leaves", to: "/hr/leaves" },
+        { key: "recruitment", label: "Recruitment", to: "/hr/recruitment" },
     ];
 
     const handleLogout = () => {

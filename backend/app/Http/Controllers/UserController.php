@@ -24,24 +24,6 @@ class UserController extends Controller
         return response()->json(['message' => 'Unauthorized'], 403);
     }
         $validated = $request->validate([
-            'name'   => ['required', 'string', 'max:255'],
-            'email'  => ['required', 'email', 'unique:users,email'],
-            'role_id' => ['required', 'exists:roles,id'],
-            'temp_password' => ['required', 'string', 'min:4'],
-        ]);
-
-        $user = User::create([
-            'name'  => $validated['name'],
-            'email' => $validated['email'],
-            'role_id' => $validated['role_id'],
-            'password' => Hash::make($validated['temp_password']),
-            'temp_password' => $validated['temp_password'], 
-        ]);
-
-        return response()->json([
-            'message' => 'User created successfully',
-            'user'    => $user
-        ], 201);
     }
 
     public function show($id)

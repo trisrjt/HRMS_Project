@@ -6,13 +6,13 @@ const SuperAdminSidebar = () => {
     const navigate = useNavigate();
 
     const menuItems = [
-        { key: "dashboard", label: "Dashboard", to: "/admin/dashboard" },
-        { key: "profile", label: "My Profile", to: "/admin/profile" },
-        { key: "employees", label: "Employees", to: "/admin/employees" },
-        { key: "attendance", label: "Attendance", to: "/admin/attendance" },
-        { key: "leaves", label: "Leaves", to: "/admin/leaves" },
-        { key: "documents", label: "Documents", to: "/admin/documents" },
-        { key: "recruitment", label: "Recruitment", to: "/admin/recruitment" },
+        { key: "dashboard", label: "Dashboard", to: "/superadmin/dashboard" },
+        { key: "employees", label: "Employees", to: "/superadmin/employees" },
+        { key: "departments", label: "Departments", to: "/superadmin/departments" },
+        { key: "attendance", label: "Attendance", to: "/superadmin/attendance" },
+        { key: "leaves", label: "Leaves", to: "/superadmin/leaves" },
+        { key: "recruitment", label: "Recruitment", to: "/superadmin/recruitment" },
+        { key: "settings", label: "Settings", to: "/superadmin/settings" },
     ];
 
     const handleLogout = () => {

@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import api from "../../api/axios";
+import { formatTime } from "../../utils/dateUtils";
 
 // --- UI Components ---
 
@@ -250,10 +251,10 @@ const AttendancePage = () => {
                                                 })}
                                             </td>
                                             <td style={{ padding: "12px 16px", fontSize: "14px", color: "#111827" }}>
-                                                {record.check_in || "-"}
+                                                {formatTime(record.check_in, record.date)}
                                             </td>
                                             <td style={{ padding: "12px 16px", fontSize: "14px", color: "#111827" }}>
-                                                {record.check_out || "-"}
+                                                {formatTime(record.check_out, record.date)}
                                             </td>
                                             <td style={{ padding: "12px 16px", fontSize: "14px" }}>
                                                 <Badge variant={record.status}>

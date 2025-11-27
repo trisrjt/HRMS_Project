@@ -44,7 +44,11 @@ import HREmployees from "../pages/hr/EmployeesPage";
 // SUPERADMIN PAGES
 import SuperAdminDashboard from "../pages/superadmin/DashboardPage";
 import SuperAdminSettings from "../pages/superadmin/SettingsPage";
-import SuperAdminSystemControls from "../pages/superadmin/SystemControlsPage";
+import SuperAdminEmployees from "../pages/superadmin/EmployeesPage";
+import SuperAdminDepartments from "../pages/superadmin/DepartmentsPage";
+import SuperAdminAttendance from "../pages/superadmin/AttendancePage";
+import SuperAdminLeaves from "../pages/superadmin/LeavesPage";
+import SuperAdminRecruitment from "../pages/superadmin/RecruitmentPage";
 
 const AppRouter = () => (
   <BrowserRouter>
@@ -124,11 +128,11 @@ const AppRouter = () => (
         }
       />
 
-      {/* ADMIN PORTAL (Role 1 & 2) */}
+      {/* ADMIN PORTAL (Role 2) */}
       <Route
         path="/admin/dashboard"
         element={
-          <ProtectedRoute roles={[1, 2]}>
+          <ProtectedRoute roles={[2]}>
             <AdminLayout>
               <AdminDashboard />
             </AdminLayout>
@@ -138,7 +142,7 @@ const AppRouter = () => (
       <Route
         path="/admin/employees"
         element={
-          <ProtectedRoute roles={[1, 2]}>
+          <ProtectedRoute roles={[2]}>
             <AdminLayout>
               <AdminEmployees />
             </AdminLayout>
@@ -148,7 +152,7 @@ const AppRouter = () => (
       <Route
         path="/admin/departments"
         element={
-          <ProtectedRoute roles={[1, 2]}>
+          <ProtectedRoute roles={[2]}>
             <AdminLayout>
               <AdminDepartments />
             </AdminLayout>
@@ -156,79 +160,9 @@ const AppRouter = () => (
         }
       />
       <Route
-        path="/admin/designations"
-        element={
-          <ProtectedRoute roles={[1, 2]}>
-            <AdminLayout>
-              <AdminDesignations />
-            </AdminLayout>
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/admin/documents"
-        element={
-          <ProtectedRoute roles={[1, 2]}>
-            <AdminLayout>
-              <AdminDocuments />
-            </AdminLayout>
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/admin/recruitment"
-        element={
-          <ProtectedRoute roles={[1, 2]}>
-            <AdminLayout>
-              <AdminRecruitment />
-            </AdminLayout>
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/admin/performance-reviews"
-        element={
-          <ProtectedRoute roles={[1, 2]}>
-            <AdminLayout>
-              <AdminPerformanceReviews />
-            </AdminLayout>
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/admin/announcements"
-        element={
-          <ProtectedRoute roles={[1, 2]}>
-            <AdminLayout>
-              <AdminAnnouncements />
-            </AdminLayout>
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/admin/settings"
-        element={
-          <ProtectedRoute roles={[1, 2]}>
-            <AdminLayout>
-              <AdminSettings />
-            </AdminLayout>
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/admin/leaves"
-        element={
-          <ProtectedRoute roles={[1, 2]}>
-            <AdminLayout>
-              <AdminLeaves />
-            </AdminLayout>
-          </ProtectedRoute>
-        }
-      />
-      <Route
         path="/admin/attendance"
         element={
-          <ProtectedRoute roles={[1, 2]}>
+          <ProtectedRoute roles={[2]}>
             <AdminLayout>
               <AdminAttendance />
             </AdminLayout>
@@ -236,11 +170,11 @@ const AppRouter = () => (
         }
       />
       <Route
-        path="/admin/salaries"
+        path="/admin/leaves"
         element={
-          <ProtectedRoute roles={[1, 2]}>
+          <ProtectedRoute roles={[2]}>
             <AdminLayout>
-              <AdminSalaries />
+              <AdminLeaves />
             </AdminLayout>
           </ProtectedRoute>
         }
@@ -248,80 +182,35 @@ const AppRouter = () => (
       <Route
         path="/admin/payslips"
         element={
-          <ProtectedRoute roles={[1, 2]}>
+          <ProtectedRoute roles={[2]}>
             <AdminLayout>
               <AdminPayslips />
             </AdminLayout>
           </ProtectedRoute>
         }
       />
-      {/* Admin Profile - Reusing EmployeeProfile or creating new? Using EmployeeProfile for now as generic profile */}
       <Route
-        path="/admin/profile"
+        path="/admin/recruitment"
         element={
-          <ProtectedRoute roles={[1, 2]}>
+          <ProtectedRoute roles={[2]}>
             <AdminLayout>
-              <EmployeeProfile />
+              <AdminRecruitment />
+            </AdminLayout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/admin/settings"
+        element={
+          <ProtectedRoute roles={[2]}>
+            <AdminLayout>
+              <AdminSettings />
             </AdminLayout>
           </ProtectedRoute>
         }
       />
 
-
-      {/* HR PORTAL (Role 3) */}
-      <Route
-        path="/hr/dashboard"
-        element={
-          <ProtectedRoute roles={[3]}>
-            <HRLayout>
-              <HRDashboard />
-            </HRLayout>
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/hr/leaves"
-        element={
-          <ProtectedRoute roles={[3]}>
-            <HRLayout>
-              <HRLeaves />
-            </HRLayout>
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/hr/attendance"
-        element={
-          <ProtectedRoute roles={[3]}>
-            <HRLayout>
-              <HRAttendance />
-            </HRLayout>
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/hr/recruitment"
-        element={
-          <ProtectedRoute roles={[3]}>
-            <HRLayout>
-              <HRRecruitment />
-            </HRLayout>
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/hr/employees"
-        element={
-          <ProtectedRoute roles={[3]}>
-            <HRLayout>
-              <HREmployees />
-            </HRLayout>
-          </ProtectedRoute>
-        }
-      />
-
-
-      {/* SUPERADMIN PORTAL (Role 1 - assuming SuperAdmin is also Role 1 or has specific ID, using 1 for now based on request) */}
+      {/* SUPERADMIN PORTAL (Role 1) */}
       <Route
         path="/superadmin/dashboard"
         element={
@@ -333,21 +222,61 @@ const AppRouter = () => (
         }
       />
       <Route
-        path="/superadmin/settings"
+        path="/superadmin/employees"
         element={
           <ProtectedRoute roles={[1]}>
             <SuperAdminLayout>
-              <SuperAdminSettings />
+              <SuperAdminEmployees />
             </SuperAdminLayout>
           </ProtectedRoute>
         }
       />
       <Route
-        path="/superadmin/system-controls"
+        path="/superadmin/departments"
         element={
           <ProtectedRoute roles={[1]}>
             <SuperAdminLayout>
-              <SuperAdminSystemControls />
+              <SuperAdminDepartments />
+            </SuperAdminLayout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/superadmin/attendance"
+        element={
+          <ProtectedRoute roles={[1]}>
+            <SuperAdminLayout>
+              <SuperAdminAttendance />
+            </SuperAdminLayout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/superadmin/leaves"
+        element={
+          <ProtectedRoute roles={[1]}>
+            <SuperAdminLayout>
+              <SuperAdminLeaves />
+            </SuperAdminLayout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/superadmin/recruitment"
+        element={
+          <ProtectedRoute roles={[1]}>
+            <SuperAdminLayout>
+              <SuperAdminRecruitment />
+            </SuperAdminLayout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/superadmin/settings"
+        element={
+          <ProtectedRoute roles={[1]}>
+            <SuperAdminLayout>
+              <SuperAdminSettings />
             </SuperAdminLayout>
           </ProtectedRoute>
         }

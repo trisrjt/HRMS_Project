@@ -206,3 +206,10 @@ Route::middleware(['role:1'])->group(function () {
 Route::get('/test-admin', function () {
     return "Admin or SuperAdmin allowed.";
 })->middleware(['auth:sanctum', 'role:1,2']);
+
+// SuperAdmin Dashboard Routes
+Route::middleware(['auth:sanctum'])->prefix('superadmin')->group(function () {
+    Route::get('/stats', [App\Http\Controllers\SuperAdminDashboardController::class, 'stats']);
+    Route::get('/activity-log', [App\Http\Controllers\SuperAdminDashboardController::class, 'activityLog']);
+    Route::get('/system-health', [App\Http\Controllers\SuperAdminDashboardController::class, 'systemHealth']);
+});

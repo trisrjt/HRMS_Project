@@ -7,18 +7,12 @@ const AdminSidebar = () => {
 
     const menuItems = [
         { key: "dashboard", label: "Dashboard", to: "/admin/dashboard" },
-        { key: "profile", label: "My Profile", to: "/admin/profile" },
         { key: "employees", label: "Employees", to: "/admin/employees" },
         { key: "departments", label: "Departments", to: "/admin/departments" },
-        { key: "designations", label: "Designations", to: "/admin/designations" },
         { key: "attendance", label: "Attendance", to: "/admin/attendance" },
         { key: "leaves", label: "Leaves", to: "/admin/leaves" },
-        { key: "salaries", label: "Salaries", to: "/admin/salaries" },
         { key: "payslips", label: "Payslips", to: "/admin/payslips" },
-        { key: "documents", label: "Documents", to: "/admin/documents" },
         { key: "recruitment", label: "Recruitment", to: "/admin/recruitment" },
-        { key: "performance", label: "Performance Reviews", to: "/admin/performance-reviews" },
-        { key: "announcements", label: "Announcements", to: "/admin/announcements" },
         { key: "settings", label: "Settings", to: "/admin/settings" },
     ];
 
