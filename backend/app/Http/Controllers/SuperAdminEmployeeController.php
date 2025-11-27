@@ -48,11 +48,16 @@ class SuperAdminEmployeeController extends Controller
 
         DB::beginTransaction();
         try {
+            // Generate password based on name (FirstName@123)
+            $firstName = explode(' ', trim($validated['name']))[0];
+            $plainPassword = ucfirst($firstName) . '@123';
+
             // Create User
             $user = User::create([
                 'name' => $validated['name'],
                 'email' => $validated['email'],
-                'password' => Hash::make('password123'), // Default password
+                'password' => Hash::make($plainPassword),
+                'temp_password' => $plainPassword,
                 'role_id' => 4, // Employee role
                 'is_active' => true,
             ]);
@@ -70,7 +75,12 @@ class SuperAdminEmployeeController extends Controller
             ]);
 
             DB::commit();
-            return response()->json($employee->load('user', 'department'), 201);
+            
+            // Return employee data with plain password for admin to see
+            $response = $employee->load('user', 'department')->toArray();
+            $response['plain_password'] = $plainPassword;
+            
+            return response()->json($response, 201);
         } catch (\Exception $e) {
             DB::rollBack();
             return response()->json(['message' => 'Failed to create employee', 'error' => $e->getMessage()], 500);
@@ -138,5 +148,96 @@ class SuperAdminEmployeeController extends Controller
             DB::rollBack();
             return response()->json(['message' => 'Failed to delete employee', 'error' => $e->getMessage()], 500);
         }
+    }
+
+    // GET /api/superadmin/employees/{id}
+    public function show($id)
+    {
+        $employee = Employee::with(['user', 'department'])->findOrFail($id);
+        return response()->json($employee);
+    }
+
+    // GET /api/superadmin/employees/{id}/attendance
+    public function attendance(Request $request, $id)
+    {
+        $employee = Employee::findOrFail($id);
+        
+        $query = \App\Models\Attendance::where('employee_id', $employee->id);
+
+        if ($request->has('month')) {
+            $month = $request->month; // YYYY-MM
+            $query->where('date', 'like', "$month%");
+        }
+
+        if ($request->has('year')) {
+            $query->whereYear('date', $request->year);
+        }
+
+        $attendance = $query->orderByDesc('date')->paginate(15);
+
+        return response()->json($attendance);
+    }
+
+    // GET /api/superadmin/employees/{id}/attendance/summary
+    public function attendanceSummary(Request $request, $id)
+    {
+        $employee = Employee::findOrFail($id);
+        $query = \App\Models\Attendance::where('employee_id', $employee->id);
+
+        if ($request->has('month')) {
+            $month = $request->month; // YYYY-MM
+            $query->where('date', 'like', "$month%");
+        }
+
+        $stats = [
+            'present' => (clone $query)->where('status', 'Present')->count(),
+            'absent' => (clone $query)->where('status', 'Absent')->count(),
+            'late' => (clone $query)->where('status', 'Late')->count(),
+            'on_leave' => (clone $query)->where('status', 'On Leave')->count(),
+        ];
+
+        return response()->json($stats);
+    }
+
+    // GET /api/superadmin/employees/{id}/attendance/export
+    public function attendanceExport(Request $request, $id)
+    {
+        $employee = Employee::with('user')->findOrFail($id);
+        $query = \App\Models\Attendance::where('employee_id', $employee->id);
+
+        if ($request->has('month')) {
+            $month = $request->month; // YYYY-MM
+            $query->where('date', 'like', "$month%");
+        }
+
+        $attendance = $query->orderBy('date', 'asc')->get();
+
+        $csvFileName = "attendance_{$employee->employee_code}_{$request->month}.csv";
+        $headers = [
+            "Content-type" => "text/csv",
+            "Content-Disposition" => "attachment; filename=$csvFileName",
+            "Pragma" => "no-cache",
+            "Cache-Control" => "must-revalidate, post-check=0, pre-check=0",
+            "Expires" => "0"
+        ];
+
+        $callback = function() use ($attendance, $employee) {
+            $file = fopen('php://output', 'w');
+            fputcsv($file, ['Employee Code', 'Name', 'Date', 'Check In', 'Check Out', 'Status']);
+
+            foreach ($attendance as $row) {
+                fputcsv($file, [
+                    $employee->employee_code,
+                    $employee->user->name,
+                    $row->date,
+                    $row->check_in,
+                    $row->check_out,
+                    $row->status
+                ]);
+            }
+            fclose($file);
+        };
+
+        return response()->stream($callback, 200, $headers);
     }
 }

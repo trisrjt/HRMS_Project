@@ -31,9 +31,27 @@ export const formatTime = (timeString) => {
  */
 export const formatDate = (dateString) => {
     if (!dateString) return "N/A";
-    return new Date(dateString).toLocaleDateString("en-US", {
-        year: "numeric",
-        month: "short",
-        day: "numeric"
-    });
+});
+};
+
+/**
+ * Calculates the difference between two time strings (HH:mm:ss) in hours and minutes.
+ * @param {string} checkIn - Check-in time (HH:mm:ss)
+ * @param {string} checkOut - Check-out time (HH:mm:ss)
+ * @returns {string} - Duration (e.g., "8h 30m") or "—"
+ */
+export const calculateHours = (checkIn, checkOut) => {
+    if (!checkIn) return "—";
+    if (!checkOut) return "Working...";
+
+    const start = new Date(`1970-01-01T${checkIn}`);
+    const end = new Date(`1970-01-01T${checkOut}`);
+    const diffMs = end - start;
+
+    if (diffMs < 0) return "—"; // Handle cases where checkout might be before checkin (e.g. overnight, though not expected per requirements)
+
+    const hours = Math.floor(diffMs / (1000 * 60 * 60));
+    const minutes = Math.floor((diffMs / (1000 * 60)) % 60);
+
+    return `${hours}h ${minutes}m`;
 };

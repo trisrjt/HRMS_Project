@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import api from "../../api/axios";
 import { useAuth } from "../../context/AuthContext";
-import { formatTime } from "../../utils/dateUtils";
+import { formatTime, calculateHours } from "../../utils/dateUtils";
 
 // --- UI Components ---
 
@@ -220,7 +220,9 @@ const DashboardPage = () => {
                             <div style={{ fontSize: "13px", color: "#6b7280" }}>Check In</div>
                             <div style={{ fontSize: "16px", fontWeight: "600", marginBottom: "0.5rem" }}>{formatTime(attendance?.check_in, attendance?.date)}</div>
                             <div style={{ fontSize: "13px", color: "#6b7280" }}>Check Out</div>
-                            <div style={{ fontSize: "16px", fontWeight: "600" }}>{formatTime(attendance?.check_out, attendance?.date)}</div>
+                            <div style={{ fontSize: "16px", fontWeight: "600", marginBottom: "0.5rem" }}>{formatTime(attendance?.check_out, attendance?.date)}</div>
+                            <div style={{ fontSize: "13px", color: "#6b7280" }}>Hours Worked</div>
+                            <div style={{ fontSize: "16px", fontWeight: "600" }}>{calculateHours(attendance?.check_in, attendance?.check_out)}</div>
                         </div>
                     </div>
 

@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 import api from "../../api/axios";
 import SuperAdminLayout from "../../layouts/SuperAdminLayout";
 import { formatDate } from "../../utils/dateUtils";
@@ -167,6 +168,10 @@ const EmployeesPage = () => {
         setSelectedEmployee(null);
     };
 
+    // Password Modal State
+    const [createdPassword, setCreatedPassword] = useState(null);
+    const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
+
     // Form Submission
     const validateForm = () => {
         const errors = {};
@@ -189,9 +194,15 @@ const EmployeesPage = () => {
 
         setIsSubmitting(true);
         try {
-            await api.post("/superadmin/employees", formData);
+            const response = await api.post("/superadmin/employees", formData);
             fetchEmployees();
             closeModals();
+
+            // Show password modal if plain_password is returned
+            if (response.data.plain_password) {
+                setCreatedPassword(response.data.plain_password);
+                setIsPasswordModalOpen(true);
+            }
         } catch (err) {
             console.error("Failed to create employee", err);
             setFormErrors({ api: err.response?.data?.message || "Failed to create employee" });
@@ -352,6 +363,23 @@ const EmployeesPage = () => {
                                                     </span>
                                                 </td>
                                                 <td style={{ ...tdStyle, textAlign: "right" }}>
+                                                    <Link
+                                                        to={`/superadmin/employees/${emp.id}/attendance`}
+                                                        style={{
+                                                            display: "inline-block",
+                                                            padding: "0.25rem 0.5rem",
+                                                            backgroundColor: "#d1fae5",
+                                                            color: "#065f46",
+                                                            borderRadius: "0.375rem",
+                                                            textDecoration: "none",
+                                                            fontSize: "0.75rem",
+                                                            fontWeight: "600",
+                                                            marginRight: "0.5rem",
+                                                            border: "1px solid #a7f3d0"
+                                                        }}
+                                                    >
+                                                        Attendance
+                                                    </Link>
                                                     <button onClick={() => openViewModal(emp)} style={actionButtonStyle}>View</button>
                                                     <button onClick={() => openEditModal(emp)} style={{ ...actionButtonStyle, color: "#2563eb" }}>Edit</button>
                                                     <button onClick={() => openDeleteModal(emp)} style={{ ...actionButtonStyle, color: "#dc2626", marginRight: 0 }}>Delete</button>
@@ -587,8 +615,37 @@ const EmployeesPage = () => {
                     </div>
                 </div>
             )}
+
+            {/* PASSWORD MODAL */}
+            {isPasswordModalOpen && (
+                <div style={modalOverlayStyle}>
+                    <div style={{ ...modalContentStyle, maxWidth: "400px", textAlign: "center" }}>
+                        <h2 style={{ fontSize: "1.25rem", fontWeight: "bold", marginBottom: "1rem", color: "#065f46" }}>Employee Created!</h2>
+                        <p style={{ color: "#4b5563", marginBottom: "1rem" }}>
+                            The employee account has been created successfully.
+                        </p>
+                        <div style={{ backgroundColor: "#f3f4f6", padding: "1rem", borderRadius: "0.5rem", marginBottom: "1.5rem" }}>
+                            <p style={{ fontSize: "0.875rem", color: "#6b7280", marginBottom: "0.25rem" }}>Temporary Password:</p>
+                            <p style={{ fontSize: "1.5rem", fontWeight: "bold", color: "#111827", fontFamily: "monospace" }}>{createdPassword}</p>
+                        </div>
+                        <p style={{ fontSize: "0.875rem", color: "#dc2626", marginBottom: "1.5rem" }}>
+                            Please copy and share this password with the employee immediately. It will not be shown again.
+                        </p>
+                        <button
+                            onClick={() => { setIsPasswordModalOpen(false); setCreatedPassword(null); }}
+                            style={{ ...primaryButtonStyle, width: "100%" }}
+                        >
+                            Close
+                        </button>
+                    </div>
+                </div>
+            )}
+
+            {/* EDIT MODAL */}
+
         </>
     );
 };
+
 
 export default EmployeesPage;

@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import api from "../../api/axios";
-import { formatTime } from "../../utils/dateUtils";
+import { formatTime, calculateHours } from "../../utils/dateUtils";
 
 // --- UI Components ---
 
@@ -238,6 +238,7 @@ const AttendancePage = () => {
                                     <th style={{ padding: "12px 16px", borderBottom: "1px solid #e5e7eb", fontSize: "14px", fontWeight: "600", color: "#374151" }}>Date</th>
                                     <th style={{ padding: "12px 16px", borderBottom: "1px solid #e5e7eb", fontSize: "14px", fontWeight: "600", color: "#374151" }}>Check In</th>
                                     <th style={{ padding: "12px 16px", borderBottom: "1px solid #e5e7eb", fontSize: "14px", fontWeight: "600", color: "#374151" }}>Check Out</th>
+                                    <th style={{ padding: "12px 16px", borderBottom: "1px solid #e5e7eb", fontSize: "14px", fontWeight: "600", color: "#374151" }}>Hours Worked</th>
                                     <th style={{ padding: "12px 16px", borderBottom: "1px solid #e5e7eb", fontSize: "14px", fontWeight: "600", color: "#374151" }}>Status</th>
                                 </tr>
                             </thead>
@@ -255,6 +256,9 @@ const AttendancePage = () => {
                                             </td>
                                             <td style={{ padding: "12px 16px", fontSize: "14px", color: "#111827" }}>
                                                 {formatTime(record.check_out, record.date)}
+                                            </td>
+                                            <td style={{ padding: "12px 16px", fontSize: "14px", color: "#111827", fontWeight: "600" }}>
+                                                {calculateHours(record.check_in, record.check_out)}
                                             </td>
                                             <td style={{ padding: "12px 16px", fontSize: "14px" }}>
                                                 <Badge variant={record.status}>

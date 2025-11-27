@@ -4,6 +4,7 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import LoginPage from "../pages/LoginPage";
 import ProtectedRoute from "./ProtectedRoute";
 import NotificationsPage from "../pages/common/NotificationsPage";
+import ChangePasswordPage from "../pages/ChangePasswordPage";
 
 // LAYOUTS
 import EmployeeLayout from "../layouts/EmployeeLayout";
@@ -46,6 +47,7 @@ import HREmployees from "../pages/hr/EmployeesPage";
 import SuperAdminDashboard from "../pages/superadmin/DashboardPage";
 import SuperAdminSettings from "../pages/superadmin/SettingsPage";
 import SuperAdminEmployees from "../pages/superadmin/EmployeesPage";
+import SuperAdminEmployeeAttendance from "../pages/superadmin/EmployeeAttendancePage";
 import SuperAdminDepartments from "../pages/superadmin/DepartmentsPage";
 import SuperAdminAttendance from "../pages/superadmin/AttendancePage";
 import SuperAdminLeaves from "../pages/superadmin/LeavesPage";
@@ -66,6 +68,7 @@ const AppRouter = () => (
     <Routes>
       {/* LOGIN */}
       <Route path="/login" element={<LoginPage />} />
+      <Route path="/change-password" element={<ChangePasswordPage />} />
 
       {/* COMMON PROTECTED ROUTES */}
       <Route path="/notifications" element={<ProtectedRoute><NotificationsPage /></ProtectedRoute>} />
@@ -241,6 +244,16 @@ const AppRouter = () => (
           <ProtectedRoute roles={[1]}>
             <SuperAdminLayout>
               <SuperAdminEmployees />
+            </SuperAdminLayout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/superadmin/employees/:id/attendance"
+        element={
+          <ProtectedRoute roles={[1]}>
+            <SuperAdminLayout>
+              <SuperAdminEmployeeAttendance />
             </SuperAdminLayout>
           </ProtectedRoute>
         }

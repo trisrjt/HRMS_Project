@@ -58,7 +58,7 @@ Route::middleware(['auth:sanctum', 'role:1,2'])->group(function () {
     // Set employee temp password
     Route::put('/users/{id}/set-temp-password', [UserController::class, 'setTempPassword']);
 });
-Route::post('/change-password', [UserController::class, 'changePassword']);
+Route::post('/change-password', [AuthController::class, 'changePassword']);
 
 
     // =====================================
@@ -216,8 +216,35 @@ Route::middleware(['auth:sanctum'])->prefix('superadmin')->group(function () {
     // Employee Management
     Route::get('/employees', [App\Http\Controllers\SuperAdminEmployeeController::class, 'index']);
     Route::post('/employees', [App\Http\Controllers\SuperAdminEmployeeController::class, 'store']);
+    Route::get('/employees/{id}', [App\Http\Controllers\SuperAdminEmployeeController::class, 'show']);
     Route::put('/employees/{id}', [App\Http\Controllers\SuperAdminEmployeeController::class, 'update']);
     Route::delete('/employees/{id}', [App\Http\Controllers\SuperAdminEmployeeController::class, 'destroy']);
+    Route::get('/employees/{id}/attendance', [App\Http\Controllers\SuperAdminEmployeeController::class, 'attendance']);
+    Route::get('/employees/{id}/attendance/summary', [App\Http\Controllers\SuperAdminEmployeeController::class, 'attendanceSummary']);
+    Route::get('/employees/{id}/attendance/export', [App\Http\Controllers\SuperAdminEmployeeController::class, 'attendanceExport']);
+
+    // Department Management
+    Route::get('/departments', [App\Http\Controllers\SuperAdminDepartmentController::class, 'index']);
+    Route::post('/departments', [App\Http\Controllers\SuperAdminDepartmentController::class, 'store']);
+    Route::put('/departments/{id}', [App\Http\Controllers\SuperAdminDepartmentController::class, 'update']);
+    Route::delete('/departments/{id}', [App\Http\Controllers\SuperAdminDepartmentController::class, 'destroy']);
+
+    // Attendance Management
+    Route::get('/attendance', [App\Http\Controllers\SuperAdminAttendanceController::class, 'index']);
+
+    // Leave Management
+    Route::get('/leaves', [App\Http\Controllers\SuperAdminLeaveController::class, 'index']);
+    Route::get('/leaves/summary', [App\Http\Controllers\SuperAdminLeaveController::class, 'summary']);
+    Route::get('/leaves/export', [App\Http\Controllers\SuperAdminLeaveController::class, 'export']);
+    Route::post('/leaves/{id}/approve', [App\Http\Controllers\SuperAdminLeaveController::class, 'approve']);
+    Route::post('/leaves/{id}/reject', [App\Http\Controllers\SuperAdminLeaveController::class, 'reject']);
+
+    // Salary Management
+    Route::get('/salaries', [App\Http\Controllers\SuperAdminSalaryController::class, 'index']);
+    Route::get('/salaries/history/{id}', [App\Http\Controllers\SuperAdminSalaryController::class, 'history']);
+    Route::post('/salaries/create', [App\Http\Controllers\SuperAdminSalaryController::class, 'create']);
+    Route::post('/salaries/update', [App\Http\Controllers\SuperAdminSalaryController::class, 'update']);
+    Route::get('/salaries/export', [App\Http\Controllers\SuperAdminSalaryController::class, 'export']);
 });
 
 // Notifications Routes
