@@ -296,7 +296,12 @@ const SalariesPage = () => {
                                                 <td style={tdStyle}>{salary.hra ? formatINR(salary.hra) : "-"}</td>
                                                 <td style={tdStyle}>{salary.da ? formatINR(salary.da) : "-"}</td>
                                                 <td style={{ ...tdStyle, color: "#ef4444" }}>{salary.deductions ? `-${formatINR(salary.deductions)}` : "-"}</td>
-                                                <td style={{ ...tdStyle, fontWeight: "bold" }}>{salary.gross_salary ? formatINR(salary.gross_salary) : "Not Set"}</td>
+                                                <td style={{ ...tdStyle, fontWeight: "bold" }}>
+                                                    {salary.gross_salary
+                                                        ? formatINR(salary.gross_salary)
+                                                        : (salary.employee?.salary ? <span title="From Employee Profile">{formatINR(salary.employee.salary)}*</span> : "Not Set")
+                                                    }
+                                                </td>
                                                 <td style={{ ...tdStyle, color: "#6b7280" }}>{salary.updated_at ? formatDate(salary.updated_at) : "Never"}</td>
                                                 <td style={tdStyle}>
                                                     <button onClick={() => handleEdit(salary)} style={actionButtonStyle}>

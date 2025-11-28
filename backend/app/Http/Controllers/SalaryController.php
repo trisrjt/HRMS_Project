@@ -148,10 +148,10 @@ class SalaryController extends Controller
             return response()->json(['message' => 'Employee profile not found'], 404);
         }
 
-        $salary = Salary::where('employee_id', $employee->id)->first();
+        $salary = Salary::where('employee_id', $employee->id)->latest()->first();
 
         if (!$salary) {
-            return response()->json(['message' => 'Salary record not found'], 404);
+            return response()->json(['salary' => null], 200);
         }
 
         return response()->json($salary);

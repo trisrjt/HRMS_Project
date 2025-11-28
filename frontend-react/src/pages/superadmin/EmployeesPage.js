@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import api from "../../api/axios";
-import SuperAdminLayout from "../../layouts/SuperAdminLayout";
+
 import { formatDate } from "../../utils/dateUtils";
 
 const EmployeesPage = () => {
@@ -262,168 +262,153 @@ const EmployeesPage = () => {
     const buttonStyle = { padding: "0.5rem 1rem", borderRadius: "0.5rem", border: "1px solid #d1d5db", backgroundColor: "white", color: "#374151", cursor: "pointer", fontSize: "0.875rem", fontWeight: "500" };
     const primaryButtonStyle = { ...buttonStyle, backgroundColor: "#2563eb", color: "white", border: "none" };
     const filterContainerStyle = { backgroundColor: "white", padding: "1rem", borderRadius: "0.5rem", boxShadow: "0 1px 2px 0 rgba(0, 0, 0, 0.05)", border: "1px solid #e5e7eb", marginBottom: "1.5rem", display: "flex", flexWrap: "wrap", gap: "1rem", alignItems: "center" };
-    const inputStyle = { padding: "0.5rem 1rem", border: "1px solid #d1d5db", borderRadius: "0.5rem", outline: "none", width: "100%", maxWidth: "300px" };
-    const selectStyle = { padding: "0.5rem 1rem", border: "1px solid #d1d5db", borderRadius: "0.5rem", outline: "none" };
-    const tableContainerStyle = { backgroundColor: "white", borderRadius: "0.5rem", boxShadow: "0 1px 2px 0 rgba(0, 0, 0, 0.05)", border: "1px solid #e5e7eb", overflow: "hidden" };
-    const tableStyle = { width: "100%", borderCollapse: "collapse", textAlign: "left" };
-    const thStyle = { padding: "0.75rem 1.5rem", fontSize: "0.75rem", fontWeight: "600", color: "#6b7280", textTransform: "uppercase", borderBottom: "1px solid #e5e7eb", backgroundColor: "#f9fafb", cursor: "pointer" };
-    const tdStyle = { padding: "1rem 1.5rem", fontSize: "0.875rem", color: "#111827", borderBottom: "1px solid #e5e7eb" };
+    const inputStyle = { padding: "0.75rem 1rem", border: "1px solid #d1d5db", borderRadius: "0.5rem", outline: "none", width: "100%", boxSizing: "border-box" };
+    const selectStyle = { padding: "0.75rem 1rem", border: "1px solid #d1d5db", borderRadius: "0.5rem", outline: "none", width: "100%", boxSizing: "border-box" };
+    const modalOverlayStyle = { position: "fixed", top: 0, left: 0, right: 0, bottom: 0, backgroundColor: "rgba(0, 0, 0, 0.5)", display: "flex", justifyContent: "center", alignItems: "center", zIndex: 1000 };
+    const modalContentStyle = { backgroundColor: "white", padding: "2rem", borderRadius: "0.5rem", width: "90%", maxWidth: "800px", maxHeight: "90vh", overflowY: "auto", boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)" };
+    const formGroupStyle = { display: "flex", flexDirection: "column", gap: "0.5rem" };
+    const labelStyle = { fontSize: "0.875rem", fontWeight: "500", color: "#374151" };
+    const errorStyle = { fontSize: "0.75rem", color: "#dc2626", marginTop: "0.25rem" };
     const badgeStyle = (isActive) => ({
-        padding: "0.25rem 0.5rem", borderRadius: "9999px", fontSize: "0.75rem", fontWeight: "600",
-        backgroundColor: isActive ? "#d1fae5" : "#f3f4f6", color: isActive ? "#065f46" : "#1f2937"
+        padding: "0.25rem 0.75rem",
+        borderRadius: "9999px",
+        fontSize: "0.75rem",
+        fontWeight: "500",
+        backgroundColor: isActive ? "#d1fae5" : "#fee2e2",
+        color: isActive ? "#065f46" : "#b91c1c"
     });
-    const actionButtonStyle = { color: "#6b7280", fontWeight: "500", marginRight: "0.5rem", cursor: "pointer", background: "none", border: "none" };
-    const modalOverlayStyle = { position: "fixed", inset: 0, backgroundColor: "rgba(0, 0, 0, 0.5)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 50 };
-    const modalContentStyle = { backgroundColor: "white", borderRadius: "0.5rem", boxShadow: "0 20px 25px -5px rgba(0, 0, 0, 0.1)", width: "100%", maxWidth: "600px", padding: "1.5rem", maxHeight: "90vh", overflowY: "auto" };
-    const labelStyle = { display: "block", fontSize: "0.875rem", fontWeight: "500", color: "#374151", marginBottom: "0.25rem" };
-    const formGroupStyle = { marginBottom: "1rem" };
-    const errorStyle = { color: "#ef4444", fontSize: "0.75rem", marginTop: "0.25rem" };
-
     return (
         <>
             <div style={containerStyle}>
-                {/* Header */}
                 <div style={headerStyle}>
                     <div>
-                        <h1 style={titleStyle}>Employees Management</h1>
-                        <p style={subTitleStyle}>Manage all employees and their accounts</p>
+                        <h1 style={titleStyle}>Employees</h1>
+                        <p style={subTitleStyle}>Manage your organization's workforce</p>
                     </div>
                     <div style={buttonGroupStyle}>
-                        <button onClick={fetchEmployees} style={buttonStyle}>Refresh</button>
                         <button onClick={openAddModal} style={primaryButtonStyle}>+ Add Employee</button>
                     </div>
                 </div>
 
-                {/* Filters */}
                 <div style={filterContainerStyle}>
                     <input
                         type="text"
-                        placeholder="Search by name, email, or code..."
+                        placeholder="Search employees..."
                         value={search}
                         onChange={(e) => setSearch(e.target.value)}
-                        style={inputStyle}
+                        style={{ ...inputStyle, maxWidth: "300px" }}
                     />
-                    <select value={departmentFilter} onChange={(e) => setDepartmentFilter(e.target.value)} style={selectStyle}>
+                    <select
+                        value={departmentFilter}
+                        onChange={(e) => setDepartmentFilter(e.target.value)}
+                        style={{ ...selectStyle, maxWidth: "200px" }}
+                    >
                         <option value="">All Departments</option>
-                        {departments.map(dept => <option key={dept.id} value={dept.id}>{dept.name}</option>)}
+                        {departments.map(d => <option key={d.id} value={d.id}>{d.name}</option>)}
                     </select>
-                    <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} style={selectStyle}>
+                    <select
+                        value={statusFilter}
+                        onChange={(e) => setStatusFilter(e.target.value)}
+                        style={{ ...selectStyle, maxWidth: "150px" }}
+                    >
                         <option value="">All Status</option>
                         <option value="Active">Active</option>
                         <option value="Inactive">Inactive</option>
                     </select>
-                    <button
-                        onClick={() => { setSearch(""); setDepartmentFilter(""); setStatusFilter(""); }}
-                        style={{ ...buttonStyle, border: "none", color: "#4b5563" }}
-                    >
-                        Reset
-                    </button>
                 </div>
 
-                {/* Table */}
-                <div style={tableContainerStyle}>
-                    {loading ? (
-                        <div style={{ padding: "2rem", textAlign: "center", color: "#6b7280" }}>Loading employees...</div>
-                    ) : error ? (
-                        <div style={{ padding: "2rem", textAlign: "center", color: "#ef4444" }}>{error}</div>
-                    ) : (
-                        <div style={{ overflowX: "auto" }}>
-                            <table style={tableStyle}>
-                                <thead>
+                {loading ? (
+                    <div style={{ textAlign: "center", padding: "2rem", color: "#6b7280" }}>Loading employees...</div>
+                ) : error ? (
+                    <div style={{ textAlign: "center", padding: "2rem", color: "#ef4444" }}>{error}</div>
+                ) : (
+                    <div style={{ backgroundColor: "white", borderRadius: "0.5rem", boxShadow: "0 1px 3px 0 rgba(0, 0, 0, 0.1)", overflow: "hidden" }}>
+                        <table style={{ width: "100%", borderCollapse: "collapse", textAlign: "left" }}>
+                            <thead style={{ backgroundColor: "#f9fafb" }}>
+                                <tr>
+                                    <th onClick={() => handleSort("name")} style={{ padding: "0.75rem 1.5rem", fontSize: "0.75rem", fontWeight: "600", color: "#6b7280", textTransform: "uppercase", cursor: "pointer" }}>
+                                        Employee {sortConfig.key === "name" && (sortConfig.direction === "asc" ? "↑" : "↓")}
+                                    </th>
+                                    <th onClick={() => handleSort("department")} style={{ padding: "0.75rem 1.5rem", fontSize: "0.75rem", fontWeight: "600", color: "#6b7280", textTransform: "uppercase", cursor: "pointer" }}>
+                                        Department {sortConfig.key === "department" && (sortConfig.direction === "asc" ? "↑" : "↓")}
+                                    </th>
+                                    <th style={{ padding: "0.75rem 1.5rem", fontSize: "0.75rem", fontWeight: "600", color: "#6b7280", textTransform: "uppercase" }}>Contact</th>
+                                    <th onClick={() => handleSort("date_of_joining")} style={{ padding: "0.75rem 1.5rem", fontSize: "0.75rem", fontWeight: "600", color: "#6b7280", textTransform: "uppercase", cursor: "pointer" }}>
+                                        Joined {sortConfig.key === "date_of_joining" && (sortConfig.direction === "asc" ? "↑" : "↓")}
+                                    </th>
+                                    <th style={{ padding: "0.75rem 1.5rem", fontSize: "0.75rem", fontWeight: "600", color: "#6b7280", textTransform: "uppercase" }}>Status</th>
+                                    <th style={{ padding: "0.75rem 1.5rem", fontSize: "0.75rem", fontWeight: "600", color: "#6b7280", textTransform: "uppercase", textAlign: "right" }}>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody style={{ divideY: "1px solid #e5e7eb" }}>
+                                {paginatedEmployees.length === 0 ? (
                                     <tr>
-                                        <th style={thStyle}>Code</th>
-                                        <th style={thStyle} onClick={() => handleSort("name")}>Name</th>
-                                        <th style={thStyle}>Email</th>
-                                        <th style={thStyle} onClick={() => handleSort("department")}>Department</th>
-                                        <th style={thStyle}>Designation</th>
-                                        <th style={thStyle} onClick={() => handleSort("date_of_joining")}>Joined</th>
-                                        <th style={thStyle}>Status</th>
-                                        <th style={{ ...thStyle, textAlign: "right" }}>Actions</th>
+                                        <td colSpan="6" style={{ padding: "2rem", textAlign: "center", color: "#6b7280" }}>
+                                            No employees found.
+                                        </td>
                                     </tr>
-                                </thead>
-                                <tbody>
-                                    {paginatedEmployees.length === 0 ? (
-                                        <tr>
-                                            <td colSpan="8" style={{ padding: "2rem", textAlign: "center", color: "#6b7280" }}>
-                                                No employees found matching your filters.
+                                ) : (
+                                    paginatedEmployees.map((emp) => (
+                                        <tr key={emp.id} style={{ borderTop: "1px solid #e5e7eb" }}>
+                                            <td style={{ padding: "1rem 1.5rem" }}>
+                                                <div style={{ fontWeight: "500", color: "#111827" }}>{emp.user?.name}</div>
+                                                <div style={{ fontSize: "0.75rem", color: "#6b7280" }}>{emp.designation}</div>
+                                            </td>
+                                            <td style={{ padding: "1rem 1.5rem", color: "#374151" }}>{emp.department?.name}</td>
+                                            <td style={{ padding: "1rem 1.5rem" }}>
+                                                <div style={{ color: "#374151" }}>{emp.user?.email}</div>
+                                                <div style={{ fontSize: "0.75rem", color: "#6b7280" }}>{emp.phone}</div>
+                                            </td>
+                                            <td style={{ padding: "1rem 1.5rem", color: "#374151" }}>{formatDate(emp.date_of_joining)}</td>
+                                            <td style={{ padding: "1rem 1.5rem" }}>
+                                                <span style={badgeStyle(emp.user?.is_active)}>
+                                                    {emp.user?.is_active ? "Active" : "Inactive"}
+                                                </span>
+                                            </td>
+                                            <td style={{ padding: "1rem 1.5rem", textAlign: "right" }}>
+                                                <div style={{ display: "flex", justifyContent: "flex-end", gap: "0.5rem" }}>
+                                                    <button onClick={() => openViewModal(emp)} style={{ color: "#2563eb", background: "none", border: "none", cursor: "pointer", fontWeight: "500" }}>View</button>
+                                                    <button onClick={() => openEditModal(emp)} style={{ color: "#d97706", background: "none", border: "none", cursor: "pointer", fontWeight: "500" }}>Edit</button>
+                                                    <button onClick={() => openDeleteModal(emp)} style={{ color: "#dc2626", background: "none", border: "none", cursor: "pointer", fontWeight: "500" }}>Delete</button>
+                                                </div>
                                             </td>
                                         </tr>
-                                    ) : (
-                                        paginatedEmployees.map((emp) => (
-                                            <tr key={emp.id} style={{ borderBottom: "1px solid #e5e7eb" }}>
-                                                <td style={tdStyle}>{emp.employee_code}</td>
-                                                <td style={{ ...tdStyle, fontWeight: "500" }}>{emp.user?.name}</td>
-                                                <td style={{ ...tdStyle, color: "#6b7280" }}>{emp.user?.email}</td>
-                                                <td style={{ ...tdStyle, color: "#6b7280" }}>{emp.department?.name || "-"}</td>
-                                                <td style={{ ...tdStyle, color: "#6b7280" }}>{emp.designation}</td>
-                                                <td style={{ ...tdStyle, color: "#6b7280" }}>{formatDate(emp.date_of_joining)}</td>
-                                                <td style={tdStyle}>
-                                                    <span style={badgeStyle(emp.user?.is_active)}>
-                                                        {emp.user?.is_active ? "Active" : "Inactive"}
-                                                    </span>
-                                                </td>
-                                                <td style={{ ...tdStyle, textAlign: "right" }}>
-                                                    <Link
-                                                        to={`/superadmin/employees/${emp.id}/attendance`}
-                                                        style={{
-                                                            display: "inline-block",
-                                                            padding: "0.25rem 0.5rem",
-                                                            backgroundColor: "#d1fae5",
-                                                            color: "#065f46",
-                                                            borderRadius: "0.375rem",
-                                                            textDecoration: "none",
-                                                            fontSize: "0.75rem",
-                                                            fontWeight: "600",
-                                                            marginRight: "0.5rem",
-                                                            border: "1px solid #a7f3d0"
-                                                        }}
-                                                    >
-                                                        Attendance
-                                                    </Link>
-                                                    <button onClick={() => openViewModal(emp)} style={actionButtonStyle}>View</button>
-                                                    <button onClick={() => openEditModal(emp)} style={{ ...actionButtonStyle, color: "#2563eb" }}>Edit</button>
-                                                    <button onClick={() => openDeleteModal(emp)} style={{ ...actionButtonStyle, color: "#dc2626", marginRight: 0 }}>Delete</button>
-                                                </td>
-                                            </tr>
-                                        ))
-                                    )}
-                                </tbody>
-                            </table>
-                        </div>
-                    )}
-
-                    {/* Pagination */}
-                    {totalPages > 1 && (
+                                    ))
+                                )}
+                            </tbody>
+                        </table>
                         <div style={{ padding: "1rem 1.5rem", borderTop: "1px solid #e5e7eb", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                            <button
-                                onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
-                                disabled={currentPage === 1}
-                                style={{ ...buttonStyle, opacity: currentPage === 1 ? 0.5 : 1 }}
-                            >
-                                Previous
-                            </button>
-                            <span style={{ fontSize: "0.875rem", color: "#4b5563" }}>
-                                Page {currentPage} of {totalPages}
-                            </span>
-                            <button
-                                onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
-                                disabled={currentPage === totalPages}
-                                style={{ ...buttonStyle, opacity: currentPage === totalPages ? 0.5 : 1 }}
-                            >
-                                Next
-                            </button>
+                            <div style={{ fontSize: "0.875rem", color: "#6b7280" }}>
+                                Showing <span style={{ fontWeight: "500" }}>{(currentPage - 1) * itemsPerPage + 1}</span> to <span style={{ fontWeight: "500" }}>{Math.min(currentPage * itemsPerPage, filteredEmployees.length)}</span> of <span style={{ fontWeight: "500" }}>{filteredEmployees.length}</span> results
+                            </div>
+                            <div style={{ display: "flex", gap: "0.5rem" }}>
+                                <button
+                                    onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                                    disabled={currentPage === 1}
+                                    style={{ padding: "0.5rem 1rem", border: "1px solid #d1d5db", borderRadius: "0.375rem", backgroundColor: "white", color: currentPage === 1 ? "#9ca3af" : "#374151", cursor: currentPage === 1 ? "default" : "pointer" }}
+                                >
+                                    Previous
+                                </button>
+                                <button
+                                    onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                                    disabled={currentPage === totalPages}
+                                    style={{ padding: "0.5rem 1rem", border: "1px solid #d1d5db", borderRadius: "0.375rem", backgroundColor: "white", color: currentPage === totalPages ? "#9ca3af" : "#374151", cursor: currentPage === totalPages ? "default" : "pointer" }}
+                                >
+                                    Next
+                                </button>
+                            </div>
                         </div>
-                    )}
-                </div>
+                    </div>
+                )}
             </div>
 
             {/* ADD MODAL */}
             {isAddModalOpen && (
                 <div style={modalOverlayStyle}>
                     <div style={modalContentStyle}>
-                        <h2 style={{ fontSize: "1.25rem", fontWeight: "bold", marginBottom: "1rem", color: "#1f2937" }}>Add New Employee</h2>
-                        {formErrors.api && <div style={{ marginBottom: "1rem", padding: "0.75rem", backgroundColor: "#fee2e2", color: "#b91c1c", borderRadius: "0.375rem" }}>{formErrors.api}</div>}
-                        <form onSubmit={handleAddSubmit} style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1rem" }}>
+                        <h2 style={{ fontSize: "1.5rem", fontWeight: "bold", marginBottom: "2rem", color: "#1f2937", borderBottom: "1px solid #e5e7eb", paddingBottom: "1rem" }}>Add New Employee</h2>
+                        {formErrors.api && <div style={{ marginBottom: "1.5rem", padding: "1rem", backgroundColor: "#fee2e2", color: "#b91c1c", borderRadius: "0.5rem" }}>{formErrors.api}</div>}
+                        <form onSubmit={handleAddSubmit} style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))", gap: "2rem" }}>
                             <div style={formGroupStyle}>
                                 <label style={labelStyle}>Name *</label>
                                 <input type="text" value={formData.name} onChange={(e) => setFormData({ ...formData, name: e.target.value })} style={inputStyle} />
@@ -436,7 +421,7 @@ const EmployeesPage = () => {
                             </div>
                             <div style={formGroupStyle}>
                                 <label style={labelStyle}>Department *</label>
-                                <select value={formData.department_id} onChange={(e) => setFormData({ ...formData, department_id: e.target.value })} style={{ ...inputStyle, width: "100%" }}>
+                                <select value={formData.department_id} onChange={(e) => setFormData({ ...formData, department_id: e.target.value })} style={selectStyle}>
                                     <option value="">Select Department</option>
                                     {departments.map(d => <option key={d.id} value={d.id}>{d.name}</option>)}
                                 </select>
@@ -481,9 +466,9 @@ const EmployeesPage = () => {
             {isEditModalOpen && (
                 <div style={modalOverlayStyle}>
                     <div style={modalContentStyle}>
-                        <h2 style={{ fontSize: "1.25rem", fontWeight: "bold", marginBottom: "1rem", color: "#1f2937" }}>Edit Employee</h2>
-                        {formErrors.api && <div style={{ marginBottom: "1rem", padding: "0.75rem", backgroundColor: "#fee2e2", color: "#b91c1c", borderRadius: "0.375rem" }}>{formErrors.api}</div>}
-                        <form onSubmit={handleEditSubmit} style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1rem" }}>
+                        <h2 style={{ fontSize: "1.5rem", fontWeight: "bold", marginBottom: "2rem", color: "#1f2937", borderBottom: "1px solid #e5e7eb", paddingBottom: "1rem" }}>Edit Employee</h2>
+                        {formErrors.api && <div style={{ marginBottom: "1.5rem", padding: "1rem", backgroundColor: "#fee2e2", color: "#b91c1c", borderRadius: "0.5rem" }}>{formErrors.api}</div>}
+                        <form onSubmit={handleEditSubmit} style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))", gap: "2rem" }}>
                             <div style={formGroupStyle}>
                                 <label style={labelStyle}>Name *</label>
                                 <input type="text" value={formData.name} onChange={(e) => setFormData({ ...formData, name: e.target.value })} style={inputStyle} />
@@ -494,7 +479,7 @@ const EmployeesPage = () => {
                             </div>
                             <div style={formGroupStyle}>
                                 <label style={labelStyle}>Department *</label>
-                                <select value={formData.department_id} onChange={(e) => setFormData({ ...formData, department_id: e.target.value })} style={{ ...inputStyle, width: "100%" }}>
+                                <select value={formData.department_id} onChange={(e) => setFormData({ ...formData, department_id: e.target.value })} style={selectStyle}>
                                     <option value="">Select Department</option>
                                     {departments.map(d => <option key={d.id} value={d.id}>{d.name}</option>)}
                                 </select>
@@ -521,7 +506,7 @@ const EmployeesPage = () => {
                             </div>
                             <div style={formGroupStyle}>
                                 <label style={labelStyle}>Status</label>
-                                <select value={formData.status} onChange={(e) => setFormData({ ...formData, status: e.target.value })} style={{ ...inputStyle, width: "100%" }}>
+                                <select value={formData.status} onChange={(e) => setFormData({ ...formData, status: e.target.value })} style={selectStyle}>
                                     <option value="Active">Active</option>
                                     <option value="Inactive">Inactive</option>
                                 </select>
@@ -614,35 +599,37 @@ const EmployeesPage = () => {
                         </div>
                     </div>
                 </div>
-            )}
+            )
+            }
 
             {/* PASSWORD MODAL */}
-            {isPasswordModalOpen && (
-                <div style={modalOverlayStyle}>
-                    <div style={{ ...modalContentStyle, maxWidth: "400px", textAlign: "center" }}>
-                        <h2 style={{ fontSize: "1.25rem", fontWeight: "bold", marginBottom: "1rem", color: "#065f46" }}>Employee Created!</h2>
-                        <p style={{ color: "#4b5563", marginBottom: "1rem" }}>
-                            The employee account has been created successfully.
-                        </p>
-                        <div style={{ backgroundColor: "#f3f4f6", padding: "1rem", borderRadius: "0.5rem", marginBottom: "1.5rem" }}>
-                            <p style={{ fontSize: "0.875rem", color: "#6b7280", marginBottom: "0.25rem" }}>Temporary Password:</p>
-                            <p style={{ fontSize: "1.5rem", fontWeight: "bold", color: "#111827", fontFamily: "monospace" }}>{createdPassword}</p>
+            {
+                isPasswordModalOpen && (
+                    <div style={modalOverlayStyle}>
+                        <div style={modalContentStyle, { maxWidth: "400px", textAlign: "center" }}>
+                            <h2 style={{ fontSize: "1.25rem", fontWeight: "bold", marginBottom: "1rem", color: "#065f46" }}>Employee Created!</h2>
+                            <p style={{ color: "#4b5563", marginBottom: "1rem" }}>
+                                The employee account has been created successfully.
+                            </p>
+                            <div style={{ backgroundColor: "#f3f4f6", padding: "1rem", borderRadius: "0.5rem", marginBottom: "1.5rem" }}>
+                                <p style={{ fontSize: "0.875rem", color: "#6b7280", marginBottom: "0.25rem" }}>Temporary Password:</p>
+                                <p style={{ fontSize: "1.5rem", fontWeight: "bold", color: "#111827", fontFamily: "monospace" }}>{createdPassword}</p>
+                            </div>
+                            <p style={{ fontSize: "0.875rem", color: "#dc2626", marginBottom: "1.5rem" }}>
+                                Please copy and share this password with the employee immediately. It will not be shown again.
+                            </p>
+                            <button
+                                onClick={() => { setIsPasswordModalOpen(false); setCreatedPassword(null); }}
+                                style={{ ...primaryButtonStyle, width: "100%" }}
+                            >
+                                Close
+                            </button>
                         </div>
-                        <p style={{ fontSize: "0.875rem", color: "#dc2626", marginBottom: "1.5rem" }}>
-                            Please copy and share this password with the employee immediately. It will not be shown again.
-                        </p>
-                        <button
-                            onClick={() => { setIsPasswordModalOpen(false); setCreatedPassword(null); }}
-                            style={{ ...primaryButtonStyle, width: "100%" }}
-                        >
-                            Close
-                        </button>
                     </div>
-                </div>
-            )}
+                )
+            }
 
-            {/* EDIT MODAL */}
-
+            {/* End of Modals */}
         </>
     );
 };

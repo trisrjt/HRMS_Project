@@ -76,14 +76,19 @@ const SalariesPage = () => {
         const fetchSalary = async () => {
             try {
                 const { data } = await api.get("/my-salary");
-                setSalary(data);
+                // Check if the response indicates no salary record
+                if (data && data.salary === null) {
+                    setSalary(null);
+                } else {
+                    setSalary(data);
+                }
             } catch (err) {
+                console.error("Salary fetch error:", err);
                 if (err.response && err.response.status === 404) {
-                    setError("Salary details not found.");
+                    setError("Employee profile not found or system error.");
                 } else {
                     setError("Failed to load salary details.");
                 }
-                console.error(err);
             } finally {
                 setIsLoading(false);
             }
@@ -119,6 +124,11 @@ const SalariesPage = () => {
             {/* Error Alert */}
             {error && <Alert variant="error">{error}</Alert>}
 
+            {/* No Salary Message */}
+            {!isLoading && !error && !salary && (
+                <Alert variant="info">Salary not added yet. Contact HR/Admin.</Alert>
+            )}
+
             {/* Salary Details Card */}
             {salary && (
                 <Card style={{ padding: "2rem", maxWidth: "800px", margin: "0 auto" }}>
@@ -129,15 +139,15 @@ const SalariesPage = () => {
                             <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
                                 <div style={{ display: "flex", justifyContent: "space-between", borderBottom: "1px solid #f3f4f6", paddingBottom: "0.5rem" }}>
                                     <span style={{ color: "#6b7280" }}>Basic Salary</span>
-                                    <span style={{ fontWeight: "600" }}>${Number(salary.basic).toFixed(2)}</span>
+                                    <span style={{ fontWeight: "600" }}>${Number(salary.basic || 0).toFixed(2)}</span>
                                 </div>
                                 <div style={{ display: "flex", justifyContent: "space-between", borderBottom: "1px solid #f3f4f6", paddingBottom: "0.5rem" }}>
                                     <span style={{ color: "#6b7280" }}>HRA</span>
-                                    <span style={{ fontWeight: "600" }}>${Number(salary.hra).toFixed(2)}</span>
+                                    <span style={{ fontWeight: "600" }}>${Number(salary.hra || 0).toFixed(2)}</span>
                                 </div>
                                 <div style={{ display: "flex", justifyContent: "space-between", borderBottom: "1px solid #f3f4f6", paddingBottom: "0.5rem" }}>
                                     <span style={{ color: "#6b7280" }}>DA</span>
-                                    <span style={{ fontWeight: "600" }}>${Number(salary.da).toFixed(2)}</span>
+                                    <span style={{ fontWeight: "600" }}>${Number(salary.da || 0).toFixed(2)}</span>
                                 </div>
                             </div>
                         </div>
@@ -148,7 +158,7 @@ const SalariesPage = () => {
                             <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
                                 <div style={{ display: "flex", justifyContent: "space-between", borderBottom: "1px solid #f3f4f6", paddingBottom: "0.5rem" }}>
                                     <span style={{ color: "#6b7280" }}>Total Deductions</span>
-                                    <span style={{ fontWeight: "600", color: "#ef4444" }}>-${Number(salary.deductions).toFixed(2)}</span>
+                                    <span style={{ fontWeight: "600", color: "#ef4444" }}>-${Number(salary.deductions || 0).toFixed(2)}</span>
                                 </div>
                             </div>
                         </div>
@@ -157,7 +167,7 @@ const SalariesPage = () => {
                     {/* Gross Salary Section */}
                     <div style={{ marginTop: "2rem", paddingTop: "1rem", borderTop: "2px solid #e5e7eb", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                         <span style={{ fontSize: "18px", fontWeight: "600", color: "#111827" }}>Gross Salary</span>
-                        <span style={{ fontSize: "24px", fontWeight: "bold", color: "#10b981" }}>${Number(salary.gross_salary).toFixed(2)}</span>
+                        <span style={{ fontSize: "24px", fontWeight: "bold", color: "#10b981" }}>${Number(salary.gross_salary || 0).toFixed(2)}</span>
                     </div>
                 </Card>
             )}

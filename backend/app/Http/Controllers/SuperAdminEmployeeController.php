@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Employee;
 use App\Models\User;
+use App\Models\Salary;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\DB;
@@ -72,6 +73,16 @@ class SuperAdminEmployeeController extends Controller
                 'salary' => $validated['salary'],
                 'phone' => $validated['phone'] ?? null,
                 'address' => $validated['address'] ?? null,
+            ]);
+
+            // Create Default Salary Record
+            Salary::create([
+                'employee_id' => $employee->id,
+                'basic' => 0,
+                'hra' => 0,
+                'da' => 0,
+                'deductions' => 0,
+                'gross_salary' => 0,
             ]);
 
             DB::commit();
