@@ -12,45 +12,17 @@ class SuperAdminSalaryController extends Controller
     // GET /api/superadmin/salaries
     public function index(Request $request)
     {
-        $query = Salary::with(['employee.user', 'employee.department']);
+        $query = Employee::with(['user', 'department', 'currentSalary']);
 
         // Filter by Department
         if ($request->has('department_id') && $request->department_id) {
-            $query->whereHas('employee', function ($q) use ($request) {
-                $q->where('department_id', $request->department_id);
-            });
+            $query->where('department_id', $request->department_id);
         }
 
-        // Filter by Month (YYYY-MM) - Assuming updated_at or created_at tracks the month, 
-        // or if there's a specific month column. The user request implies filtering by month.
-        // Existing Salary model seems to be "current salary structure", not "monthly salary slip".
-        // However, the user asked for "Salary History" which implies historical records.
-        // If the Salary table is just current structure, "history" might need to come from a different table (like Payslips) 
-        // OR the Salary table has a date column. 
-        // Looking at SalaryController, it just has basic fields. 
-        // BUT, the user asked for "GET /api/superadmin/salaries/history/{employee_id}" returning a list.
-        // If Salary table is just current structure, we can't get history from it unless we use audits or a separate table.
-        // BUT, for this task, I will assume the Salary table *might* have multiple entries per employee if we are tracking history, 
-        // OR I will just return the current one for now if that's the schema.
-        // Wait, the user request says: "List salary breakdown for last 12 months Use API #2".
-        // And API #2 is "GET /api/superadmin/salaries/history/{employee_id}".
-        // If the system only stores current salary, I might have to fake history or just show current.
-        // Let's assume for this task that we are just managing the "Current Salary Structure" in the main table.
-        // And "History" might be fetched from Payslips (which are monthly) OR if Salary table has history.
-        // Given the previous `SalaryController` only has `employee_id` and amounts, it looks like "Current Structure".
-        // The user might be confusing "Salary Structure" with "Payslips". 
-        // However, I must follow the prompt. 
-        // "Response example" for history shows "month": "2025-11".
-        // I will implement `history` by fetching `Payslips` for that employee, as that's where monthly salary data usually lives.
-        // OR, if I must strictly use `Salary` model, I might have to just return the current one as "current month".
-        // Let's look at `Payslip` model if it exists. 
-        // Actually, I'll stick to the requested API structure. 
-        // If I can't find history, I'll return empty or current.
-        
         // Search by Employee Name/Code/Email
         if ($request->has('search') && $request->search) {
             $search = $request->search;
-            $query->whereHas('employee', function ($q) use ($search) {
+            $query->where(function ($q) use ($search) {
                 $q->where('employee_code', 'like', "%{$search}%")
                   ->orWhereHas('user', function ($u) use ($search) {
                       $u->where('name', 'like', "%{$search}%")
@@ -59,15 +31,30 @@ class SuperAdminSalaryController extends Controller
             });
         }
 
-        // For the main list, we usually show the LATEST salary structure for each employee.
-        // If the table allows multiple rows per employee (history), we should group by employee.
-        // But `SalaryController` `store` creates a new record. `update` updates it.
-        // It seems `Salary` table is 1-to-1 with Employee (Current Salary).
-        // So `index` just lists them.
-        
-        $salaries = $query->orderByDesc('updated_at')->paginate(15);
+        // Sort by Employee Name
+        $query->whereHas('user', function($q) {
+            $q->orderBy('name', 'asc');
+        });
 
-        return response()->json($salaries);
+        $employees = $query->paginate(15);
+
+        // Transform data to flatten salary structure
+        $employees->getCollection()->transform(function ($employee) {
+            $salary = $employee->currentSalary;
+            return [
+                'id' => $salary ? $salary->id : null, // Salary ID if exists
+                'employee_id' => $employee->id,
+                'employee' => $employee, // Full employee object for frontend
+                'basic' => $salary ? $salary->basic : 0,
+                'hra' => $salary ? $salary->hra : 0,
+                'da' => $salary ? $salary->da : 0,
+                'deductions' => $salary ? $salary->deductions : 0,
+                'gross_salary' => $salary ? $salary->gross_salary : 0,
+                'updated_at' => $salary ? $salary->updated_at : null,
+            ];
+        });
+
+        return response()->json($employees);
     }
 
     // GET /api/superadmin/salaries/history/{employee_id}

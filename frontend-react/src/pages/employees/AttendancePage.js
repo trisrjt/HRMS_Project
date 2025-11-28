@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import api from "../../api/axios";
-import { formatTime, calculateHours, calculateWeeklyStats } from "../../utils/dateUtils";
+import { formatTime, calculateHours, calculateWeeklyStats, calculateMonthlyStats } from "../../utils/dateUtils";
 
 // --- UI Components ---
 
@@ -119,6 +119,9 @@ const AttendancePage = () => {
     const [isCheckingIn, setIsCheckingIn] = useState(false);
     const [isCheckingOut, setIsCheckingOut] = useState(false);
 
+    // Month Filter State
+    const [selectedMonth, setSelectedMonth] = useState(new Date().toISOString().slice(0, 7)); // YYYY-MM
+
     // Fetch Attendance Data
     const fetchAttendance = async () => {
         try {
@@ -175,7 +178,12 @@ const AttendancePage = () => {
     const isCheckedInToday = !!todayRecord?.check_in;
     const isCheckedOutToday = !!todayRecord?.check_out;
 
+    // Calculate Stats
     const weeklyStats = calculateWeeklyStats(attendance);
+    const monthlyStats = calculateMonthlyStats(attendance, selectedMonth);
+
+    // Filter attendance for display based on selected month
+    const filteredAttendance = attendance.filter(record => record.date.startsWith(selectedMonth));
 
     if (isLoading) {
         return (
@@ -227,30 +235,55 @@ const AttendancePage = () => {
                 )}
             </div>
 
-            {/* Weekly Summary Row */}
-            <div style={{ marginBottom: "1.5rem", padding: "1rem", backgroundColor: "#f9fafb", borderRadius: "8px", border: "1px solid #e5e7eb", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-                <div>
-                    <span style={{ fontWeight: "600", color: "#374151", marginRight: "0.5rem" }}>This Week:</span>
-                    {weeklyStats.hours === 0 && weeklyStats.minutes === 0 ? (
-                        <span style={{ color: "#6b7280" }}>0h (No attendance this week)</span>
-                    ) : (
-                        <>
-                            <span style={{ fontWeight: "700", color: "#111827", fontSize: "16px" }}>{weeklyStats.formatted}</span>
-                            <span style={{ color: "#6b7280", fontSize: "14px", marginLeft: "0.5rem" }}>({weeklyStats.daysWorked} working days)</span>
-                        </>
-                    )}
-                </div>
-                {weeklyStats.daysWorked > 0 && (
-                    <div style={{ fontSize: "14px", color: "#6b7280" }}>
-                        Daily Avg: <span style={{ fontWeight: "600", color: "#374151" }}>{weeklyStats.average}</span>
+            {/* Summaries Grid */}
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))", gap: "1.5rem", marginBottom: "2rem" }}>
+
+                {/* Weekly Summary */}
+                <div style={{ padding: "1.5rem", backgroundColor: "white", borderRadius: "8px", border: "1px solid #e5e7eb", boxShadow: "0 1px 2px rgba(0,0,0,0.05)" }}>
+                    <div style={{ fontSize: "14px", color: "#6b7280", marginBottom: "0.5rem", fontWeight: "500" }}>This Week</div>
+                    <div style={{ display: "flex", alignItems: "baseline", gap: "0.5rem", marginBottom: "1rem" }}>
+                        <span style={{ fontSize: "24px", fontWeight: "700", color: "#111827" }}>{weeklyStats.formatted}</span>
+                        <span style={{ fontSize: "14px", color: "#6b7280" }}>worked</span>
                     </div>
-                )}
+                    <div style={{ fontSize: "13px", color: "#6b7280", display: "flex", justifyContent: "space-between" }}>
+                        <span>Days: <strong style={{ color: "#374151" }}>{weeklyStats.daysWorked}</strong></span>
+                        <span>Avg: <strong style={{ color: "#374151" }}>{weeklyStats.average}</strong> / day</span>
+                    </div>
+                </div>
+
+                {/* Monthly Summary */}
+                <div style={{ padding: "1.5rem", backgroundColor: "white", borderRadius: "8px", border: "1px solid #e5e7eb", boxShadow: "0 1px 2px rgba(0,0,0,0.05)" }}>
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "0.5rem" }}>
+                        <div style={{ fontSize: "14px", color: "#6b7280", fontWeight: "500" }}>Monthly Overview</div>
+                        <input
+                            type="month"
+                            value={selectedMonth}
+                            onChange={(e) => setSelectedMonth(e.target.value)}
+                            style={{
+                                fontSize: "13px",
+                                padding: "4px 8px",
+                                borderRadius: "4px",
+                                border: "1px solid #d1d5db",
+                                color: "#374151"
+                            }}
+                        />
+                    </div>
+                    <div style={{ display: "flex", alignItems: "baseline", gap: "0.5rem", marginBottom: "1rem" }}>
+                        <span style={{ fontSize: "24px", fontWeight: "700", color: "#111827" }}>{monthlyStats.formatted}</span>
+                        <span style={{ fontSize: "14px", color: "#6b7280" }}>worked</span>
+                    </div>
+                    <div style={{ fontSize: "13px", color: "#6b7280", display: "flex", justifyContent: "space-between" }}>
+                        <span>Days: <strong style={{ color: "#374151" }}>{monthlyStats.daysWorked}</strong></span>
+                        <span>Avg: <strong style={{ color: "#374151" }}>{monthlyStats.average}</strong> / day</span>
+                    </div>
+                </div>
+
             </div>
 
             {/* Attendance List */}
             <Card>
                 <CardHeader>
-                    <CardTitle>Attendance History</CardTitle>
+                    <CardTitle>Attendance History ({new Date(selectedMonth + "-01").toLocaleString('default', { month: 'long', year: 'numeric' })})</CardTitle>
                 </CardHeader>
                 <CardContent style={{ padding: 0 }}>
                     <div style={{ overflowX: "auto" }}>
@@ -265,8 +298,8 @@ const AttendancePage = () => {
                                 </tr>
                             </thead>
                             <tbody>
-                                {attendance.length > 0 ? (
-                                    attendance.map((record) => (
+                                {filteredAttendance.length > 0 ? (
+                                    filteredAttendance.map((record) => (
                                         <tr key={record.id} style={{ borderBottom: "1px solid #e5e7eb" }}>
                                             <td style={{ padding: "12px 16px", fontSize: "14px", color: "#111827" }}>
                                                 {new Date(record.date).toLocaleDateString("en-US", {
@@ -291,8 +324,8 @@ const AttendancePage = () => {
                                     ))
                                 ) : (
                                     <tr>
-                                        <td colSpan="4" style={{ padding: "32px", textAlign: "center", color: "#6b7280" }}>
-                                            No attendance records found.
+                                        <td colSpan="5" style={{ padding: "32px", textAlign: "center", color: "#6b7280" }}>
+                                            No attendance records found for this month.
                                         </td>
                                     </tr>
                                 )}

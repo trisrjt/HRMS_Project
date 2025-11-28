@@ -34,8 +34,12 @@ class Employee extends Model
     }
    
     public function salaries()
-{
-    return $this->hasMany(Salary::class, 'employee_id');
-}
+    {
+        return $this->hasMany(Salary::class, 'employee_id');
+    }
 
+    public function currentSalary()
+    {
+        return $this->hasOne(Salary::class, 'employee_id')->latestOfMany();
+    }
 }

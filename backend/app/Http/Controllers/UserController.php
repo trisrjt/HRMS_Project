@@ -21,14 +21,24 @@ class UserController extends Controller
     public function store(Request $request)
     {
         if (!in_array(auth()->user()->role_id, [1, 2])) {
-        return response()->json(['message' => 'Unauthorized'], 403);
-    }
-        $validated = $request->validate([
-    }
+            return response()->json(['message' => 'Unauthorized'], 403);
+        }
 
-    public function show($id)
-    {
-        return User::findOrFail($id);
+        $validated = $request->validate([
+            'name' => 'required|string|max:255',
+            'email' => 'required|string|email|max:255|unique:users',
+            'password' => 'required|string|min:8',
+            'role_id' => 'required|integer|exists:roles,id',
+        ]);
+
+        $user = new User();
+        $user->name = $validated['name'];
+        $user->email = $validated['email'];
+        $user->password = Hash::make($validated['password']);
+        $user->role_id = $validated['role_id'];
+        $user->save();
+
+        return response()->json($user, 201);
     }
 
     public function update(Request $request, $id)

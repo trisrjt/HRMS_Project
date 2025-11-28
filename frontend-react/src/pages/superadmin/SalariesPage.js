@@ -281,25 +281,27 @@ const SalariesPage = () => {
                                     {salaries.data.length === 0 ? (
                                         <tr>
                                             <td colSpan="8" style={{ padding: "2rem", textAlign: "center", color: "#6b7280" }}>
-                                                No salary records found.
+                                                No employees found.
                                             </td>
                                         </tr>
                                     ) : (
                                         salaries.data.map((salary) => (
-                                            <tr key={salary.id}>
+                                            <tr key={salary.employee_id}>
                                                 <td style={tdStyle}>
                                                     <div style={{ fontWeight: "600" }}>{salary.employee?.user?.name}</div>
                                                     <div style={{ fontSize: "0.75rem", color: "#6b7280" }}>{salary.employee?.employee_code}</div>
                                                     <div style={{ fontSize: "0.75rem", color: "#6b7280" }}>{salary.employee?.department?.name}</div>
                                                 </td>
-                                                <td style={tdStyle}>{formatINR(salary.basic)}</td>
-                                                <td style={tdStyle}>{formatINR(salary.hra)}</td>
-                                                <td style={tdStyle}>{formatINR(salary.da)}</td>
-                                                <td style={{ ...tdStyle, color: "#ef4444" }}>-{formatINR(salary.deductions)}</td>
-                                                <td style={{ ...tdStyle, fontWeight: "bold" }}>{formatINR(salary.gross_salary)}</td>
-                                                <td style={{ ...tdStyle, color: "#6b7280" }}>{formatDate(salary.updated_at)}</td>
+                                                <td style={tdStyle}>{salary.basic ? formatINR(salary.basic) : "-"}</td>
+                                                <td style={tdStyle}>{salary.hra ? formatINR(salary.hra) : "-"}</td>
+                                                <td style={tdStyle}>{salary.da ? formatINR(salary.da) : "-"}</td>
+                                                <td style={{ ...tdStyle, color: "#ef4444" }}>{salary.deductions ? `-${formatINR(salary.deductions)}` : "-"}</td>
+                                                <td style={{ ...tdStyle, fontWeight: "bold" }}>{salary.gross_salary ? formatINR(salary.gross_salary) : "Not Set"}</td>
+                                                <td style={{ ...tdStyle, color: "#6b7280" }}>{salary.updated_at ? formatDate(salary.updated_at) : "Never"}</td>
                                                 <td style={tdStyle}>
-                                                    <button onClick={() => handleEdit(salary)} style={actionButtonStyle}>Edit Salary</button>
+                                                    <button onClick={() => handleEdit(salary)} style={actionButtonStyle}>
+                                                        {salary.id ? "Edit Salary" : "Set Salary"}
+                                                    </button>
                                                     <button onClick={() => handleHistory(salary.employee_id)} style={actionButtonStyle}>View History</button>
                                                 </td>
                                             </tr>
