@@ -13,7 +13,11 @@ class Salary extends Model
         'employee_id',
         'basic',
         'hra',
+        'pf',
+        'esic',
+        'ptax',
         'da',
+        'allowances',
         'deductions',
         'gross_salary',
     ];

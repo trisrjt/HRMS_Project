@@ -3,31 +3,35 @@ import { useAuth } from "../context/AuthContext";
 
 const routeRoleMap = {
   // Employee routes (role 4)
-  "/dashboard": [4],
-  "/profile": [4],
-  "/attendance": [4],
-  "/leaves": [4],
-  "/salary": [4],
-  "/payslips": [4],
-  "/announcements": [4],
+  "/employee/dashboard": [4],
+  "/employee/profile": [4],
+  "/employee/attendance": [4],
+  "/employee/leaves": [4],
+  "/employee/salary": [4],
+  "/employee/payslips": [4],
+  "/employee/announcements": [4],
+  "/employee/notifications": [4],
 
-  // Admin routes (roles 1, 2)
-  "/admin/dashboard": [1, 2],
-  "/admin/employees": [1, 2],
-  "/admin/leaves": [1, 2],
-  "/admin/attendance": [1, 2],
-  "/admin/payslips": [1, 2],
-  "/admin/salaries": [1, 2],
-  "/admin/departments": [1, 2],
-  "/admin/designations": [1, 2],
-  "/admin/announcements": [1, 2],
-  "/admin/settings": [1],
-  "/admin/documents": [1, 2],
-  "/admin/recruitment": [1, 2],
-  "/admin/performance-reviews": [1, 2],
-  "/admin/profile": [1, 2],
+  // Admin routes (roles 2 ONLY)
+  "/admin": [2],
+  "/admin/dashboard": [2],
+  "/admin/employees": [2],
+  "/admin/leaves": [2],
+  "/admin/attendance": [2],
+  "/admin/payslips": [2],
+  "/admin/salaries": [2],
+  "/admin/departments": [2],
+  "/admin/designations": [2],
+  "/admin/announcements": [2],
+  "/admin/settings": [2],
+  "/admin/documents": [2],
+  "/admin/recruitment": [2],
+  "/admin/performance-reviews": [2],
+  "/admin/profile": [2],
+  "/admin/notifications": [2],
 
   // HR routes (role 3)
+  "/hr": [3], // Catch-all for /hr/*
   "/hr/dashboard": [3],
   "/hr/leaves": [3],
   "/hr/attendance": [3],
@@ -35,6 +39,7 @@ const routeRoleMap = {
   "/hr/employees": [3],
 
   // SuperAdmin routes (role 1)
+  "/superadmin": [1], // Catch-all for /superadmin/*
   "/superadmin/dashboard": [1],
   "/superadmin/employees": [1],
   "/superadmin/departments": [1],
@@ -93,7 +98,7 @@ const ProtectedRoute = ({ children, roles }) => {
 const getRedirectPath = (roleId) => {
   switch (roleId) {
     case 4:
-      return "/dashboard";
+      return "/employee/dashboard";
     case 3:
       return "/hr/dashboard";
     case 2:

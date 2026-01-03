@@ -91,13 +91,13 @@ class AuthController extends Controller
              // Since we don't have attempt tracking yet, I will just trigger a generic alert for now or skip if too complex without DB changes.
              // The prompt explicitly asked for "Failed Login Attempts (Optional)".
              // I'll add a simple trigger here for ANY failed login for a valid user, as tracking 3 requires DB columns.
-             $this->notifications->sendToRoles(
+             /* $this->notifications->sendToRoles(
                 [1],
                 "Security Alert",
                 "Failed login attempt detected for email {$request->email}",
                 "security",
                 "/superadmin/security"
-            );
+            ); */
         }
         return response()->json(['message' => 'Invalid credentials'], 401);
     }
@@ -115,11 +115,31 @@ class AuthController extends Controller
         ], 200);
     }
 
+    // Construct permissions array from boolean columns
+    $permissions = [];
+    $permissionFields = [
+        'can_manage_employees', 'can_view_employees',
+        'can_manage_salaries', 'can_view_salaries',
+        'can_manage_attendance', 'can_view_attendance',
+        'can_manage_leaves', 'can_view_leaves',
+        'can_manage_departments', 'can_manage_payslips'
+    ];
+    
+    foreach ($permissionFields as $field) {
+        if ($user->$field) {
+            $permissions[] = $field;
+        }
+    }
+    
+    // Use toArray to safe return
+    $userData = $user->toArray();
+    $userData['permissions'] = $permissions;
+
     return response()->json([
         'message' => 'Login successful',
         'force_password_change' => false,
         'token' => $token,
-        'user' => $user
+        'user' => $userData
     ], 200);
 }
 

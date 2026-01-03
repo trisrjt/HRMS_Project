@@ -22,38 +22,25 @@ const AnnouncementsPage = () => {
     fetchAnnouncements();
   }, []);
 
-  if (isLoading) return <div style={{ padding: "2rem", textAlign: "center" }}>Loading Announcements...</div>;
-  if (error) return <div style={{ padding: "2rem", textAlign: "center", color: "red" }}>{error}</div>;
+  if (isLoading) return <div className="p-8 text-center text-gray-500 dark:text-gray-400">Loading Announcements...</div>;
+  if (error) return <div className="p-8 text-center text-red-500">{error}</div>;
 
   return (
-    <div style={{ padding: "1.5rem", maxWidth: "1200px", margin: "0 auto" }}>
-      <h1 style={{ fontSize: "24px", fontWeight: "bold", marginBottom: "2rem" }}>Announcements</h1>
+    <div className="p-6 max-w-7xl mx-auto min-h-screen bg-gray-50 dark:bg-gray-900 transition-colors duration-200">
+      <h1 className="text-2xl font-bold mb-8 text-gray-900 dark:text-white">Announcements</h1>
 
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(300px, 1fr))", gap: "1.5rem" }}>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {announcements.length > 0 ? (
           announcements.map((announcement) => (
-            <div key={announcement.id} style={{
-              backgroundColor: "white",
-              borderRadius: "8px",
-              boxShadow: "0 1px 3px rgba(0,0,0,0.1)",
-              border: "1px solid #e5e7eb",
-              padding: "1.5rem",
-              display: "flex",
-              flexDirection: "column"
-            }}>
-              <h3 style={{ fontSize: "18px", fontWeight: "600", color: "#1f2937", marginBottom: "0.5rem" }}>
+            <div key={announcement.id} className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6 flex flex-col transition-colors duration-200">
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
                 {announcement.title}
               </h3>
-              <p style={{ fontSize: "14px", color: "#6b7280", marginBottom: "1rem", flexGrow: 1, lineHeight: "1.5" }}>
+              <p className="text-sm text-gray-600 dark:text-gray-300 mb-4 flex-grow leading-relaxed">
                 {announcement.message || announcement.description}
               </p>
 
-              <div style={{
-                borderTop: "1px solid #f3f4f6",
-                paddingTop: "0.75rem",
-                fontSize: "12px",
-                color: "#9ca3af"
-              }}>
+              <div className="border-t border-gray-100 dark:border-gray-700 pt-3 text-xs text-gray-500 dark:text-gray-400">
                 Posted on {new Date(announcement.created_at).toLocaleDateString("en-US", {
                   year: "numeric",
                   month: "long",
@@ -63,7 +50,7 @@ const AnnouncementsPage = () => {
             </div>
           ))
         ) : (
-          <div style={{ gridColumn: "1 / -1", textAlign: "center", color: "#6b7280", padding: "2rem" }}>
+          <div className="col-span-full text-center text-gray-500 dark:text-gray-400 py-8">
             No announcements available.
           </div>
         )}

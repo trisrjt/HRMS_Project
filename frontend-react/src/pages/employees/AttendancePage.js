@@ -4,64 +4,43 @@ import { formatTime, calculateHours, calculateWeeklyStats, calculateMonthlyStats
 
 // --- UI Components ---
 
-const Card = ({ children, style }) => (
-    <div style={{
-        backgroundColor: "white",
-        borderRadius: "8px",
-        border: "1px solid #e5e7eb",
-        boxShadow: "0 1px 3px rgba(0,0,0,0.1)",
-        ...style
-    }}>
+const Card = ({ children, className }) => (
+    <div className={`bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 transition-colors duration-200 ${className}`}>
         {children}
     </div>
 );
 
 const CardHeader = ({ children }) => (
-    <div style={{ padding: "1.5rem", borderBottom: "1px solid #e5e7eb" }}>
+    <div className="p-6 border-b border-gray-100 dark:border-gray-700">
         {children}
     </div>
 );
 
-const CardContent = ({ children, style }) => (
-    <div style={{ padding: "1.5rem", ...style }}>
+const CardContent = ({ children, className }) => (
+    <div className={`p-6 ${className}`}>
         {children}
     </div>
 );
 
 const CardTitle = ({ children }) => (
-    <h2 style={{ fontSize: "20px", fontWeight: "600", color: "#111827", margin: 0 }}>
+    <h2 className="text-xl font-semibold text-gray-900 dark:text-white m-0">
         {children}
     </h2>
 );
 
-const Button = ({ children, onClick, disabled, variant = "primary", style }) => {
-    const baseStyle = {
-        padding: "10px 20px",
-        borderRadius: "6px",
-        fontWeight: "500",
-        fontSize: "14px",
-        cursor: disabled ? "not-allowed" : "pointer",
-        border: "none",
-        transition: "background-color 0.2s",
-        display: "inline-flex",
-        alignItems: "center",
-        justifyContent: "center",
-        opacity: disabled ? 0.7 : 1,
-        ...style
-    };
-
+const Button = ({ children, onClick, disabled, variant = "primary", className }) => {
     const variants = {
-        primary: { backgroundColor: "#3b82f6", color: "white" },
-        success: { backgroundColor: "#10b981", color: "white" },
-        outline: { backgroundColor: "transparent", border: "1px solid #d1d5db", color: "#374151" },
-        destructive: { backgroundColor: "#ef4444", color: "white" }
+        primary: "bg-blue-600 hover:bg-blue-700 text-white shadow-md hover:shadow-lg disabled:bg-blue-300 disabled:shadow-none",
+        success: "bg-emerald-600 hover:bg-emerald-700 text-white shadow-md hover:shadow-lg disabled:bg-emerald-300 disabled:shadow-none",
+        outline: "bg-transparent border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50",
+        destructive: "bg-red-600 hover:bg-red-700 text-white shadow-md hover:shadow-lg disabled:bg-red-300 disabled:shadow-none"
     };
 
     return (
         <button
             onClick={onClick}
             disabled={disabled}
-            style={{ ...baseStyle, ...variants[variant] }}
+            className={`px-5 py-2.5 rounded-lg font-medium text-sm transition-all duration-200 flex items-center justify-center ${variants[variant]} ${disabled ? 'cursor-not-allowed' : 'cursor-pointer'} ${className}`}
         >
             {children}
         </button>
@@ -69,41 +48,30 @@ const Button = ({ children, onClick, disabled, variant = "primary", style }) => 
 };
 
 const Alert = ({ children, variant = "error" }) => (
-    <div style={{
-        padding: "1rem",
-        borderRadius: "6px",
-        marginBottom: "1rem",
-        backgroundColor: variant === "error" ? "#fef2f2" : "#ecfdf5",
-        border: `1px solid ${variant === "error" ? "#fecaca" : "#a7f3d0"}`,
-        color: variant === "error" ? "#991b1b" : "#065f46",
-        fontSize: "14px"
-    }}>
+    <div className={`p-4 rounded-lg mb-4 text-sm border ${variant === "error"
+        ? "bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800 text-red-700 dark:text-red-400"
+        : "bg-emerald-50 dark:bg-emerald-900/20 border-emerald-200 dark:border-emerald-800 text-emerald-700 dark:text-emerald-400"
+        }`}>
         {children}
     </div>
 );
 
 const Badge = ({ children, variant = "default" }) => {
     const styles = {
-        default: { bg: "#f3f4f6", color: "#374151" },
-        success: { bg: "#d1fae5", color: "#065f46" },
-        danger: { bg: "#fee2e2", color: "#991b1b" },
-        warning: { bg: "#fef3c7", color: "#92400e" },
-        Present: { bg: "#d1fae5", color: "#065f46" },
-        Absent: { bg: "#fee2e2", color: "#991b1b" },
-        Late: { bg: "#fef3c7", color: "#92400e" }
+        default: "bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300",
+        success: "bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-400",
+        danger: "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400",
+        warning: "bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400",
+        Present: "bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-400",
+        Absent: "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400",
+        Late: "bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400",
+        "Half Day": "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400"
     };
 
     const current = styles[variant] || styles.default;
 
     return (
-        <span style={{
-            padding: "2px 8px",
-            borderRadius: "9999px",
-            fontSize: "12px",
-            fontWeight: "500",
-            backgroundColor: current.bg,
-            color: current.color
-        }}>
+        <span className={`inline-flex px-2.5 py-1 rounded-full text-xs font-semibold ${current}`}>
             {children}
         </span>
     );
@@ -116,6 +84,7 @@ const AttendancePage = () => {
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState(null);
     const [actionError, setActionError] = useState(null);
+    const [successMessage, setSuccessMessage] = useState(null);
     const [isCheckingIn, setIsCheckingIn] = useState(false);
     const [isCheckingOut, setIsCheckingOut] = useState(false);
 
@@ -126,8 +95,10 @@ const AttendancePage = () => {
     const fetchAttendance = async () => {
         try {
             setError(null);
-            const { data } = await api.get("/my-attendance");
-            setAttendance(data);
+            // Using /my-attendance which is the correct existing endpoint
+            const response = await api.get("/my-attendance");
+            const data = response.data.data || response.data; // Handle pagination if present
+            setAttendance(Array.isArray(data) ? data : []);
         } catch (err) {
             console.error("Fetch error:", err);
             setError("Failed to load attendance records. Please try again later.");
@@ -140,12 +111,24 @@ const AttendancePage = () => {
         fetchAttendance();
     }, []);
 
+    // Clear messages after 3 seconds
+    useEffect(() => {
+        if (successMessage || actionError) {
+            const timer = setTimeout(() => {
+                setSuccessMessage(null);
+                setActionError(null);
+            }, 3000);
+            return () => clearTimeout(timer);
+        }
+    }, [successMessage, actionError]);
+
     // Check In Handler
     const handleCheckIn = async () => {
         try {
             setIsCheckingIn(true);
             setActionError(null);
             await api.post("/my-attendance/check-in");
+            setSuccessMessage("Checked in successfully!");
             await fetchAttendance(); // Reload list
         } catch (err) {
             console.error("Check-in error:", err);
@@ -161,6 +144,7 @@ const AttendancePage = () => {
             setIsCheckingOut(true);
             setActionError(null);
             await api.post("/my-attendance/check-out");
+            setSuccessMessage("Checked out successfully!");
             await fetchAttendance(); // Reload list
         } catch (err) {
             console.error("Check-out error:", err);
@@ -187,47 +171,50 @@ const AttendancePage = () => {
 
     if (isLoading) {
         return (
-            <div style={{ padding: "2rem", textAlign: "center", color: "#6b7280" }}>
-                Loading attendance...
+            <div className="flex justify-center items-center h-screen bg-gray-50 dark:bg-gray-900 text-gray-500 dark:text-gray-400 transition-colors">
+                <div className="text-xl font-medium animate-pulse">Loading attendance...</div>
             </div>
         );
     }
 
     return (
-        <div style={{ padding: "1.5rem", maxWidth: "1200px", margin: "0 auto" }}>
+        <div className="p-6 max-w-[1200px] mx-auto bg-gray-50 dark:bg-gray-900 min-h-screen transition-colors duration-200">
 
             {/* Header & Actions */}
-            <div style={{ display: "flex", flexDirection: "column", gap: "1.5rem", marginBottom: "2rem" }}>
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "1rem" }}>
-                    <h1 style={{ fontSize: "28px", fontWeight: "bold", color: "#111827" }}>My Attendance</h1>
+            <div className="flex flex-col gap-6 mb-8">
+                <div className="flex justify-between items-center flex-wrap gap-4">
+                    <h1 className="text-3xl font-bold text-gray-900 dark:text-white">My Attendance</h1>
 
-                    <div style={{ display: "flex", gap: "1rem" }}>
+                    <div className="flex gap-4">
                         <Button
                             onClick={handleCheckIn}
                             disabled={isCheckingIn || isCheckedInToday}
                             variant="success"
                         >
-                            {isCheckingIn ? "Checking In..." : "Check In"}
+                            {isCheckingIn ? "Checking In..." : isCheckedInToday ? "Checked In" : "Check In"}
                         </Button>
 
                         <Button
                             onClick={handleCheckOut}
                             disabled={isCheckingOut || !isCheckedInToday || isCheckedOutToday}
-                            variant="primary"
+                            variant="destructive"
                         >
-                            {isCheckingOut ? "Checking Out..." : "Check Out"}
+                            {isCheckingOut ? "Checking Out..." : isCheckedOutToday ? "Checked Out" : "Check Out"}
                         </Button>
                     </div>
                 </div>
 
-                {/* Action Error Alert */}
+                {/* Messages */}
                 {actionError && (
                     <Alert variant="error">
                         <strong>Error:</strong> {actionError}
                     </Alert>
                 )}
-
-                {/* Main Error Alert */}
+                {successMessage && (
+                    <Alert variant="success">
+                        <strong>Success:</strong> {successMessage}
+                    </Alert>
+                )}
                 {error && (
                     <Alert variant="error">
                         {error}
@@ -236,86 +223,82 @@ const AttendancePage = () => {
             </div>
 
             {/* Summaries Grid */}
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))", gap: "1.5rem", marginBottom: "2rem" }}>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
 
                 {/* Weekly Summary */}
-                <div style={{ padding: "1.5rem", backgroundColor: "white", borderRadius: "8px", border: "1px solid #e5e7eb", boxShadow: "0 1px 2px rgba(0,0,0,0.05)" }}>
-                    <div style={{ fontSize: "14px", color: "#6b7280", marginBottom: "0.5rem", fontWeight: "500" }}>This Week</div>
-                    <div style={{ display: "flex", alignItems: "baseline", gap: "0.5rem", marginBottom: "1rem" }}>
-                        <span style={{ fontSize: "24px", fontWeight: "700", color: "#111827" }}>{weeklyStats.formatted}</span>
-                        <span style={{ fontSize: "14px", color: "#6b7280" }}>worked</span>
+                <div className="p-6 bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm transition-colors duration-200">
+                    <div className="text-sm text-gray-500 dark:text-gray-400 mb-2 font-medium uppercase tracking-wide">This Week</div>
+                    <div className="flex items-baseline gap-2 mb-4">
+                        <span className="text-3xl font-bold text-gray-900 dark:text-white">{weeklyStats.formatted || "0h 0m"}</span>
+                        <span className="text-sm text-gray-500 dark:text-gray-400">worked</span>
                     </div>
-                    <div style={{ fontSize: "13px", color: "#6b7280", display: "flex", justifyContent: "space-between" }}>
-                        <span>Days: <strong style={{ color: "#374151" }}>{weeklyStats.daysWorked}</strong></span>
-                        <span>Avg: <strong style={{ color: "#374151" }}>{weeklyStats.average}</strong> / day</span>
+                    <div className="flex justify-between text-sm text-gray-500 dark:text-gray-400 border-t border-gray-100 dark:border-gray-700 pt-4">
+                        <span>Days: <strong className="text-gray-700 dark:text-gray-300">{weeklyStats.daysWorked || 0}</strong></span>
+                        <span>Avg: <strong className="text-gray-700 dark:text-gray-300">{weeklyStats.average || "0h"}</strong> / day</span>
                     </div>
                 </div>
 
                 {/* Monthly Summary */}
-                <div style={{ padding: "1.5rem", backgroundColor: "white", borderRadius: "8px", border: "1px solid #e5e7eb", boxShadow: "0 1px 2px rgba(0,0,0,0.05)" }}>
-                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "0.5rem" }}>
-                        <div style={{ fontSize: "14px", color: "#6b7280", fontWeight: "500" }}>Monthly Overview</div>
+                <div className="p-6 bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm transition-colors duration-200">
+                    <div className="flex justify-between items-center mb-2">
+                        <div className="text-sm text-gray-500 dark:text-gray-400 font-medium uppercase tracking-wide">Monthly Overview</div>
                         <input
                             type="month"
+                            id="month-filter"
+                            name="month-filter"
                             value={selectedMonth}
                             onChange={(e) => setSelectedMonth(e.target.value)}
-                            style={{
-                                fontSize: "13px",
-                                padding: "4px 8px",
-                                borderRadius: "4px",
-                                border: "1px solid #d1d5db",
-                                color: "#374151"
-                            }}
+                            className="bg-gray-50 dark:bg-gray-700 text-gray-700 dark:text-gray-200 text-sm px-3 py-1 rounded border border-gray-200 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
                         />
                     </div>
-                    <div style={{ display: "flex", alignItems: "baseline", gap: "0.5rem", marginBottom: "1rem" }}>
-                        <span style={{ fontSize: "24px", fontWeight: "700", color: "#111827" }}>{monthlyStats.formatted}</span>
-                        <span style={{ fontSize: "14px", color: "#6b7280" }}>worked</span>
+                    <div className="flex items-baseline gap-2 mb-4">
+                        <span className="text-3xl font-bold text-gray-900 dark:text-white">{monthlyStats.formatted || "0h 0m"}</span>
+                        <span className="text-sm text-gray-500 dark:text-gray-400">worked</span>
                     </div>
-                    <div style={{ fontSize: "13px", color: "#6b7280", display: "flex", justifyContent: "space-between" }}>
-                        <span>Days: <strong style={{ color: "#374151" }}>{monthlyStats.daysWorked}</strong></span>
-                        <span>Avg: <strong style={{ color: "#374151" }}>{monthlyStats.average}</strong> / day</span>
+                    <div className="flex justify-between text-sm text-gray-500 dark:text-gray-400 border-t border-gray-100 dark:border-gray-700 pt-4">
+                        <span>Days: <strong className="text-gray-700 dark:text-gray-300">{monthlyStats.daysWorked || 0}</strong></span>
+                        <span>Avg: <strong className="text-gray-700 dark:text-gray-300">{monthlyStats.average || "0h"}</strong> / day</span>
                     </div>
                 </div>
 
             </div>
 
             {/* Attendance List */}
-            <Card>
+            <Card className="overflow-hidden">
                 <CardHeader>
                     <CardTitle>Attendance History ({new Date(selectedMonth + "-01").toLocaleString('default', { month: 'long', year: 'numeric' })})</CardTitle>
                 </CardHeader>
-                <CardContent style={{ padding: 0 }}>
-                    <div style={{ overflowX: "auto" }}>
-                        <table style={{ width: "100%", borderCollapse: "collapse", textAlign: "left" }}>
-                            <thead style={{ backgroundColor: "#f9fafb" }}>
+                <CardContent className="p-0">
+                    <div className="overflow-x-auto">
+                        <table className="w-full text-left border-collapse">
+                            <thead className="bg-gray-50 dark:bg-gray-700/50">
                                 <tr>
-                                    <th style={{ padding: "12px 16px", borderBottom: "1px solid #e5e7eb", fontSize: "14px", fontWeight: "600", color: "#374151" }}>Date</th>
-                                    <th style={{ padding: "12px 16px", borderBottom: "1px solid #e5e7eb", fontSize: "14px", fontWeight: "600", color: "#374151" }}>Check In</th>
-                                    <th style={{ padding: "12px 16px", borderBottom: "1px solid #e5e7eb", fontSize: "14px", fontWeight: "600", color: "#374151" }}>Check Out</th>
-                                    <th style={{ padding: "12px 16px", borderBottom: "1px solid #e5e7eb", fontSize: "14px", fontWeight: "600", color: "#374151" }}>Hours Worked</th>
-                                    <th style={{ padding: "12px 16px", borderBottom: "1px solid #e5e7eb", fontSize: "14px", fontWeight: "600", color: "#374151" }}>Status</th>
+                                    <th className="p-4 border-b border-gray-200 dark:border-gray-700 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Date</th>
+                                    <th className="p-4 border-b border-gray-200 dark:border-gray-700 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Check In</th>
+                                    <th className="p-4 border-b border-gray-200 dark:border-gray-700 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Check Out</th>
+                                    <th className="p-4 border-b border-gray-200 dark:border-gray-700 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Hours</th>
+                                    <th className="p-4 border-b border-gray-200 dark:border-gray-700 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Status</th>
                                 </tr>
                             </thead>
-                            <tbody>
+                            <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
                                 {filteredAttendance.length > 0 ? (
                                     filteredAttendance.map((record) => (
-                                        <tr key={record.id} style={{ borderBottom: "1px solid #e5e7eb" }}>
-                                            <td style={{ padding: "12px 16px", fontSize: "14px", color: "#111827" }}>
+                                        <tr key={record.id} className="hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
+                                            <td className="p-4 text-sm font-medium text-gray-900 dark:text-white">
                                                 {new Date(record.date).toLocaleDateString("en-US", {
                                                     weekday: 'short', year: 'numeric', month: 'short', day: 'numeric'
                                                 })}
                                             </td>
-                                            <td style={{ padding: "12px 16px", fontSize: "14px", color: "#111827" }}>
-                                                {formatTime(record.check_in, record.date)}
+                                            <td className="p-4 text-sm text-gray-700 dark:text-gray-300">
+                                                {record.check_in ? formatTime(record.check_in, record.date) : "--:--"}
                                             </td>
-                                            <td style={{ padding: "12px 16px", fontSize: "14px", color: "#111827" }}>
-                                                {formatTime(record.check_out, record.date)}
+                                            <td className="p-4 text-sm text-gray-700 dark:text-gray-300">
+                                                {record.check_out ? formatTime(record.check_out, record.date) : "--:--"}
                                             </td>
-                                            <td style={{ padding: "12px 16px", fontSize: "14px", color: "#111827", fontWeight: "600" }}>
+                                            <td className="p-4 text-sm font-semibold text-indigo-600 dark:text-indigo-400">
                                                 {calculateHours(record.check_in, record.check_out)}
                                             </td>
-                                            <td style={{ padding: "12px 16px", fontSize: "14px" }}>
+                                            <td className="p-4 text-sm">
                                                 <Badge variant={record.status}>
                                                     {record.status}
                                                 </Badge>
@@ -324,7 +307,7 @@ const AttendancePage = () => {
                                     ))
                                 ) : (
                                     <tr>
-                                        <td colSpan="5" style={{ padding: "32px", textAlign: "center", color: "#6b7280" }}>
+                                        <td colSpan="5" className="p-8 text-center text-gray-500 dark:text-gray-400">
                                             No attendance records found for this month.
                                         </td>
                                     </tr>

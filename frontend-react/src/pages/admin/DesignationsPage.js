@@ -1,12 +1,8 @@
+import React from "react";
+import DesignationManagement from "../../components/DesignationManagement";
+
 const DesignationsPage = () => {
-  return (
-    <div>
-      <h1>Designations</h1>
-      <p>This is the Designations page. CRUD will be added later.</p>
-    </div>
-  );
+  return <DesignationManagement />;
 };
 
 export default DesignationsPage;
-
-

@@ -23,6 +23,17 @@ class User extends Authenticatable
         'temp_password',
         'role_id',
         'is_active',
+        // Permissions
+        'can_manage_employees',
+        'can_view_employees',
+        'can_manage_salaries',
+        'can_view_salaries',
+        'can_manage_attendance',
+        'can_view_attendance',
+        'can_manage_leaves',
+        'can_view_leaves',
+        'can_manage_departments',
+        'can_manage_payslips',
     ];
 
     /**
@@ -36,12 +47,30 @@ class User extends Authenticatable
     ];
 
     /**
+     * The accessors to append to the model's array form.
+     *
+     * @var array
+     */
+    protected $appends = ['is_manager'];
+
+    /**
      * The attributes that should be cast.
      *
      * @var array<string, string>
      */
     protected $casts = [
         'email_verified_at' => 'datetime',
+        'is_active' => 'boolean',
+        'can_manage_employees' => 'boolean',
+        'can_view_employees' => 'boolean',
+        'can_manage_salaries' => 'boolean',
+        'can_view_salaries' => 'boolean',
+        'can_manage_attendance' => 'boolean',
+        'can_view_attendance' => 'boolean',
+        'can_manage_leaves' => 'boolean',
+        'can_view_leaves' => 'boolean',
+        'can_manage_departments' => 'boolean',
+        'can_manage_payslips' => 'boolean',
     ];
 
     // Relationships (optional)
@@ -58,5 +87,15 @@ class User extends Authenticatable
     public function department()
     {
         return $this->belongsTo(Department::class);
+    }
+
+    // Accessor: Check if user is a manager (has direct reports)
+    public function getIsManagerAttribute()
+    {
+        if ($this->role_id === 4 && $this->employee) {
+            // Check if any employee reports to this user's employee ID
+            return Employee::where('reports_to', $this->employee->id)->exists();
+        }
+        return false;
     }
 }

@@ -9,6 +9,8 @@ const ProfilePage = () => {
     useEffect(() => {
         const fetchProfile = async () => {
             try {
+                // Using /user to get the authenticated user's details
+                // This typically returns { id, name, email, role_id, employee: {...}, ... }
                 const { data } = await api.get("/user");
                 setProfile(data);
             } catch (err) {
@@ -22,83 +24,147 @@ const ProfilePage = () => {
         fetchProfile();
     }, []);
 
-    if (isLoading) return <div style={{ padding: "2rem", textAlign: "center" }}>Loading Profile...</div>;
-    if (error) return <div style={{ padding: "2rem", textAlign: "center", color: "red" }}>{error}</div>;
+    const formatDate = (dateString) => {
+        if (!dateString) return "N/A";
+        return new Date(dateString).toLocaleDateString('en-IN', {
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric'
+        });
+    };
+
+    const maskAadhar = (aadhar) => {
+        if (!aadhar) return "N/A";
+        return aadhar.replace(/\d{8}(\d{4})/, "XXXX-XXXX-$1");
+    };
+
+    const getProfilePhotoUrl = (path) => {
+        if (!path) return null;
+        // Adjust base URL as needed, assuming localhost:8000 for backend storage
+        return `http://localhost:8000/storage/${path}`;
+    };
+
+    if (isLoading) {
+        return (
+            <div className="flex justify-center items-center h-screen bg-gray-50 dark:bg-gray-900 text-gray-500 dark:text-gray-400 transition-colors">
+                <div className="text-xl font-medium animate-pulse">Loading Profile...</div>
+            </div>
+        );
+    }
+
+    if (error) {
+        return (
+            <div className="flex justify-center items-center h-screen bg-gray-50 dark:bg-gray-900 text-red-500 dark:text-red-400 transition-colors">
+                <div className="text-lg">{error}</div>
+            </div>
+        );
+    }
 
     return (
-        <div style={{ padding: "2rem", maxWidth: "800px", margin: "0 auto" }}>
-            <h1 style={{ fontSize: "24px", fontWeight: "bold", marginBottom: "1.5rem" }}>My Profile</h1>
+        <div className="p-6 max-w-[1200px] mx-auto bg-gray-50 dark:bg-gray-900 min-h-screen transition-colors duration-200">
+            <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-8">My Profile</h1>
 
-            <div style={{
-                backgroundColor: "white",
-                padding: "2rem",
-                borderRadius: "8px",
-                boxShadow: "0 1px 3px rgba(0,0,0,0.1)",
-                border: "1px solid #e5e7eb"
-            }}>
-                <div style={{ display: "flex", alignItems: "center", marginBottom: "2rem" }}>
-                    <div style={{
-                        width: "80px",
-                        height: "80px",
-                        backgroundColor: "#3b82f6",
-                        borderRadius: "50%",
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        color: "white",
-                        fontSize: "32px",
-                        fontWeight: "bold",
-                        marginRight: "1.5rem"
-                    }}>
-                        {profile?.name?.charAt(0).toUpperCase()}
+            <div className="bg-white dark:bg-gray-800 p-8 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 transition-colors">
+
+                {/* Header Section */}
+                <div className="flex flex-col md:flex-row items-center mb-10 pb-8 border-b border-gray-100 dark:border-gray-700">
+                    <div className="w-28 h-28 rounded-full overflow-hidden mr-0 md:mr-8 mb-6 md:mb-0 bg-blue-500 flex items-center justify-center border-4 border-blue-50 dark:border-blue-900/30 ring-2 ring-white dark:ring-gray-700">
+                        {profile?.employee?.profile_photo ? (
+                            <img
+                                src={getProfilePhotoUrl(profile.employee.profile_photo)}
+                                alt={profile.name}
+                                className="w-full h-full object-cover"
+                                onError={(e) => { e.target.style.display = 'none'; e.target.nextSibling.style.display = 'flex'; }}
+                            />
+                        ) : (
+                            <div className="text-white text-4xl font-bold">
+                                {profile?.name?.charAt(0).toUpperCase()}
+                            </div>
+                        )}
                     </div>
-                    <div>
-                        <h2 style={{ fontSize: "20px", fontWeight: "600" }}>{profile?.name}</h2>
-                        <p style={{ color: "#6b7280" }}>{profile?.email}</p>
-                        <span style={{
-                            display: "inline-block",
-                            marginTop: "0.5rem",
-                            padding: "4px 12px",
-                            backgroundColor: "#dbeafe",
-                            color: "#1e40af",
-                            borderRadius: "9999px",
-                            fontSize: "14px",
-                            fontWeight: "500"
-                        }}>
-                            {profile?.role?.name || "Employee"}
-                        </span>
+                    <div className="text-center md:text-left">
+                        <h2 className="text-3xl font-bold text-gray-900 dark:text-white">{profile?.name}</h2>
+                        <p className="text-gray-500 dark:text-gray-400 mt-1">{profile?.email}</p>
+                        <div className="mt-3 flex gap-2 justify-center md:justify-start flex-wrap">
+                            <span className="px-3 py-1 bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400 rounded-full text-sm font-medium">
+                                {profile?.role || "Employee"}
+                            </span>
+                            <span className={`px-3 py-1 rounded-full text-sm font-medium ${profile?.employee?.status === 'Inactive'
+                                    ? "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400"
+                                    : "bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-400"
+                                }`}>
+                                {profile?.employee?.status || "Active"}
+                            </span>
+                        </div>
                     </div>
                 </div>
 
-                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "2rem" }}>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-10 md:gap-16">
+                    {/* Personal Info */}
                     <div>
-                        <h3 style={{ fontSize: "16px", fontWeight: "600", marginBottom: "1rem", color: "#374151" }}>Personal Information</h3>
-                        <div style={{ display: "flex", flexDirection: "column", gap: "0.75rem" }}>
+                        <h3 className="text-lg font-semibold mb-6 text-gray-900 dark:text-white border-b border-gray-200 dark:border-gray-700 pb-2">Personal Information</h3>
+                        <div className="space-y-5">
                             <div>
-                                <label style={{ fontSize: "12px", color: "#6b7280", display: "block" }}>Employee Code</label>
-                                <div style={{ fontWeight: "500" }}>{profile?.employee?.employee_code || "N/A"}</div>
+                                <label className="text-sm text-gray-500 dark:text-gray-400 block mb-1">Employee Code</label>
+                                <div className="font-medium text-gray-800 dark:text-gray-200">{profile?.employee?.employee_code || "N/A"}</div>
                             </div>
                             <div>
-                                <label style={{ fontSize: "12px", color: "#6b7280", display: "block" }}>Phone</label>
-                                <div style={{ fontWeight: "500" }}>{profile?.employee?.phone || "N/A"}</div>
+                                <label className="text-sm text-gray-500 dark:text-gray-400 block mb-1">Date of Birth</label>
+                                <div className="font-medium text-gray-800 dark:text-gray-200">{formatDate(profile?.employee?.dob)}</div>
                             </div>
                             <div>
-                                <label style={{ fontSize: "12px", color: "#6b7280", display: "block" }}>Date of Joining</label>
-                                <div style={{ fontWeight: "500" }}>{profile?.employee?.date_of_joining || "N/A"}</div>
+                                <label className="text-sm text-gray-500 dark:text-gray-400 block mb-1">Gender</label>
+                                <div className="font-medium text-gray-800 dark:text-gray-200">{profile?.employee?.gender || "N/A"}</div>
+                            </div>
+                            <div>
+                                <label className="text-sm text-gray-500 dark:text-gray-400 block mb-1">Marital Status</label>
+                                <div className="font-medium text-gray-800 dark:text-gray-200">{profile?.employee?.marital_status || "N/A"}</div>
+                            </div>
+                            <div>
+                                <label className="text-sm text-gray-500 dark:text-gray-400 block mb-1">Phone</label>
+                                <div className="font-medium text-gray-800 dark:text-gray-200">{profile?.employee?.phone || "N/A"}</div>
+                            </div>
+                            <div>
+                                <label className="text-sm text-gray-500 dark:text-gray-400 block mb-1">Emergency Contact</label>
+                                <div className="font-medium text-gray-800 dark:text-gray-200">{profile?.employee?.emergency_contact || "N/A"}</div>
+                            </div>
+                            <div>
+                                <label className="text-sm text-gray-500 dark:text-gray-400 block mb-1">Current Address</label>
+                                <div className="font-medium text-gray-800 dark:text-gray-200 leading-relaxed">{profile?.employee?.address || "N/A"}</div>
                             </div>
                         </div>
                     </div>
 
+                    {/* Work Info */}
                     <div>
-                        <h3 style={{ fontSize: "16px", fontWeight: "600", marginBottom: "1rem", color: "#374151" }}>Work Information</h3>
-                        <div style={{ display: "flex", flexDirection: "column", gap: "0.75rem" }}>
+                        <h3 className="text-lg font-semibold mb-6 text-gray-900 dark:text-white border-b border-gray-200 dark:border-gray-700 pb-2">Work & Identity</h3>
+                        <div className="space-y-5">
                             <div>
-                                <label style={{ fontSize: "12px", color: "#6b7280", display: "block" }}>Designation</label>
-                                <div style={{ fontWeight: "500" }}>{profile?.employee?.designation || "N/A"}</div>
+                                <label className="text-sm text-gray-500 dark:text-gray-400 block mb-1">Department</label>
+                                <div className="font-medium text-gray-800 dark:text-gray-200">{profile?.employee?.department || "N/A"}</div>
                             </div>
                             <div>
-                                <label style={{ fontSize: "12px", color: "#6b7280", display: "block" }}>Address</label>
-                                <div style={{ fontWeight: "500" }}>{profile?.employee?.address || "N/A"}</div>
+                                <label className="text-sm text-gray-500 dark:text-gray-400 block mb-1">Designation</label>
+                                <div className="font-medium text-gray-800 dark:text-gray-200">{profile?.employee?.designation || "N/A"}</div>
+                            </div>
+                            <div>
+                                <label className="text-sm text-gray-500 dark:text-gray-400 block mb-1">Date of Joining</label>
+                                <div className="font-medium text-gray-800 dark:text-gray-200">{formatDate(profile?.employee?.date_of_joining)}</div>
+                            </div>
+
+                            <div className="mt-8 pt-6 border-t border-dashed border-gray-200 dark:border-gray-700">
+                                <div className="mb-5">
+                                    <label className="text-sm text-gray-500 dark:text-gray-400 block mb-1">Aadhar Number</label>
+                                    <div className="font-medium text-gray-800 dark:text-gray-200 font-mono tracking-wide">
+                                        {maskAadhar(profile?.employee?.aadhar_number)}
+                                    </div>
+                                </div>
+                                <div>
+                                    <label className="text-sm text-gray-500 dark:text-gray-400 block mb-1">PAN Number</label>
+                                    <div className="font-medium text-gray-800 dark:text-gray-200 font-mono tracking-wide">
+                                        {profile?.employee?.pan_number || "N/A"}
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>

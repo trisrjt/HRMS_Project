@@ -27,31 +27,21 @@ const Sidebar = () => {
   );
 
   return (
-    <aside
-      style={{
-        width: "220px",
-        minHeight: "100vh",
-        borderRight: "1px solid #e5e7eb",
-        padding: "1rem 0.5rem",
-        boxSizing: "border-box",
-      }}
-    >
-      <div style={{ padding: "0 0.75rem", marginBottom: "1rem" }}>
-        <h2 style={{ fontSize: "1.1rem", fontWeight: "bold" }}>HRMS</h2>
+    <aside className="w-64 min-h-screen bg-white dark:bg-gray-900 border-r border-gray-200 dark:border-gray-800 p-4 transition-colors duration-200">
+      <div className="px-3 mb-4">
+        <h2 className="text-lg font-bold text-gray-800 dark:text-white">HRMS</h2>
       </div>
-      <nav style={{ display: "flex", flexDirection: "column", gap: "0.25rem" }}>
+      <nav className="flex flex-col gap-1">
         {items.map((item) => (
           <NavLink
             key={item.key}
             to={item.to}
-            style={({ isActive }) => ({
-              padding: "0.5rem 0.75rem",
-              borderRadius: "0.375rem",
-              textDecoration: "none",
-              color: isActive ? "#111827" : "#4b5563",
-              backgroundColor: isActive ? "#e5e7eb" : "transparent",
-              fontSize: "0.9rem",
-            })}
+            className={({ isActive }) => `
+              px-3 py-2 rounded-lg text-sm font-medium transition-colors duration-200
+              ${isActive
+                ? "bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-white"
+                : "text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800 hover:text-gray-900 dark:hover:text-gray-200"}
+            `}
           >
             {item.label}
           </NavLink>

@@ -32,10 +32,18 @@ export const NotificationProvider = ({ children }) => {
     // Fetch only unread count
     const fetchUnreadCount = useCallback(async () => {
         if (!user) return;
+        // Don't fetch if offline
+        if (!navigator.onLine) return;
+
         try {
             const response = await api.get("/notifications/unread-count");
             setUnreadCount(response.data.unread);
         } catch (err) {
+            // Suppress network errors (often happens on wake from sleep or offline)
+            if (err.code === "ERR_NETWORK" || err.message === "Network Error") {
+                // benign error, ignore to avoid console spam
+                return;
+            }
             console.error("Failed to fetch unread count", err);
         }
     }, [user]);
@@ -70,10 +78,13 @@ export const NotificationProvider = ({ children }) => {
         // Initial fetch
         fetchUnreadCount();
 
-        // Poll every 20 seconds
+        // Poll every 30 seconds (5s was too aggressive and caused network stack issues on sleep)
         const interval = setInterval(() => {
-            fetchUnreadCount();
-        }, 20000);
+            // Only poll if page is visible to save resources and reduce errors
+            if (document.visibilityState === 'visible') {
+                fetchUnreadCount();
+            }
+        }, 30000);
 
         return () => clearInterval(interval);
     }, [user, fetchUnreadCount]);

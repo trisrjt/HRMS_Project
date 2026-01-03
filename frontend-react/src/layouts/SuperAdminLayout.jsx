@@ -2,6 +2,7 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import SuperAdminSidebar from "../components/SuperAdminSidebar";
 import NotificationBell from "../components/NotificationBell";
+import ThemeToggle from "../components/ThemeToggle";
 
 const SuperAdminLayout = ({ children }) => {
     const { user, logout } = useAuth();
@@ -13,52 +14,26 @@ const SuperAdminLayout = ({ children }) => {
     };
 
     return (
-        <div
-            style={{
-                display: "flex",
-                minHeight: "100vh",
-            }}
-        >
+        <div className="flex min-h-screen bg-gray-50 dark:bg-gray-900 transition-colors duration-200">
             {/* Sidebar */}
-            <div
-                style={{
-                    display: "block",
-                }}
-                className="sidebar-desktop"
-            >
+            <div className="hidden md:block">
                 <SuperAdminSidebar />
             </div>
 
             {/* Main area */}
-            <div style={{ flex: 1, display: "flex", flexDirection: "column" }}>
+            <div className="flex-1 flex flex-col min-w-0">
                 {/* Topbar */}
-                <header
-                    style={{
-                        height: "56px",
-                        borderBottom: "1px solid #e5e7eb",
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "space-between",
-                        padding: "0 1rem",
-                        boxSizing: "border-box",
-                    }}
-                >
+                <header className="h-16 border-b border-gray-200 dark:border-gray-800 flex items-center justify-between px-4 bg-white dark:bg-gray-900 transition-colors duration-200">
                     <div>
-                        <span style={{ fontWeight: "500" }}>Welcome, </span>
-                        <span style={{ fontWeight: "600" }}>{user?.name || "Super Admin"}</span>
+                        <span className="font-medium text-gray-700 dark:text-gray-300">Welcome, </span>
+                        <span className="font-bold text-gray-900 dark:text-white">{user?.name || "Super Admin"}</span>
                     </div>
-                    <div style={{ display: "flex", alignItems: "center", gap: "1rem" }}>
+                    <div className="flex items-center gap-4">
+                        <ThemeToggle />
                         <NotificationBell />
                         <button
                             onClick={handleLogout}
-                            style={{
-                                padding: "0.35rem 0.75rem",
-                                fontSize: "0.85rem",
-                                borderRadius: "0.375rem",
-                                border: "1px solid #e5e7eb",
-                                backgroundColor: "#f9fafb",
-                                cursor: "pointer",
-                            }}
+                            className="px-3 py-1.5 text-sm rounded-md border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-800 text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
                         >
                             Logout
                         </button>
@@ -66,7 +41,7 @@ const SuperAdminLayout = ({ children }) => {
                 </header>
 
                 {/* Page content */}
-                <main style={{ flex: 1, padding: "1rem", boxSizing: "border-box" }}>{children}</main>
+                <main className="flex-1 p-4 overflow-auto">{children}</main>
             </div>
         </div>
     );

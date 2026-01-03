@@ -110,4 +110,103 @@ class SuperAdminDashboardController extends Controller
             'queue_status' => 'running' // Mocked
         ]);
     }
+    public function employeeGrowth()
+    {
+        // Get employee growth for the last 12 months
+        $growth = collect();
+        for ($i = 11; $i >= 0; $i--) {
+            $date = Carbon::today()->subMonths($i);
+            $monthName = $date->format('M');
+            $year = $date->format('Y');
+            
+            // Count employees created up to the end of that month
+            $count = Employee::where('created_at', '<=', $date->endOfMonth())->count();
+            
+            $growth->push([
+                'month' => $monthName,
+                'count' => $count
+            ]);
+        }
+        
+        return response()->json($growth);
+    }
+
+    public function departmentDistribution()
+    {
+        $distribution = Department::withCount('employees')
+            ->get()
+            ->map(function ($dept) {
+                return [
+                    'department' => $dept->name,
+                    'count' => $dept->employees_count
+                ];
+            });
+            
+        return response()->json($distribution);
+    }
+
+    public function attendanceTrends()
+    {
+        // Last 6 months attendance trends
+        $trends = collect();
+        for ($i = 5; $i >= 0; $i--) {
+            $date = Carbon::today()->subMonths($i);
+            $monthName = $date->format('M');
+            
+            $present = Attendance::whereMonth('date', $date->month)
+                ->whereYear('date', $date->year)
+                ->where('status', 'Present')
+                ->count();
+                
+            $absent = Attendance::whereMonth('date', $date->month)
+                ->whereYear('date', $date->year)
+                ->where('status', 'Absent')
+                ->count();
+                
+            $trends->push([
+                'month' => $monthName,
+                'present' => $present,
+                'absent' => $absent
+            ]);
+        }
+        
+        return response()->json($trends);
+    }
+
+    public function leavesSummary()
+    {
+        $summary = [
+            'approved' => Leave::where('status', 'Approved')->count(),
+            'pending' => Leave::where('status', 'Pending')->count(),
+            'rejected' => Leave::where('status', 'Rejected')->count(),
+        ];
+        
+        return response()->json($summary);
+    }
+    public function todayAttendance()
+    {
+        $today = Carbon::today();
+        
+        $totalEmployees = Employee::count();
+        
+        // Count actual check-ins (where check_in time is recorded)
+        $checkedIn = Attendance::whereDate('date', $today)
+                               ->whereNotNull('check_in')
+                               ->count();
+        
+        // Employees on approved leave today
+        $onLeave = Leave::whereDate('start_date', '<=', $today)
+                        ->whereDate('end_date', '>=', $today)
+                        ->where('status', 'Approved')
+                        ->count();
+                        
+        // Not Checked In = Total - (Checked In + On Leave)
+        $notCheckedIn = max(0, $totalEmployees - ($checkedIn + $onLeave));
+        
+        return response()->json([
+            ['name' => 'Checked In', 'value' => $checkedIn, 'color' => '#10B981'], // Emerald-500
+            ['name' => 'Not Checked In', 'value' => $notCheckedIn, 'color' => '#EF4444'],  // Red-500
+            ['name' => 'On Leave', 'value' => $onLeave, 'color' => '#F59E0B'], // Amber-500
+        ]);
+    }
 }

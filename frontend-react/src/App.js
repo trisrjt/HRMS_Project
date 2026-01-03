@@ -1,13 +1,16 @@
 import AppRouter from "./routes/AppRouter";
 import { AuthProvider } from "./context/AuthContext";
 import { NotificationProvider } from "./context/NotificationContext";
+import { ThemeProvider } from "./context/ThemeContext";
 
 const App = () => {
   return (
     <AuthProvider>
-      <NotificationProvider>
-        <AppRouter />
-      </NotificationProvider>
+      <ThemeProvider>
+        <NotificationProvider>
+          <AppRouter />
+        </NotificationProvider>
+      </ThemeProvider>
     </AuthProvider>
   );
 };

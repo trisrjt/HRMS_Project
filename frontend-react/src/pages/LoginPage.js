@@ -62,7 +62,7 @@ const LoginPage = () => {
           login(data.token, data.user);
           // Redirect based on role
           const roleId = data.user.role_id;
-          let targetPath = "/dashboard"; // Default for Employee (Role 4)
+          let targetPath = "/employee/dashboard"; // Default for Employee (Role 4)
 
           if (roleId === 1) targetPath = "/superadmin/dashboard";
           else if (roleId === 2) targetPath = "/admin/dashboard";
@@ -147,6 +147,7 @@ const LoginPage = () => {
               value={formValues.email}
               onChange={handleChange}
               placeholder="you@example.com"
+              autoComplete="username"
               required
               disabled={isLoading}
               style={{
@@ -184,6 +185,7 @@ const LoginPage = () => {
                 name="password"
                 value={formValues.password}
                 onChange={handleChange}
+                autoComplete="current-password"
                 placeholder="••••••••"
                 required
                 disabled={isLoading}

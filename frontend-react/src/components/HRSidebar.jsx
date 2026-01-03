@@ -1,17 +1,44 @@
-import { NavLink, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
+import ToggleSidebar from "./ui/ToggleSidebar";
 
 const HRSidebar = () => {
-    const { logout } = useAuth();
+    const { user, logout } = useAuth(); // Destructure user for permissions
     const navigate = useNavigate();
 
-    const menuItems = [
+    const hasPermission = (permission) => {
+        return user?.permissions?.includes(permission);
+    };
+
+    // Base Menu Items (Everyone has access)
+    let menuItems = [
         { key: "dashboard", label: "Dashboard", to: "/hr/dashboard" },
         { key: "employees", label: "Employees", to: "/hr/employees" },
+        { key: "departments", label: "Departments", to: "/hr/departments" },
+        { key: "designations", label: "Designations", to: "/hr/designations" },
         { key: "attendance", label: "Attendance", to: "/hr/attendance" },
         { key: "leaves", label: "Leaves", to: "/hr/leaves" },
+        { key: "holidays", label: "Holidays", to: "/hr/holidays" },
+        { key: "policies", label: "Leave Policies", to: "/hr/leave-policies" },
         { key: "recruitment", label: "Recruitment", to: "/hr/recruitment" },
+        { key: "announcements", label: "Announcements", to: "/hr/announcements" },
     ];
+
+    // Permission-based Additions
+    if (hasPermission("can_manage_salaries") || hasPermission("can_view_salaries")) {
+        menuItems.push({ key: "salaries", label: "Salaries", to: "/hr/salaries" });
+        if (hasPermission("can_manage_salaries")) {
+            menuItems.push({ key: "payroll-settings", label: "Payroll Settings", to: "/hr/payroll-settings" });
+        }
+    }
+
+    if (hasPermission("can_manage_payslips")) {
+        menuItems.push({ key: "payslips", label: "Payslips", to: "/hr/payslips" });
+    }
+
+    if (hasPermission("view_reports")) {
+        menuItems.push({ key: "reports", label: "Reports", to: "/hr/reports" });
+    }
 
     const handleLogout = () => {
         logout();
@@ -19,65 +46,12 @@ const HRSidebar = () => {
     };
 
     return (
-        <aside
-            style={{
-                width: "240px",
-                minHeight: "100vh",
-                backgroundColor: "white",
-                borderRight: "1px solid #e5e7eb",
-                display: "flex",
-                flexDirection: "column",
-                boxShadow: "2px 0 4px rgba(0,0,0,0.05)",
-            }}
-        >
-            <div style={{ padding: "1.5rem 1rem", borderBottom: "1px solid #e5e7eb", marginBottom: "1rem" }}>
-                <h2 style={{ fontSize: "20px", fontWeight: "700", color: "#1f2937" }}>HRMS</h2>
-                <p style={{ fontSize: "12px", color: "#6b7280", marginTop: "0.25rem" }}>HR Portal</p>
-            </div>
-
-            <nav style={{ flex: 1, display: "flex", flexDirection: "column", gap: "0.25rem", padding: "0 0.75rem" }}>
-                {menuItems.map((item) => (
-                    <NavLink
-                        key={item.key}
-                        to={item.to}
-                        style={({ isActive }) => ({
-                            padding: "0.75rem 1rem",
-                            borderRadius: "6px",
-                            textDecoration: "none",
-                            fontSize: "14px",
-                            fontWeight: isActive ? "600" : "500",
-                            color: isActive ? "#3b82f6" : "#4b5563",
-                            backgroundColor: isActive ? "#eff6ff" : "transparent",
-                            transition: "all 0.2s",
-                            display: "flex",
-                            alignItems: "center",
-                        })}
-                    >
-                        {item.label}
-                    </NavLink>
-                ))}
-            </nav>
-
-            <div style={{ padding: "1rem 0.75rem", borderTop: "1px solid #e5e7eb" }}>
-                <button
-                    onClick={handleLogout}
-                    style={{
-                        width: "100%",
-                        padding: "0.75rem 1rem",
-                        fontSize: "14px",
-                        fontWeight: "500",
-                        color: "#dc2626",
-                        backgroundColor: "transparent",
-                        border: "1px solid #dc2626",
-                        borderRadius: "6px",
-                        cursor: "pointer",
-                        transition: "all 0.2s",
-                    }}
-                >
-                    Logout
-                </button>
-            </div>
-        </aside>
+        <ToggleSidebar
+            title="HRMS"
+            subtitle="HR Portal"
+            menuItems={menuItems}
+            onLogout={handleLogout}
+        />
     );
 };
 

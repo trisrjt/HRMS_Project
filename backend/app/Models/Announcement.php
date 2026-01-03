@@ -9,7 +9,22 @@ class Announcement extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['title', 'message', 'created_by', 'is_active'];
+    protected $fillable = [
+        'title', 
+        'message', 
+        'category', 
+        'target_audience', 
+        'status', 
+        'attachment_url', 
+        'views_count', 
+        'created_by', 
+        'is_active'
+    ];
+
+    protected $casts = [
+        'target_audience' => 'array',
+        'is_active' => 'boolean',
+    ];
 
     public function user()
     {

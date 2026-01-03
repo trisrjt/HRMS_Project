@@ -1,10 +1,12 @@
 import { useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { useNotifications } from "../context/NotificationContext";
+import { useAuth } from "../context/AuthContext";
 import { timeAgo } from "../utils/timeAgo";
 
-const NotificationDropdown = ({ onClose }) => {
+const NotificationDropdown = ({ onClose, onSelect }) => {
     const { notifications, fetchNotifications, markRead, markAllRead, loading } = useNotifications();
+    const { user } = useAuth();
     const navigate = useNavigate();
     const dropdownRef = useRef(null);
 
@@ -27,99 +29,78 @@ const NotificationDropdown = ({ onClose }) => {
         if (!notification.is_read) {
             markRead(notification.id);
         }
-        if (notification.link) {
-            navigate(notification.link);
-            onClose();
+        // Instead of navigating, pass to parent to open modal
+        if (onSelect) {
+            onSelect(notification);
         }
-    };
-
-    const handleViewAll = () => {
-        navigate("/notifications");
         onClose();
     };
 
-    const getBorderColor = (type) => {
+    const handleViewAll = () => {
+        if (user?.role_id === 1) {
+            navigate("/superadmin/notifications");
+        } else if (user?.role_id === 4) {
+            navigate("/employee/notifications");
+        } else if (user?.role_id === 2) {
+            navigate("/admin/notifications");
+        } else if (user?.role_id === 3) {
+            navigate("/hr/notifications");
+        }
+        onClose();
+    };
+
+    const getBorderColorClass = (type) => {
         switch (type) {
-            case 'leave': return '#f59e0b'; // Orange
-            case 'attendance': return '#3b82f6'; // Blue
-            case 'hr-action': return '#8b5cf6'; // Purple
-            case 'admin-action': return '#10b981'; // Green
-            case 'security': return '#ef4444'; // Red
-            default: return '#6b7280'; // Gray
+            case 'leave': return 'border-l-amber-500'; // Orange
+            case 'attendance': return 'border-l-blue-500'; // Blue
+            case 'hr-action': return 'border-l-violet-500'; // Purple
+            case 'admin-action': return 'border-l-emerald-500'; // Green
+            case 'security': return 'border-l-red-500'; // Red
+            default: return 'border-l-gray-500'; // Gray
         }
     };
 
     return (
         <div
             ref={dropdownRef}
-            style={{
-                position: "absolute",
-                top: "50px",
-                right: "0",
-                width: "320px",
-                backgroundColor: "white",
-                borderRadius: "8px",
-                boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)",
-                border: "1px solid #e5e7eb",
-                zIndex: 50,
-                display: "flex",
-                flexDirection: "column",
-                maxHeight: "480px"
-            }}
+            className="absolute top-12 right-0 w-80 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 z-50 flex flex-col max-h-[480px] transition-colors duration-200"
         >
             {/* Header */}
-            <div style={{
-                padding: "1rem",
-                borderBottom: "1px solid #e5e7eb",
-                display: "flex",
-                justifyContent: "space-between",
-                alignItems: "center"
-            }}>
-                <h3 style={{ fontSize: "16px", fontWeight: "600", margin: 0 }}>Notifications</h3>
+            <div className="p-4 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center">
+                <h3 className="text-base font-semibold text-gray-900 dark:text-white m-0">Notifications</h3>
                 <button
                     onClick={markAllRead}
-                    style={{
-                        fontSize: "12px",
-                        color: "#2563eb",
-                        background: "none",
-                        border: "none",
-                        cursor: "pointer",
-                        textDecoration: "underline"
-                    }}
+                    className="text-xs text-blue-600 dark:text-blue-400 hover:underline bg-transparent border-none cursor-pointer"
                 >
                     Mark all read
                 </button>
             </div>
 
             {/* List */}
-            <div style={{ flex: 1, overflowY: "auto" }}>
+            <div className="flex-1 overflow-y-auto custom-scrollbar">
                 {loading ? (
-                    <div style={{ padding: "1rem", textAlign: "center", color: "#6b7280" }}>Loading...</div>
+                    <div className="p-4 text-center text-gray-500 dark:text-gray-400">Loading...</div>
                 ) : notifications.length === 0 ? (
-                    <div style={{ padding: "1rem", textAlign: "center", color: "#6b7280" }}>No notifications</div>
+                    <div className="p-4 text-center text-gray-500 dark:text-gray-400">No notifications</div>
                 ) : (
                     notifications.slice(0, 10).map((n) => (
                         <div
                             key={n.id}
                             onClick={() => handleItemClick(n)}
-                            style={{
-                                padding: "0.75rem 1rem",
-                                borderBottom: "1px solid #f3f4f6",
-                                cursor: "pointer",
-                                backgroundColor: n.is_read ? "white" : "#f9fafb",
-                                borderLeft: !n.is_read ? `4px solid ${getBorderColor(n.type)}` : "4px solid transparent",
-                                transition: "background-color 0.2s"
-                            }}
-                            onMouseEnter={(e) => e.currentTarget.style.backgroundColor = "#f3f4f6"}
-                            onMouseLeave={(e) => e.currentTarget.style.backgroundColor = n.is_read ? "white" : "#f9fafb"}
+                            className={`
+                                p-3 border-b border-gray-100 dark:border-gray-700 cursor-pointer transition-colors duration-200
+                                ${n.is_read ? 'bg-white dark:bg-gray-800' : 'bg-gray-50 dark:bg-gray-700/30'}
+                                ${!n.is_read ? `border-l-4 ${getBorderColorClass(n.type)}` : 'border-l-4 border-l-transparent'}
+                                hover:bg-gray-50 dark:hover:bg-gray-700/50
+                            `}
                         >
-                            <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "0.25rem" }}>
-                                <span style={{ fontSize: "14px", fontWeight: n.is_read ? "500" : "700", color: "#1f2937" }}>
+                            <div className="flex justify-between mb-1">
+                                <span className={`text-sm ${n.is_read ? 'font-medium text-gray-700 dark:text-gray-300' : 'font-bold text-gray-900 dark:text-white'}`}>
                                     {n.title}
                                 </span>
-                                <span style={{ fontSize: "11px", color: "#9ca3af" }}>{timeAgo(n.created_at)}</span>
+                                <span className="text-xs text-gray-400 dark:text-gray-500">{timeAgo(n.created_at)}</span>
                             </div>
-                            <p style={{ fontSize: "13px", color: "#4b5563", margin: 0, lineHeight: "1.4" }}>
+                            <p className="text-xs text-gray-600 dark:text-gray-400 m-0 leading-snug">
                                 {n.message}
                             </p>
                         </div>
@@ -128,20 +109,10 @@ const NotificationDropdown = ({ onClose }) => {
             </div>
 
             {/* Footer */}
-            <div style={{ padding: "0.75rem", borderTop: "1px solid #e5e7eb", textAlign: "center" }}>
+            <div className="p-3 border-t border-gray-200 dark:border-gray-700 text-center">
                 <button
                     onClick={handleViewAll}
-                    style={{
-                        width: "100%",
-                        padding: "0.5rem",
-                        backgroundColor: "white",
-                        border: "1px solid #e5e7eb",
-                        borderRadius: "6px",
-                        fontSize: "13px",
-                        fontWeight: "500",
-                        color: "#374151",
-                        cursor: "pointer"
-                    }}
+                    className="w-full p-2 bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-md text-xs font-medium text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors"
                 >
                     View All Notifications
                 </button>

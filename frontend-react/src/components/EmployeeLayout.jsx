@@ -1,10 +1,30 @@
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import EmployeeSidebar from "./EmployeeSidebar";
+import { useEffect } from "react";
 
 const EmployeeLayout = ({ children }) => {
-  const { user, logout } = useAuth();
+  const { user, logout, refreshUser, token } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
+
+  // Refresh user data on route change (navigation)
+  useEffect(() => {
+    if (token) {
+      refreshUser(token);
+    }
+  }, [location.pathname, refreshUser, token]);
+
+  // Poll for updates every 30 seconds
+  useEffect(() => {
+    const intervalId = setInterval(() => {
+      if (token) {
+        refreshUser(token);
+      }
+    }, 30000); // 30 seconds
+
+    return () => clearInterval(intervalId);
+  }, [refreshUser, token]);
 
   const handleLogout = () => {
     logout();

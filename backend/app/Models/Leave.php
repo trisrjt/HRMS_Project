@@ -16,7 +16,11 @@ class Leave extends Model
         'end_date',
         'reason',
         'status',
-        'approved_by'
+        'approved_by',
+        'approved_start_date',
+        'approved_end_date',
+        'approved_days',
+        'withdrawn_at'
     ];
 
     // Employee who applied leave

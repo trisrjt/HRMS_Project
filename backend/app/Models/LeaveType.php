@@ -11,7 +11,15 @@ class LeaveType extends Model
 
     protected $fillable = [
         'name',
-        'max_days',
-        'description'
+        'applicable_gender',
+        'max_days', // Keeping untounched for backward compatibility if used
+        'description',
+        'max_days_per_year',
+        'carry_forward_allowed',
+        'allow_partial_approval',
+        'auto_approve',
+        'requires_approval',
+        'is_paid',
+        'available_during_probation'
     ];
 }

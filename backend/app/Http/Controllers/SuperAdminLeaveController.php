@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Leave;
 use App\Models\Employee;
+use App\Models\LeaveBalance;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use App\Services\NotificationService;
@@ -20,7 +21,25 @@ class SuperAdminLeaveController extends Controller
     // GET /api/superadmin/leaves
     public function index(Request $request)
     {
-        $query = Leave::with(['employee.user', 'employee.department', 'leaveType']);
+        $query = Leave::with([
+            'employee' => function ($q) {
+                $q->with('user', 'department')
+                  ->withCount(['leaves as approved_leaves_count' => function ($query) {
+                      $query->whereIn('status', ['Approved', 'Partially Approved']);
+                  }])
+                  ->addSelect(['total_approved_days' => Leave::selectRaw("SUM(
+                        CASE 
+                            WHEN status = 'Approved' THEN DATEDIFF(end_date, start_date) + 1
+                            WHEN status = 'Partially Approved' THEN approved_days
+                            ELSE 0 
+                        END
+                    )")
+                    ->whereColumn('employee_id', 'employees.id')
+                    ->whereIn('status', ['Approved', 'Partially Approved'])
+                  ]);
+            },
+            'leaveType'
+        ]);
 
         // Filter by Employee
         if ($request->has('employee_id') && $request->employee_id) {
@@ -56,7 +75,8 @@ class SuperAdminLeaveController extends Controller
             });
         }
 
-        $leaves = $query->orderByDesc('created_at')->paginate(15);
+        $perPage = $request->input('per_page', 20);
+        $leaves = $query->orderByDesc('created_at')->paginate($perPage);
 
         return response()->json($leaves);
     }
@@ -70,9 +90,19 @@ class SuperAdminLeaveController extends Controller
             $query->where('start_date', 'like', "{$request->month}%");
         }
 
-        $total = (clone $query)->count();
+        $total = (clone $query)->where('status', '!=', 'Withdrawn')->count();
         $pending = (clone $query)->where('status', 'Pending')->count();
-        $approved = (clone $query)->where('status', 'Approved')->count();
+        $approved = (clone $query)
+            ->whereIn('status', ['Approved', 'Partially Approved'])
+            ->selectRaw("SUM(
+                CASE 
+                    WHEN status = 'Approved' THEN DATEDIFF(end_date, start_date) + 1
+                    WHEN status = 'Partially Approved' THEN approved_days
+                    ELSE 0 
+                END
+            ) as total_days")
+            ->value('total_days') ?? 0;
+
         $rejected = (clone $query)->where('status', 'Rejected')->count();
 
         return response()->json([
@@ -122,6 +152,16 @@ class SuperAdminLeaveController extends Controller
             'status' => 'Rejected',
             'approved_by' => auth()->id()
         ]);
+
+        // Restore Balance
+        $days = (strtotime($leave->end_date) - strtotime($leave->start_date)) / (60 * 60 * 24) + 1;
+        $balance = LeaveBalance::where('employee_id', $leave->employee_id)
+            ->where('leave_type_id', $leave->leave_type_id)
+            ->first();
+        
+        if ($balance) {
+            $balance->decrement('used_days', $days);
+        }
 
         // Notify Employee
         $this->notifications->sendToUser(

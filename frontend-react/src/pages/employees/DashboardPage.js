@@ -4,87 +4,173 @@ import api from "../../api/axios";
 import { useAuth } from "../../context/AuthContext";
 import { formatTime, calculateHours, calculateWeeklyStats, calculateMonthlyStats } from "../../utils/dateUtils";
 
-// --- UI Components ---
+// --- Internal Components ---
 
-const Card = ({ children, style, className }) => (
-    <div
-        className={className}
-        style={{
-            backgroundColor: "white",
-            borderRadius: "12px",
-            border: "1px solid #e5e7eb",
-            boxShadow: "0 2px 4px rgba(0,0,0,0.05)",
-            padding: "1.5rem",
-            ...style
-        }}
-    >
-        {children}
+const DashboardHeader = ({ profile }) => {
+    const today = new Date().toLocaleDateString("en-US", { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+
+    return (
+        <div className="bg-gradient-to-r from-indigo-600 to-blue-500 rounded-2xl p-8 text-white mb-8 shadow-lg flex justify-between items-center flex-wrap gap-4">
+            <div>
+                <h1 className="text-3xl font-bold mb-2">
+                    Welcome back, {profile?.name?.split(' ')[0] || "Employee"}!
+                </h1>
+                <div className="flex gap-6 text-sm opacity-90">
+                    <span>Department: <strong>{profile?.employee?.department || "N/A"}</strong></span>
+                    <span>Designation: <strong>{profile?.employee?.designation || "N/A"}</strong></span>
+                </div>
+            </div>
+            <div className="text-right bg-white/10 px-5 py-3 rounded-xl backdrop-blur-sm">
+                <div className="text-sm opacity-80 mb-1">Today is</div>
+                <div className="text-lg font-semibold">{today}</div>
+            </div>
+        </div>
+    );
+};
+
+const AttendanceActionCard = ({ attendance, onCheckIn, onCheckOut, loading }) => {
+    const isCheckedIn = !!attendance?.check_in;
+    const isCheckedOut = !!attendance?.check_out;
+    const status = attendance?.status || "Not Marked";
+
+    return (
+        <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-sm border border-gray-200 dark:border-gray-700 mb-8 transition-colors duration-200">
+            <div className="flex justify-between items-center mb-6">
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Today's Attendance</h3>
+                <span className={`px-3 py-1 rounded-full text-sm font-medium ${status === "Present"
+                        ? "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400"
+                        : "bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300"
+                    }`}>
+                    {status}
+                </span>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+                <div>
+                    <div className="text-sm text-gray-500 dark:text-gray-400 mb-1">Check In</div>
+                    <div className="text-xl font-semibold text-gray-900 dark:text-white">
+                        {attendance?.check_in ? formatTime(attendance.check_in) : "--:--"}
+                    </div>
+                </div>
+                <div>
+                    <div className="text-sm text-gray-500 dark:text-gray-400 mb-1">Check Out</div>
+                    <div className="text-xl font-semibold text-gray-900 dark:text-white">
+                        {attendance?.check_out ? formatTime(attendance.check_out) : "--:--"}
+                    </div>
+                </div>
+                <div>
+                    <div className="text-sm text-gray-500 dark:text-gray-400 mb-1">Duration</div>
+                    <div className="text-xl font-semibold text-indigo-600 dark:text-indigo-400">
+                        {calculateHours(attendance?.check_in, attendance?.check_out)}
+                    </div>
+                </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+                <button
+                    onClick={onCheckIn}
+                    disabled={loading || isCheckedIn}
+                    className={`py-3.5 rounded-xl font-semibold text-base transition-all duration-200 ${isCheckedIn
+                            ? "bg-gray-100 text-gray-400 dark:bg-gray-700 dark:text-gray-500 cursor-not-allowed"
+                            : "bg-emerald-500 hover:bg-emerald-600 text-white shadow-md hover:shadow-lg"
+                        }`}
+                >
+                    {isCheckedIn ? "Checked In" : "Check In"}
+                </button>
+                <button
+                    onClick={onCheckOut}
+                    disabled={loading || !isCheckedIn || isCheckedOut}
+                    className={`py-3.5 rounded-xl font-semibold text-base transition-all duration-200 ${(!isCheckedIn || isCheckedOut)
+                            ? "bg-gray-100 text-gray-400 dark:bg-gray-700 dark:text-gray-500 cursor-not-allowed"
+                            : "bg-rose-500 hover:bg-rose-600 text-white shadow-md hover:shadow-lg"
+                        }`}
+                >
+                    {isCheckedOut ? "Checked Out" : "Check Out"}
+                </button>
+            </div>
+        </div>
+    );
+};
+
+const RecentActivitySection = ({ leaves, announcements, payslips, navigate }) => (
+    <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        {/* Recent Leaves */}
+        <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-sm border border-gray-200 dark:border-gray-700 transition-colors duration-200">
+            <div className="flex justify-between items-center mb-6">
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Leave Summary</h3>
+                <button onClick={() => navigate("/employee/leaves")} className="text-indigo-600 dark:text-indigo-400 hover:text-indigo-800 dark:hover:text-indigo-300 font-medium text-sm transition-colors">View All</button>
+            </div>
+            {leaves.length > 0 ? (
+                <div className="flex flex-col gap-4">
+                    {leaves.map(leave => (
+                        <div key={leave.id} className="flex justify-between items-center pb-2 border-b border-gray-100 dark:border-gray-700 last:border-0 last:pb-0">
+                            <div>
+                                <div className="font-medium text-gray-800 dark:text-gray-200">{leave.leave_type?.name || "Leave"}</div>
+                                <div className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                                    {new Date(leave.start_date).toLocaleDateString()} - {new Date(leave.end_date).toLocaleDateString()}
+                                </div>
+                            </div>
+                            <span className={`px-2 py-1 rounded text-xs font-semibold ${leave.status === "Approved" ? "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400" :
+                                    leave.status === "Rejected" ? "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400" :
+                                        "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400"
+                                }`}>
+                                {leave.status}
+                            </span>
+                        </div>
+                    ))}
+                </div>
+            ) : (
+                <div className="text-center text-gray-400 py-4">No recent leaves</div>
+            )}
+        </div>
+
+        {/* Recent Announcements */}
+        <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-sm border border-gray-200 dark:border-gray-700 transition-colors duration-200">
+            <div className="flex justify-between items-center mb-6">
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Announcements</h3>
+                <button onClick={() => navigate("/employee/announcements")} className="text-indigo-600 dark:text-indigo-400 hover:text-indigo-800 dark:hover:text-indigo-300 font-medium text-sm transition-colors">View All</button>
+            </div>
+            {announcements.length > 0 ? (
+                <div className="flex flex-col gap-4">
+                    {announcements.map(ann => (
+                        <div key={ann.id} className="pb-2 border-b border-gray-100 dark:border-gray-700 last:border-0 last:pb-0">
+                            <div className="font-medium text-gray-800 dark:text-gray-200 mb-1">{ann.title}</div>
+                            <div className="text-xs text-gray-500 dark:text-gray-400">{new Date(ann.created_at).toLocaleDateString()}</div>
+                        </div>
+                    ))}
+                </div>
+            ) : (
+                <div className="text-center text-gray-400 py-4">No announcements</div>
+            )}
+        </div>
+
+        {/* Recent Payslips */}
+        <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-sm border border-gray-200 dark:border-gray-700 transition-colors duration-200">
+            <div className="flex justify-between items-center mb-6">
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Recent Payslips</h3>
+                <button onClick={() => navigate("/employee/payslips")} className="text-indigo-600 dark:text-indigo-400 hover:text-indigo-800 dark:hover:text-indigo-300 font-medium text-sm transition-colors">View All</button>
+            </div>
+            {payslips.length > 0 ? (
+                <div className="flex flex-col gap-3">
+                    {payslips.map(payslip => (
+                        <div key={payslip.id} className="flex justify-between items-center p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
+                            <div>
+                                <div className="font-semibold text-gray-700 dark:text-gray-200 text-sm">
+                                    {new Date(0, payslip.month - 1).toLocaleString('default', { month: 'short' })} {payslip.year}
+                                </div>
+                            </div>
+                            <div className="font-bold text-emerald-600 dark:text-emerald-400">
+                                ₹{Number(payslip.net_pay || 0).toLocaleString()}
+                            </div>
+                        </div>
+                    ))}
+                </div>
+            ) : (
+                <div className="text-center text-gray-400 py-4">No payslips found</div>
+            )}
+        </div>
     </div>
 );
-
-const SectionTitle = ({ children }) => (
-    <h3 style={{ fontSize: "18px", fontWeight: "600", color: "#111827", marginBottom: "1rem" }}>
-        {children}
-    </h3>
-);
-
-const Badge = ({ children, variant = "default" }) => {
-    const styles = {
-        default: { bg: "#f3f4f6", color: "#374151" },
-        success: { bg: "#d1fae5", color: "#065f46" }, // Approved, Present
-        danger: { bg: "#fee2e2", color: "#991b1b" },  // Rejected, Absent
-        warning: { bg: "#fef3c7", color: "#92400e" }, // Pending, Late
-        primary: { bg: "#dbeafe", color: "#1e40af" }
-    };
-
-    let style = styles.default;
-    if (["Approved", "Present"].includes(variant)) style = styles.success;
-    if (["Rejected", "Absent"].includes(variant)) style = styles.danger;
-    if (["Pending", "Late"].includes(variant)) style = styles.warning;
-
-    return (
-        <span style={{
-            padding: "2px 10px",
-            borderRadius: "9999px",
-            fontSize: "12px",
-            fontWeight: "600",
-            backgroundColor: style.bg,
-            color: style.color
-        }}>
-            {children}
-        </span>
-    );
-};
-
-const Button = ({ children, onClick, disabled, variant = "primary", style }) => {
-    const baseStyle = {
-        padding: "10px 20px",
-        borderRadius: "8px",
-        fontWeight: "500",
-        fontSize: "14px",
-        cursor: disabled ? "not-allowed" : "pointer",
-        border: "none",
-        transition: "all 0.2s",
-        opacity: disabled ? 0.7 : 1,
-        ...style
-    };
-
-    const variants = {
-        primary: { backgroundColor: "#3b82f6", color: "white" },
-        success: { backgroundColor: "#10b981", color: "white" },
-        danger: { backgroundColor: "#ef4444", color: "white" }
-    };
-
-    return (
-        <button
-            onClick={onClick}
-            disabled={disabled}
-            style={{ ...baseStyle, ...variants[variant] }}
-        >
-            {children}
-        </button>
-    );
-};
 
 // --- Main Component ---
 
@@ -97,9 +183,7 @@ const DashboardPage = () => {
         attendance: null,
         announcements: [],
         leaves: [],
-        payslips: [],
-        weeklyStats: null,
-        monthlyStats: null
+        payslips: []
     });
     const [isLoading, setIsLoading] = useState(true);
     const [actionLoading, setActionLoading] = useState(false);
@@ -108,44 +192,41 @@ const DashboardPage = () => {
     // Fetch all dashboard data
     const fetchDashboardData = async () => {
         try {
-            // 1. Profile
+            // Fetch Profile (User Info)
             const profileRes = await api.get("/user");
 
-            // 2. Attendance (Today)
-            const attendanceRes = await api.get("/my-attendance");
-            const today = new Date().toISOString().split("T")[0];
-            const todayRecord = Array.isArray(attendanceRes.data)
-                ? attendanceRes.data.find(r => r.date === today)
-                : null;
-
-            // Calculate Weekly Stats
-            const weeklyStats = calculateWeeklyStats(attendanceRes.data);
-
-            // Calculate Monthly Stats (Current Month)
-            const currentMonth = today.substring(0, 7); // YYYY-MM
-            const monthlyStats = calculateMonthlyStats(attendanceRes.data, currentMonth);
-
-            // 3. Announcements
+            // Fetch Announcements
             const announcementsRes = await api.get("/announcements");
+            const announcementsData = announcementsRes.data.data || announcementsRes.data; // Handle pagination
 
-            // 4. Leaves
+            // Fetch Leaves
             const leavesRes = await api.get("/my-leaves");
 
-            // 5. Payslips
+            // Fetch Payslips
             const payslipsRes = await api.get("/my-payslips");
+
+            // Fetch Attendance (Get All and find today, or assume API returns today)
+            // Using /my-attendance which returns list. finding today.
+            const attendanceRes = await api.get("/my-attendance");
+            const todayStr = new Date().toISOString().split('T')[0];
+            const attendanceList = attendanceRes.data.data || attendanceRes.data; // Handle pagination if any
+
+            let todayAttendance = null;
+            if (Array.isArray(attendanceList)) {
+                todayAttendance = attendanceList.find(a => a.date === todayStr) || null;
+            }
 
             setData({
                 profile: profileRes.data,
-                attendance: todayRecord,
-                announcements: Array.isArray(announcementsRes.data) ? announcementsRes.data.slice(0, 5) : [],
+                attendance: todayAttendance, // Object or null
+                announcements: Array.isArray(announcementsData) ? announcementsData.slice(0, 3) : [],
                 leaves: Array.isArray(leavesRes.data) ? leavesRes.data.slice(0, 5) : [],
-                payslips: Array.isArray(payslipsRes.data) ? payslipsRes.data.slice(0, 3) : [],
-                weeklyStats,
-                monthlyStats
+                payslips: Array.isArray(payslipsRes.data) ? payslipsRes.data.slice(0, 3) : []
             });
+            setError(null);
         } catch (err) {
             console.error("Dashboard fetch error:", err);
-            setError("Failed to load dashboard data.");
+            // setError("Failed to load dashboard data. Please try again.");
         } finally {
             setIsLoading(false);
         }
@@ -161,7 +242,7 @@ const DashboardPage = () => {
             setActionLoading(true);
             const endpoint = type === "check-in" ? "/my-attendance/check-in" : "/my-attendance/check-out";
             await api.post(endpoint);
-            // Refresh data to show updated status
+            // Refresh data
             await fetchDashboardData();
         } catch (err) {
             alert(err?.response?.data?.message || `Failed to ${type}`);
@@ -170,300 +251,42 @@ const DashboardPage = () => {
         }
     };
 
-    // Derived State for Leaves Summary
-    const leaveStats = {
-        pending: data.leaves.filter(l => l.status === "Pending").length,
-        approved: data.leaves.filter(l => l.status === "Approved").length,
-        rejected: data.leaves.filter(l => l.status === "Rejected").length
-    };
-
     if (isLoading) {
         return (
-            <div style={{ padding: "3rem", textAlign: "center", color: "#6b7280" }}>
-                <div style={{ fontSize: "1.2rem", fontWeight: "500" }}>Loading Dashboard...</div>
+            <div className="flex justify-center items-center h-screen text-gray-500 dark:text-gray-400 bg-gray-50 dark:bg-gray-900 transition-colors">
+                <div className="text-xl font-medium animate-pulse">Loading Dashboard...</div>
             </div>
         );
     }
 
-    if (error) {
+    if (!data.profile && error) {
         return (
-            <div style={{ padding: "3rem", textAlign: "center", color: "#ef4444" }}>
-                <div>{error}</div>
-                <Button onClick={fetchDashboardData} style={{ marginTop: "1rem" }}>Retry</Button>
+            <div className="flex flex-col justify-center items-center h-screen text-red-500 dark:text-red-400 bg-gray-50 dark:bg-gray-900 transition-colors">
+                <div className="mb-4">{error}</div>
+                <button onClick={fetchDashboardData} className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors">Retry</button>
             </div>
         );
     }
-
-    const { profile, attendance, weeklyStats, monthlyStats, announcements, leaves, payslips } = data;
-    const isCheckedIn = !!attendance?.check_in;
-    const isCheckedOut = !!attendance?.check_out;
 
     return (
-        <div style={{ padding: "1.5rem", maxWidth: "1400px", margin: "0 auto" }}>
+        <div className="p-8 max-w-[1400px] mx-auto bg-gray-50 dark:bg-gray-900 min-h-screen transition-colors duration-200">
+            <DashboardHeader profile={data.profile} />
 
-            {/* 1. Welcome Card & 2. Attendance Card */}
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(350px, 1fr))", gap: "1.5rem", marginBottom: "1.5rem" }}>
+            {/* Attendance Section */}
+            <AttendanceActionCard
+                attendance={data.attendance}
+                onCheckIn={() => handleAttendanceAction("check-in")}
+                onCheckOut={() => handleAttendanceAction("check-out")}
+                loading={actionLoading}
+            />
 
-                {/* Welcome Card */}
-                <Card style={{ background: "linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)", color: "white", border: "none" }}>
-                    <h2 style={{ fontSize: "24px", fontWeight: "700", marginBottom: "0.5rem" }}>
-                        Hello, {profile?.name || "Employee"}!
-                    </h2>
-                    <div style={{ opacity: 0.9, fontSize: "15px", lineHeight: "1.6" }}>
-                        <p>Department: <strong>{profile?.employee?.department?.name || "N/A"}</strong></p>
-                        <p>Designation: <strong>{profile?.employee?.designation?.name || profile?.employee?.designation || "N/A"}</strong></p>
-                    </div>
-                    <div style={{ marginTop: "1.5rem", fontSize: "14px", opacity: 0.8 }}>
-                        {new Date().toLocaleDateString("en-US", { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
-                    </div>
-                </Card>
-
-                {/* Attendance Card */}
-                <Card>
-                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
-                        <div>
-                            <SectionTitle>Today's Attendance</SectionTitle>
-                            <div style={{ fontSize: "14px", color: "#6b7280", marginBottom: "1rem" }}>
-                                Status: <Badge variant={attendance?.status || "Absent"}>{attendance?.status || "Not Marked"}</Badge>
-                            </div>
-                        </div>
-                        <div style={{ textAlign: "right" }}>
-                            <div style={{ fontSize: "13px", color: "#6b7280" }}>Check In</div>
-                            <div style={{ fontSize: "16px", fontWeight: "600", marginBottom: "0.5rem" }}>{formatTime(attendance?.check_in, attendance?.date)}</div>
-                            <div style={{ fontSize: "13px", color: "#6b7280" }}>Check Out</div>
-                            <div style={{ fontSize: "16px", fontWeight: "600", marginBottom: "0.5rem" }}>{formatTime(attendance?.check_out, attendance?.date)}</div>
-                            <div style={{ fontSize: "13px", color: "#6b7280" }}>Hours Worked</div>
-                            <div style={{ fontSize: "16px", fontWeight: "600" }}>{calculateHours(attendance?.check_in, attendance?.check_out)}</div>
-                        </div>
-                    </div>
-
-                    <div style={{ marginTop: "1.5rem" }}>
-                        {!isCheckedIn ? (
-                            <Button
-                                onClick={() => handleAttendanceAction("check-in")}
-                                disabled={actionLoading}
-                                variant="success"
-                                style={{ width: "100%" }}
-                            >
-                                {actionLoading ? "Processing..." : "Check In Now"}
-                            </Button>
-                        ) : !isCheckedOut ? (
-                            <Button
-                                onClick={() => handleAttendanceAction("check-out")}
-                                disabled={actionLoading}
-                                variant="danger"
-                                style={{ width: "100%" }}
-                            >
-                                {actionLoading ? "Processing..." : "Check Out Now"}
-                            </Button>
-                        ) : (
-                            <div style={{ textAlign: "center", padding: "10px", backgroundColor: "#f3f4f6", borderRadius: "8px", color: "#374151", fontSize: "14px", fontWeight: "500" }}>
-                                Shift Completed
-                            </div>
-                        )}
-                    </div>
-                </Card>
-
-                {/* Weekly Summary Card */}
-                <Card>
-                    <SectionTitle>Weekly Hours</SectionTitle>
-                    <div style={{ fontSize: "13px", color: "#6b7280", marginBottom: "1rem" }}>Mon – Sun</div>
-
-                    <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
-                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                            <span style={{ color: "#4b5563", fontSize: "14px" }}>Total Hours</span>
-                            <span style={{ fontSize: "18px", fontWeight: "700", color: "#111827" }}>
-                                {weeklyStats?.formatted || "0h 0m"}
-                            </span>
-                        </div>
-
-                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                            <span style={{ color: "#4b5563", fontSize: "14px" }}>Days Worked</span>
-                            <span style={{ fontSize: "14px", fontWeight: "600", color: "#374151" }}>
-                                {weeklyStats?.daysWorked || 0} of 7
-                            </span>
-                        </div>
-
-                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                            <span style={{ color: "#4b5563", fontSize: "14px" }}>Daily Average</span>
-                            <span style={{ fontSize: "14px", fontWeight: "600", color: "#374151" }}>
-                                {weeklyStats?.average || "0h 0m"}
-                            </span>
-                        </div>
-                    </div>
-
-                    <div style={{ marginTop: "1.5rem", padding: "0.75rem", backgroundColor: "#f9fafb", borderRadius: "8px", fontSize: "12px", color: "#6b7280", textAlign: "center" }}>
-                        Keep up the good work!
-                    </div>
-                </Card>
-
-                {/* Monthly Summary Card */}
-                <Card>
-                    <SectionTitle>Monthly Hours</SectionTitle>
-                    <div style={{ fontSize: "13px", color: "#6b7280", marginBottom: "1rem" }}>
-                        {new Date().toLocaleString('default', { month: 'long', year: 'numeric' })}
-                    </div>
-
-                    <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
-                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                            <span style={{ color: "#4b5563", fontSize: "14px" }}>Total Hours</span>
-                            <span style={{ fontSize: "18px", fontWeight: "700", color: "#111827" }}>
-                                {monthlyStats?.formatted || "0h 0m"}
-                            </span>
-                        </div>
-
-                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                            <span style={{ color: "#4b5563", fontSize: "14px" }}>Working Days</span>
-                            <span style={{ fontSize: "14px", fontWeight: "600", color: "#374151" }}>
-                                {monthlyStats?.daysWorked || 0}
-                            </span>
-                        </div>
-
-                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                            <span style={{ color: "#4b5563", fontSize: "14px" }}>Daily Average</span>
-                            <span style={{ fontSize: "14px", fontWeight: "600", color: "#374151" }}>
-                                {monthlyStats?.average || "0h 0m"}
-                            </span>
-                        </div>
-                    </div>
-
-                    <div style={{ marginTop: "1.5rem", padding: "0.75rem", backgroundColor: "#f9fafb", borderRadius: "8px", fontSize: "12px", color: "#6b7280", textAlign: "center" }}>
-                        {monthlyStats?.daysWorked > 0 ? "Great progress this month!" : "No attendance recorded yet."}
-                    </div>
-                </Card>
-            </div>
-
-            {/* 3. Leaves Summary & 5. Payslips */}
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))", gap: "1.5rem", marginBottom: "1.5rem" }}>
-
-                {/* Leaves Summary */}
-                <Card>
-                    <SectionTitle>Leaves Overview</SectionTitle>
-                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "1rem", textAlign: "center" }}>
-                        <div style={{ padding: "1rem", backgroundColor: "#fff7ed", borderRadius: "8px", border: "1px solid #ffedd5" }}>
-                            <div style={{ fontSize: "24px", fontWeight: "700", color: "#9a3412" }}>{leaveStats.pending}</div>
-                            <div style={{ fontSize: "13px", color: "#9a3412", fontWeight: "500" }}>Pending</div>
-                        </div>
-                        <div style={{ padding: "1rem", backgroundColor: "#f0fdf4", borderRadius: "8px", border: "1px solid #dcfce7" }}>
-                            <div style={{ fontSize: "24px", fontWeight: "700", color: "#166534" }}>{leaveStats.approved}</div>
-                            <div style={{ fontSize: "13px", color: "#166534", fontWeight: "500" }}>Approved</div>
-                        </div>
-                        <div style={{ padding: "1rem", backgroundColor: "#fef2f2", borderRadius: "8px", border: "1px solid #fee2e2" }}>
-                            <div style={{ fontSize: "24px", fontWeight: "700", color: "#991b1b" }}>{leaveStats.rejected}</div>
-                            <div style={{ fontSize: "13px", color: "#991b1b", fontWeight: "500" }}>Rejected</div>
-                        </div>
-                    </div>
-                    <div style={{ marginTop: "1rem", textAlign: "center" }}>
-                        <span
-                            onClick={() => navigate("/leaves")}
-                            style={{ fontSize: "14px", color: "#3b82f6", cursor: "pointer", fontWeight: "500" }}
-                        >
-                            View All Leaves →
-                        </span>
-                    </div>
-                </Card>
-
-                {/* Latest Payslips */}
-                <Card>
-                    <SectionTitle>Recent Payslips</SectionTitle>
-                    {payslips.length > 0 ? (
-                        <div style={{ display: "flex", flexDirection: "column", gap: "0.75rem" }}>
-                            {payslips.map(payslip => (
-                                <div key={payslip.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "0.75rem", backgroundColor: "#f9fafb", borderRadius: "8px" }}>
-                                    <div>
-                                        <div style={{ fontWeight: "600", fontSize: "14px", color: "#374151" }}>
-                                            {new Date(0, payslip.month - 1).toLocaleString('default', { month: 'long' })} {payslip.year}
-                                        </div>
-                                        <div style={{ fontSize: "12px", color: "#6b7280" }}>Generated: {new Date(payslip.created_at).toLocaleDateString()}</div>
-                                    </div>
-                                    <div style={{ fontWeight: "700", color: "#059669" }}>
-                                        ${Number(payslip.net_pay).toLocaleString()}
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
-                    ) : (
-                        <div style={{ color: "#6b7280", fontSize: "14px", textAlign: "center", padding: "1rem" }}>No payslips found</div>
-                    )}
-                    <div style={{ marginTop: "1rem", textAlign: "center" }}>
-                        <span
-                            onClick={() => navigate("/payslips")}
-                            style={{ fontSize: "14px", color: "#3b82f6", cursor: "pointer", fontWeight: "500" }}
-                        >
-                            View All Payslips →
-                        </span>
-                    </div>
-                </Card>
-            </div>
-
-            {/* 4. Latest Leaves Table & 6. Announcements */}
-            <div style={{ display: "grid", gridTemplateColumns: "2fr 1fr", gap: "1.5rem", alignItems: "start" }}>
-
-                {/* Latest Leaves Table */}
-                <Card>
-                    <SectionTitle>Recent Leave Applications</SectionTitle>
-                    <div style={{ overflowX: "auto" }}>
-                        <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "14px" }}>
-                            <thead>
-                                <tr style={{ borderBottom: "2px solid #f3f4f6", textAlign: "left" }}>
-                                    <th style={{ padding: "0.75rem", color: "#6b7280", fontWeight: "600" }}>Type</th>
-                                    <th style={{ padding: "0.75rem", color: "#6b7280", fontWeight: "600" }}>Dates</th>
-                                    <th style={{ padding: "0.75rem", color: "#6b7280", fontWeight: "600" }}>Status</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {leaves.length > 0 ? (
-                                    leaves.map(leave => (
-                                        <tr key={leave.id} style={{ borderBottom: "1px solid #f3f4f6" }}>
-                                            <td style={{ padding: "0.75rem", fontWeight: "500", color: "#374151" }}>{leave.leave_type?.name || "Leave"}</td>
-                                            <td style={{ padding: "0.75rem", color: "#6b7280" }}>
-                                                {new Date(leave.start_date).toLocaleDateString()} - {new Date(leave.end_date).toLocaleDateString()}
-                                            </td>
-                                            <td style={{ padding: "0.75rem" }}>
-                                                <Badge variant={leave.status}>{leave.status}</Badge>
-                                            </td>
-                                        </tr>
-                                    ))
-                                ) : (
-                                    <tr>
-                                        <td colSpan="3" style={{ padding: "1.5rem", textAlign: "center", color: "#6b7280" }}>No recent leave applications</td>
-                                    </tr>
-                                )}
-                            </tbody>
-                        </table>
-                    </div>
-                </Card>
-
-                {/* Latest Announcements */}
-                <Card>
-                    <SectionTitle>Announcements</SectionTitle>
-                    {announcements.length > 0 ? (
-                        <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
-                            {announcements.map(announcement => (
-                                <div key={announcement.id} style={{ paddingBottom: "1rem", borderBottom: "1px solid #f3f4f6" }}>
-                                    <div style={{ fontWeight: "600", fontSize: "14px", color: "#1f2937", marginBottom: "0.25rem" }}>
-                                        {announcement.title}
-                                    </div>
-                                    <div style={{ fontSize: "12px", color: "#6b7280" }}>
-                                        {new Date(announcement.created_at).toLocaleDateString()}
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
-                    ) : (
-                        <div style={{ color: "#6b7280", fontSize: "14px", textAlign: "center", padding: "1rem" }}>No announcements</div>
-                    )}
-                    <div style={{ marginTop: "1rem", textAlign: "center" }}>
-                        <span
-                            onClick={() => navigate("/announcements")}
-                            style={{ fontSize: "14px", color: "#3b82f6", cursor: "pointer", fontWeight: "500" }}
-                        >
-                            View All →
-                        </span>
-                    </div>
-                </Card>
-            </div>
-
+            {/* Recent Activity */}
+            <RecentActivitySection
+                leaves={data.leaves}
+                announcements={data.announcements}
+                payslips={data.payslips}
+                navigate={navigate}
+            />
         </div>
     );
 };

@@ -17,6 +17,13 @@ class Payslip extends Model
         'total_deductions',
         'net_pay',
         'generated_on',
+        'basic',
+        'hra',
+        'pf',
+        'esic',
+        'ptax',
+        'gross_salary',
+        'days_worked',
     ];
 
     public function employee()

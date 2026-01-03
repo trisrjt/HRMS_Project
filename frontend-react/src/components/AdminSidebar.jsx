@@ -1,20 +1,59 @@
-import { NavLink, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
+import ToggleSidebar from "./ui/ToggleSidebar";
 
 const AdminSidebar = () => {
-    const { logout } = useAuth();
+    const { user, logout } = useAuth();
     const navigate = useNavigate();
 
-    const menuItems = [
+    const hasPermission = (permission) => {
+        // SuperAdmin (Role 1) has all permissions
+        if (user?.role_id === 1) return true;
+        // Admin (Role 2) has basic access, check specific flags
+        return user?.role_id === 2 || user?.permissions?.includes(permission);
+    };
+
+    // Base Menu Items (Matching HR Sidebar)
+    let menuItems = [
         { key: "dashboard", label: "Dashboard", to: "/admin/dashboard" },
         { key: "employees", label: "Employees", to: "/admin/employees" },
         { key: "departments", label: "Departments", to: "/admin/departments" },
+        { key: "designations", label: "Designations", to: "/admin/designations" },
         { key: "attendance", label: "Attendance", to: "/admin/attendance" },
         { key: "leaves", label: "Leaves", to: "/admin/leaves" },
-        { key: "payslips", label: "Payslips", to: "/admin/payslips" },
+        { key: "holidays", label: "Holidays", to: "/admin/holidays" },
+        { key: "policies", label: "Leave Policies", to: "/admin/leave-policies" },
         { key: "recruitment", label: "Recruitment", to: "/admin/recruitment" },
-        { key: "settings", label: "Settings", to: "/admin/settings" },
+        { key: "announcements", label: "Announcements", to: "/admin/announcements" },
+        // Explicitly EXCLUDING System Settings and User Management
     ];
+
+    // Permission-based Additions (Salary & Payslips)
+    // Admin (Role 2) or anyone with permission can access
+    if (user?.role_id === 2 || hasPermission("can_manage_salaries") || hasPermission("can_view_salaries")) {
+        menuItems.push({ key: "salaries", label: "Salaries", to: "/admin/salaries" });
+        // Payroll Settings hidden for Admin usually, but if needed:
+        // if (hasPermission("can_manage_salaries")) {
+        //    menuItems.push({ key: "payroll-settings", label: "Payroll Settings", to: "/admin/payroll-settings" });
+        // }
+    }
+
+    if (user?.role_id === 2 || hasPermission("can_manage_payslips")) {
+        menuItems.push({ key: "payslips", label: "Payslips", to: "/admin/payslips" });
+    }
+
+    // Documents (was in old Admin list, keeping for parity if HR has it, but HR list didn't show it explicitly above. 
+    // Assuming HR might have it or user wants exact match involving "others all can do". 
+    // However, user said "same sidebar like hr", and HR source didn't show "Documents". 
+    // Creating "Documents" route mapping in AdminSidebar just in case, but sticking to HR list primarily.
+    // user said "others all can do", implying full feature set except restricted ones.
+    // I will add Documents if it exists in SuperAdmin to be safe, or just stick to HR parity.)
+    // HR Sidebar source above: Dashboard, Employees, Designations, Attendance, Leaves, Holidays, Policies, Recruitment, Announcements, Salaries, Payslips, Reports.
+    // Documents is NOT in HR Sidebar source. So I will omit it to be "same like hr".
+
+    if (hasPermission("view_reports")) {
+        menuItems.push({ key: "reports", label: "Reports", to: "/admin/reports" });
+    }
 
     const handleLogout = () => {
         logout();
@@ -22,65 +61,12 @@ const AdminSidebar = () => {
     };
 
     return (
-        <aside
-            style={{
-                width: "240px",
-                minHeight: "100vh",
-                backgroundColor: "white",
-                borderRight: "1px solid #e5e7eb",
-                display: "flex",
-                flexDirection: "column",
-                boxShadow: "2px 0 4px rgba(0,0,0,0.05)",
-            }}
-        >
-            <div style={{ padding: "1.5rem 1rem", borderBottom: "1px solid #e5e7eb", marginBottom: "1rem" }}>
-                <h2 style={{ fontSize: "20px", fontWeight: "700", color: "#1f2937" }}>HRMS</h2>
-                <p style={{ fontSize: "12px", color: "#6b7280", marginTop: "0.25rem" }}>Admin Portal</p>
-            </div>
-
-            <nav style={{ flex: 1, display: "flex", flexDirection: "column", gap: "0.25rem", padding: "0 0.75rem" }}>
-                {menuItems.map((item) => (
-                    <NavLink
-                        key={item.key}
-                        to={item.to}
-                        style={({ isActive }) => ({
-                            padding: "0.75rem 1rem",
-                            borderRadius: "6px",
-                            textDecoration: "none",
-                            fontSize: "14px",
-                            fontWeight: isActive ? "600" : "500",
-                            color: isActive ? "#3b82f6" : "#4b5563",
-                            backgroundColor: isActive ? "#eff6ff" : "transparent",
-                            transition: "all 0.2s",
-                            display: "flex",
-                            alignItems: "center",
-                        })}
-                    >
-                        {item.label}
-                    </NavLink>
-                ))}
-            </nav>
-
-            <div style={{ padding: "1rem 0.75rem", borderTop: "1px solid #e5e7eb" }}>
-                <button
-                    onClick={handleLogout}
-                    style={{
-                        width: "100%",
-                        padding: "0.75rem 1rem",
-                        fontSize: "14px",
-                        fontWeight: "500",
-                        color: "#dc2626",
-                        backgroundColor: "transparent",
-                        border: "1px solid #dc2626",
-                        borderRadius: "6px",
-                        cursor: "pointer",
-                        transition: "all 0.2s",
-                    }}
-                >
-                    Logout
-                </button>
-            </div>
-        </aside>
+        <ToggleSidebar
+            title="HRMS"
+            subtitle="Admin Portal"
+            menuItems={menuItems}
+            onLogout={handleLogout}
+        />
     );
 };
 
