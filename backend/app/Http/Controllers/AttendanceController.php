@@ -140,7 +140,7 @@ class AttendanceController extends Controller
     // =====================================
     // EMPLOYEE CHECK-IN
     // =====================================
-    public function employeeCheckIn()
+    public function employeeCheckIn(Request $request)
     {
         $user = auth()->user();
 
@@ -157,11 +157,26 @@ class AttendanceController extends Controller
             return response()->json(['message' => 'Already checked in today'], 409);
         }
 
+        // Validate location and device data
+        $validated = $request->validate([
+            'latitude' => 'nullable|numeric|between:-90,90',
+            'longitude' => 'nullable|numeric|between:-180,180',
+            'device_id' => 'nullable|string|max:255',
+            'device_type' => 'nullable|string|max:255',
+            'browser' => 'nullable|string|max:255',
+        ]);
+
         $attendance = Attendance::create([
             'employee_id' => $employee->id,
             'date'        => $today,
             'check_in'    => now()->format('H:i:s'),
             'status'      => 'Present',
+            'check_in_latitude' => $validated['latitude'] ?? null,
+            'check_in_longitude' => $validated['longitude'] ?? null,
+            'device_id' => $validated['device_id'] ?? null,
+            'device_type' => $validated['device_type'] ?? null,
+            'browser' => $validated['browser'] ?? null,
+            'ip_address' => $request->ip(),
         ]);
 
         // Notify HR
@@ -182,7 +197,7 @@ class AttendanceController extends Controller
     // =====================================
     // EMPLOYEE CHECK-OUT
     // =====================================
-    public function employeeCheckOut()
+    public function employeeCheckOut(Request $request)
     {
         $user = auth()->user();
 
@@ -202,8 +217,23 @@ class AttendanceController extends Controller
             return response()->json(['message' => 'Check-in missing'], 400);
         }
 
+        // Validate location and device data
+        $validated = $request->validate([
+            'latitude' => 'nullable|numeric|between:-90,90',
+            'longitude' => 'nullable|numeric|between:-180,180',
+            'device_id' => 'nullable|string|max:255',
+            'device_type' => 'nullable|string|max:255',
+            'browser' => 'nullable|string|max:255',
+        ]);
+
         $attendance->update([
             'check_out' => now()->format('H:i:s'),
+            'check_out_latitude' => $validated['latitude'] ?? null,
+            'check_out_longitude' => $validated['longitude'] ?? null,
+            'device_id' => $validated['device_id'] ?? $attendance->device_id,
+            'device_type' => $validated['device_type'] ?? $attendance->device_type,
+            'browser' => $validated['browser'] ?? $attendance->browser,
+            'ip_address' => $request->ip(),
         ]);
 
         // Notify HR

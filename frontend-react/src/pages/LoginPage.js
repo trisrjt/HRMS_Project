@@ -76,8 +76,13 @@ const LoginPage = () => {
         setError("Invalid response from server.");
       }
     } catch (err) {
-      // Show "Invalid email or password" on any error
-      setError("Invalid email or password.");
+      // Log the actual error for debugging
+      console.error("Login error:", err);
+      console.error("Error response:", err?.response);
+      
+      // Show specific error message if available
+      const errorMessage = err?.response?.data?.message || "Invalid email or password.";
+      setError(errorMessage);
     } finally {
       setIsLoading(false);
     }

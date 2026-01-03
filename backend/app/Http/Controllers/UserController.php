@@ -13,8 +13,8 @@ class UserController extends Controller
     {
         $user = $request->user();
         
-        // Load relationships
-        $user->load(['employee.department', 'employee.designation', 'role']);
+        // Load relationships - avoid loading designation if it doesn't exist
+        $user->load(['employee.department', 'role']);
 
         // Format response
         $permissions = [];
@@ -41,7 +41,7 @@ class UserController extends Controller
             'permissions' => $permissions,
             'employee' => $user->employee ? [
                 'employee_code' => $user->employee->employee_code,
-                'designation' => $user->employee->designation ? $user->employee->designation->name : null,
+                'designation' => $user->employee->designation ?? null, // String field, not relationship
                 'department' => $user->employee->department ? $user->employee->department->name : null,
                 'phone' => $user->employee->phone,
                 'address' => $user->employee->address,
