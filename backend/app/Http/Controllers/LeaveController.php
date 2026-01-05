@@ -6,17 +6,20 @@ use Illuminate\Http\Request;
 use App\Models\Leave;
 use App\Models\LeaveBalance;
 use App\Services\NotificationService;
-use App\Services\HolidayService; // Import
+use App\Services\HolidayService;
+use App\Services\LeavePolicyService;
 
 class LeaveController extends Controller
 {
     protected $notifications;
-    protected $holidayService; // Add property
+    protected $holidayService;
+    protected $leavePolicyService;
 
-    public function __construct(NotificationService $notifications, HolidayService $holidayService)
+    public function __construct(NotificationService $notifications, HolidayService $holidayService, LeavePolicyService $leavePolicyService)
     {
         $this->notifications = $notifications;
-        $this->holidayService = $holidayService; // Inject
+        $this->holidayService = $holidayService;
+        $this->leavePolicyService = $leavePolicyService;
     }
     // ======================================
     // GET ALL LEAVES (HR, Admin, SuperAdmin)
@@ -593,6 +596,32 @@ class LeaveController extends Controller
         $balances = LeaveBalance::with('leaveType')
             ->where('employee_id', $employee->id)
             ->get();
+        
+        // Self-Healing: Check for missing policy or category mismatch (e.g. Permanent employee with Probation policy)
+        $employee->load('leavePolicy');
+        $needsUpdate = false;
+
+        // Case 1: No Policy assigned, but has category
+        if (!$employee->leave_policy_id && $employee->joining_category) {
+            $needsUpdate = true;
+        }
+        // Case 2: Policy assigned, but mismatch category
+        elseif ($employee->leave_policy_id && $employee->leavePolicy && $employee->leavePolicy->joining_category !== $employee->joining_category) {
+             $needsUpdate = true;
+        }
+        // Case 3: No balances (backup check)
+        elseif ($balances->isEmpty() && $employee->joining_category) {
+             $needsUpdate = true;
+        }
+
+        if ($needsUpdate) {
+            $this->leavePolicyService->assignPolicyToEmployee($employee);
+            
+            // Refresh balances
+            $balances = LeaveBalance::with('leaveType')
+                ->where('employee_id', $employee->id)
+                ->get();
+        }
         
         return response()->json($balances);
     }

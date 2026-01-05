@@ -89,6 +89,7 @@ const AdminAttendancePage = () => {
                     <input
                         id="search_employee"
                         name="search"
+                        aria-label="Search Employee"
                         autoComplete="off"
                         type="text"
                         placeholder="Search employee..."
@@ -100,6 +101,7 @@ const AdminAttendancePage = () => {
                     <select
                         id="filter_department"
                         name="department_id"
+                        aria-label="Filter by Department"
                         value={departmentId}
                         onChange={(e) => setDepartmentId(e.target.value)}
                         className="p-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white outline-none focus:ring-2 focus:ring-blue-500"
@@ -111,6 +113,7 @@ const AdminAttendancePage = () => {
                     <select
                         id="filter_status"
                         name="status"
+                        aria-label="Filter by Status"
                         value={statusFilter}
                         onChange={(e) => setStatusFilter(e.target.value)}
                         className="p-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white outline-none focus:ring-2 focus:ring-blue-500"
@@ -122,6 +125,7 @@ const AdminAttendancePage = () => {
                     <input
                         id="month_filter"
                         name="month"
+                        aria-label="Filter by Month"
                         type="month"
                         value={monthFilter}
                         onChange={(e) => setMonthFilter(e.target.value)}

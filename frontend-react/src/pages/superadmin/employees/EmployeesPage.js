@@ -65,9 +65,12 @@ const EmployeesPage = () => {
         address: "",
         status: "Active",
         reports_to: "",
+        joining_category: "New Joinee",
         pf_opt_out: false,
         esic_opt_out: false,
-        ptax_opt_out: false
+        ptax_opt_out: false,
+        aadhar_file: null,
+        pan_file: null
     });
     const [formErrors, setFormErrors] = useState({});
     const [isSubmitting, setIsSubmitting] = useState(false);
@@ -221,9 +224,12 @@ const EmployeesPage = () => {
             address: "",
             status: "Active",
             reports_to: "",
+            joining_category: "New Joinee",
             pf_opt_out: false,
             esic_opt_out: false,
-            ptax_opt_out: false
+            ptax_opt_out: false,
+            aadhar_file: null,
+            pan_file: null
         });
         setFormErrors({});
         setIsAddModalOpen(true);
@@ -254,6 +260,7 @@ const EmployeesPage = () => {
             address: emp.address || "",
             status: emp.user?.is_active ? "Active" : "Inactive",
             reports_to: emp.reports_to || "",
+            joining_category: emp.joining_category || "New Joinee",
             pf_opt_out: Boolean(emp.pf_opt_out),
             esic_opt_out: Boolean(emp.esic_opt_out),
             ptax_opt_out: Boolean(emp.ptax_opt_out)
@@ -694,6 +701,14 @@ const EmployeesPage = () => {
                                     {formErrors.department_id && <p className="text-xs text-red-600 dark:text-red-400">{formErrors.department_id}</p>}
                                 </div>
                                 <div className="flex flex-col gap-1">
+                                    <label htmlFor="add_joining_category" className="text-sm font-medium text-gray-700 dark:text-gray-300">Joining Category *</label>
+                                    <select id="add_joining_category" name="joining_category" value={formData.joining_category} onChange={(e) => setFormData({ ...formData, joining_category: e.target.value })} className="h-9 px-3 border border-gray-300 dark:border-gray-600 rounded-lg outline-none w-full bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 transition-colors text-sm">
+                                        <option value="New Joinee">New Joinee</option>
+                                        <option value="Intern">Intern</option>
+                                        <option value="Permanent">Permanent</option>
+                                    </select>
+                                </div>
+                                <div className="flex flex-col gap-1">
                                     <label htmlFor="add_designation" className="text-sm font-medium text-gray-700 dark:text-gray-300">Designation *</label>
                                     <input
                                         id="add_designation"
@@ -725,6 +740,15 @@ const EmployeesPage = () => {
                                     <label htmlFor="add_date_of_joining" className="text-sm font-medium text-gray-700 dark:text-gray-300">Date of Joining *</label>
                                     <input id="add_date_of_joining" name="date_of_joining" type="date" autoComplete="off" value={formData.date_of_joining} onChange={(e) => setFormData({ ...formData, date_of_joining: e.target.value })} className="h-9 px-3 border border-gray-300 dark:border-gray-600 rounded-lg outline-none w-full bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 transition-colors text-sm" />
                                     {formErrors.date_of_joining && <p className="text-xs text-red-600 dark:text-red-400">{formErrors.date_of_joining}</p>}
+                                </div>
+
+                                <div className="flex flex-col gap-1">
+                                    <label htmlFor="add_aadhar_file" className="text-sm font-medium text-gray-700 dark:text-gray-300">Aadhar File</label>
+                                    <input id="add_aadhar_file" name="aadhar_file" type="file" onChange={handleFileChange} className="border border-gray-300 dark:border-gray-600 rounded p-1.5 bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm w-full" accept=".pdf,.jpg,.jpeg,.png" />
+                                </div>
+                                <div className="flex flex-col gap-1">
+                                    <label htmlFor="add_pan_file" className="text-sm font-medium text-gray-700 dark:text-gray-300">PAN File</label>
+                                    <input id="add_pan_file" name="pan_file" type="file" onChange={handleFileChange} className="border border-gray-300 dark:border-gray-600 rounded p-1.5 bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm w-full" accept=".pdf,.jpg,.jpeg,.png" />
                                 </div>
 
                                 <div className="col-span-1 md:col-span-2 border border-gray-200 dark:border-gray-700 rounded-lg p-4 mt-2 bg-gray-50 dark:bg-gray-800/50">
@@ -982,6 +1006,14 @@ const EmployeesPage = () => {
                                         {departments.map(d => <option key={d.id} value={d.id}>{d.name}</option>)}
                                     </select>
                                     {formErrors.department_id && <p className="text-xs text-red-600 dark:text-red-400">{formErrors.department_id}</p>}
+                                </div>
+                                <div className="flex flex-col gap-1">
+                                    <label htmlFor="edit_joining_category" className="text-sm font-medium text-gray-700 dark:text-gray-300">Joining Category *</label>
+                                    <select id="edit_joining_category" name="joining_category" value={formData.joining_category} onChange={(e) => setFormData({ ...formData, joining_category: e.target.value })} className="h-9 px-3 border border-gray-300 dark:border-gray-600 rounded-lg outline-none w-full bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 transition-colors text-sm">
+                                        <option value="New Joinee">New Joinee</option>
+                                        <option value="Intern">Intern</option>
+                                        <option value="Permanent">Permanent</option>
+                                    </select>
                                 </div>
                                 <div className="flex flex-col gap-1">
                                     <label htmlFor="edit_designation" className="text-sm font-medium text-gray-700 dark:text-gray-300">Designation *</label>
@@ -1352,6 +1384,10 @@ const EmployeesPage = () => {
                                     <div>
                                         <label className="text-xs text-gray-500 dark:text-gray-400 uppercase font-semibold">Department</label>
                                         <p className="text-gray-900 dark:text-white">{selectedEmployee.department?.name}</p>
+                                    </div>
+                                    <div>
+                                        <label className="text-xs text-gray-500 dark:text-gray-400 uppercase font-semibold">Joining Category</label>
+                                        <p className="text-gray-900 dark:text-white">{selectedEmployee.joining_category || "N/A"}</p>
                                     </div>
                                     <div>
                                         <label className="text-xs text-gray-500 dark:text-gray-400 uppercase font-semibold">Joined</label>

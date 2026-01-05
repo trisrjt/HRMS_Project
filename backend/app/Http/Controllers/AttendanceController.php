@@ -312,6 +312,8 @@ class AttendanceController extends Controller
             'current_page' => $employees->currentPage(),
             'last_page' => $employees->lastPage(),
             'total' => $employees->total(),
+            'from' => $employees->firstItem(),
+            'to' => $employees->lastItem(),
         ]);
     }
     // =====================================
@@ -363,12 +365,19 @@ class AttendanceController extends Controller
 
         $employees = $employeesQuery->paginate(15);
 
-        // Process each employee
-        $summary = $employees->getCollection()->map(function ($employee) use ($month) {
+        // Determine Date Range
+        if ($request->has('start_date') && $request->has('end_date')) {
+            $startDate = \Carbon\Carbon::parse($request->start_date)->startOfDay();
+            $endDate = \Carbon\Carbon::parse($request->end_date)->endOfDay();
+        } else {
+            $month = $request->input('month', now()->format('Y-m'));
             $startDate = \Carbon\Carbon::parse($month)->startOfMonth();
             $endDate = \Carbon\Carbon::parse($month)->endOfMonth();
+        }
 
-            // Fetch attendance for this month
+        // Process each employee
+        $summary = $employees->getCollection()->map(function ($employee) use ($startDate, $endDate) {
+            // Fetch attendance for the calculated range
             $records = Attendance::where('employee_id', $employee->id)
                 ->whereBetween('date', [$startDate, $endDate])
                 ->get();
@@ -400,7 +409,8 @@ class AttendanceController extends Controller
                 if ($record->check_in && $record->check_out) {
                     $in = \Carbon\Carbon::parse($record->check_in);
                     $out = \Carbon\Carbon::parse($record->check_out);
-                    $totalHours += $out->diffInHours($in);
+                    // Use minutes for precision
+                    $totalHours += round($out->diffInMinutes($in) / 60, 2);
                 } elseif ($record->check_in && !$record->check_out) {
                     $missingPunches++;
                 }
@@ -423,6 +433,8 @@ class AttendanceController extends Controller
             'current_page' => $employees->currentPage(),
             'last_page' => $employees->lastPage(),
             'total' => $employees->total(),
+            'from' => $employees->firstItem(),
+            'to' => $employees->lastItem(),
         ]);
     }
 
@@ -495,7 +507,8 @@ class AttendanceController extends Controller
                 if ($record->check_in && $record->check_out) {
                     $in = \Carbon\Carbon::parse($record->check_in);
                     $out = \Carbon\Carbon::parse($record->check_out);
-                    $totalHours = $out->diffInHours($in);
+                    // Use minutes for precision
+                    $totalHours = round($out->diffInMinutes($in) / 60, 2);
                 }
 
                 $fullHistory[] = [

@@ -14,7 +14,7 @@ use App\Http\Controllers\PayslipController;
 use App\Http\Controllers\DepartmentController;
 use App\Http\Controllers\DesignationController;
 use App\Http\Controllers\AnnouncementController;
-use App\Http\Controllers\DocumentController;
+
 use App\Http\Controllers\RecruitmentController;
 use App\Http\Controllers\PerformanceReviewController;
 use App\Http\Controllers\SettingController;
@@ -243,12 +243,7 @@ Route::middleware('role:4')->group(function () {
     Route::post('announcements/{id}/track-view', [AnnouncementController::class, 'trackView']);
     Route::apiResource('announcements', AnnouncementController::class);
 
-    // Documents
-    Route::get('/documents', [DocumentController::class, 'index']);
-    Route::post('/documents', [DocumentController::class, 'store']);
-    Route::get('/documents/{id}', [DocumentController::class, 'show']);
-    Route::get('/documents/{id}/download', [DocumentController::class, 'download']);
-    Route::delete('/documents/{id}', [DocumentController::class, 'destroy']);
+
 
     // Recruitment
     Route::apiResource('recruitments', RecruitmentController::class);
@@ -344,8 +339,13 @@ Route::middleware(['auth:sanctum'])->group(function () {
         Route::delete('/holidays/{id}', [App\Http\Controllers\HolidayController::class, 'destroy']);
 
         // Leave Policies
+        // Leave Policies
+        Route::get('/leave-types', [App\Http\Controllers\LeavePolicyController::class, 'getLeaveTypes']);
         Route::get('/leave-policies', [App\Http\Controllers\LeavePolicyController::class, 'index']);
+        Route::post('/leave-policies', [App\Http\Controllers\LeavePolicyController::class, 'store']);
         Route::put('/leave-policies/{id}', [App\Http\Controllers\LeavePolicyController::class, 'update']);
+        Route::delete('/leave-policies/{id}', [App\Http\Controllers\LeavePolicyController::class, 'destroy']);
+        Route::post('/leave-policies/{id}/recalculate', [App\Http\Controllers\LeavePolicyController::class, 'recalculate']);
     });
     
     // Payroll Policies (SuperAdmin/Admin + HR with manage permission)
@@ -353,4 +353,13 @@ Route::middleware(['auth:sanctum'])->group(function () {
         // GET /payroll-policy handled by SalaryController (Unified)
         Route::middleware('permission:can_manage_salaries')->post('/payroll-policy', [App\Http\Controllers\PayrollPolicyController::class, 'update']);
     });
+    
+    // ======================================
+    // EMPLOYEE DOCUMENTS (Unified)
+    // ======================================
+    Route::get('/employee-documents', [App\Http\Controllers\EmployeeDocumentController::class, 'index']);
+    Route::post('/employee-documents', [App\Http\Controllers\EmployeeDocumentController::class, 'store']);
+    Route::get('/employee-documents/{id}/download', [App\Http\Controllers\EmployeeDocumentController::class, 'download']);
+    Route::delete('/employee-documents/{id}', [App\Http\Controllers\EmployeeDocumentController::class, 'destroy']);
+    
 });

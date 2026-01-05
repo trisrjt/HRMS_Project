@@ -11,14 +11,24 @@ const CreateUserPage = () => {
         name: "",
         email: "",
         role_id: 4, // Default to Employee
+        joining_category: "New Joinee",
         temp_password: "",
     });
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
     const [success, setSuccess] = useState(null);
 
+    const [files, setFiles] = useState({
+        aadhar_file: null,
+        pan_file: null
+    });
+
     const handleChange = (e) => {
         setFormData({ ...formData, [e.target.name]: e.target.value });
+    };
+
+    const handleFileChange = (e) => {
+        setFiles({ ...files, [e.target.name]: e.target.files[0] });
     };
 
     const handleSubmit = async (e) => {
@@ -27,8 +37,15 @@ const CreateUserPage = () => {
         setError(null);
         setSuccess(null);
 
+        const data = new FormData();
+        Object.keys(formData).forEach(key => data.append(key, formData[key]));
+        if (files.aadhar_file) data.append('aadhar_file', files.aadhar_file);
+        if (files.pan_file) data.append('pan_file', files.pan_file);
+
         try {
-            await api.post("/users", formData);
+            await api.post("/users", data, {
+                headers: { "Content-Type": "multipart/form-data" }
+            });
             setSuccess("User created successfully!");
             setTimeout(() => {
                 navigate("/superadmin/users");
@@ -101,6 +118,53 @@ const CreateUserPage = () => {
                     </select>
                 </div>
 
+                {parseInt(formData.role_id) === 4 && (
+                    <>
+                        <div className="mb-6">
+                            <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+                                Joining Category
+                            </label>
+                            <select
+                                name="joining_category"
+                                value={formData.joining_category}
+                                onChange={handleChange}
+                                className="w-full px-4 py-3 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none transition-colors"
+                            >
+                                <option value="New Joinee">New Joinee</option>
+                                <option value="Intern">Intern</option>
+                                <option value="Permanent">Permanent</option>
+                            </select>
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                            <div>
+                                <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+                                    Aadhar Card (PDF/Image)
+                                </label>
+                                <input
+                                    type="file"
+                                    name="aadhar_file"
+                                    onChange={handleFileChange}
+                                    accept=".pdf,.jpg,.jpeg,.png"
+                                    className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none transition-colors text-sm"
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+                                    PAN Card (PDF/Image)
+                                </label>
+                                <input
+                                    type="file"
+                                    name="pan_file"
+                                    onChange={handleFileChange}
+                                    accept=".pdf,.jpg,.jpeg,.png"
+                                    className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none transition-colors text-sm"
+                                />
+                            </div>
+                        </div>
+                    </>
+                )}
+
                 <div className="mb-8">
                     <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
                         Temporary Password
@@ -132,8 +196,8 @@ const CreateUserPage = () => {
                         Cancel
                     </button>
                 </div>
-            </form>
-        </div>
+            </form >
+        </div >
     );
 };
 
