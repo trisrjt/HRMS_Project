@@ -31,6 +31,8 @@ class Employee extends Model
         'ptax_opt_out',
         'joining_category',
         'leave_policy_id',
+        'payslip_access',
+        'probation_months',
     ];
 
     // Relationship: Employee → User

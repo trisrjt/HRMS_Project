@@ -20,7 +20,7 @@ const SuperAdminSidebar = () => {
         { key: "payslips", label: "Payslips", to: "/superadmin/payslips" },
         { key: "payroll-settings", label: "Payroll Settings", to: "/superadmin/payroll-settings" },
         { key: "documents", label: "Documents", to: "/superadmin/documents" },
-        //{ key: "recruitment", label: "Recruitment", to: "/superadmin/recruitment" },
+
         { key: "performance-reviews", label: "Performance Reviews", to: "/superadmin/performance-reviews" },
         { key: "announcements", label: "Announcements", to: "/superadmin/announcements" },
         { key: "settings", label: "System Settings", to: "/superadmin/settings" },

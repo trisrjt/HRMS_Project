@@ -182,7 +182,7 @@ const EmployeeDetailPanel = ({ employeeId, onReview, onClose }) => {
     const [history, setHistory] = useState([]);
     const [loading, setLoading] = useState(false);
     const { user } = useAuth();
-    const canApprove = user?.role_id === 1 || user?.role_id === 2 || user?.role_id === 3 || user?.permissions?.includes("can_approve_leaves");
+    const canApprove = user?.role_id === 1 || user?.permissions?.includes("can_approve_leaves");
 
     useEffect(() => {
         if (employeeId) {
@@ -268,9 +268,21 @@ const EmployeeDetailPanel = ({ employeeId, onReview, onClose }) => {
                                     </div>
                                 </div>
 
-                                <p className="text-sm text-gray-600 dark:text-gray-300 bg-gray-50 dark:bg-gray-800 p-2 rounded mb-3">
+                                <p className="text-sm text-gray-600 dark:text-gray-300 bg-gray-50 dark:bg-gray-800 p-2 rounded mb-2">
                                     {leave.reason}
                                 </p>
+
+                                {leave.approver && (
+                                    <div className="text-xs text-gray-500 dark:text-gray-400 mb-3 flex items-center gap-2">
+                                        <span className="font-medium">Approved by:</span>
+                                        <span className="text-gray-700 dark:text-gray-300 font-medium">{leave.approver.name}</span>
+                                        <span className="px-1.5 py-0.5 bg-gray-100 dark:bg-gray-700 rounded text-xs">
+                                            {leave.approver.role_id === 1 ? 'SuperAdmin' :
+                                                leave.approver.role_id === 2 ? 'Admin' :
+                                                    leave.approver.role_id === 3 ? 'HR' : 'Employee'}
+                                        </span>
+                                    </div>
+                                )}
 
                                 {leave.status === 'Pending' && canApprove && (
                                     <div className="flex gap-2 justify-end">

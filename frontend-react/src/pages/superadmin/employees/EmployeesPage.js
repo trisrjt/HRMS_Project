@@ -13,7 +13,7 @@ const EmployeesPage = () => {
     // User Roles & Permissions
     const isSuperAdmin = user?.role_id === 1;
     const canManage = isSuperAdmin || user?.role_id === 2 || user?.role_id === 3 || user?.permissions?.includes("can_manage_employees");
-    const canDelete = isSuperAdmin || (user?.role_id === 2 && user?.permissions?.includes("can_delete_employees")) || user?.permissions?.includes("can_delete_employees");
+    const canDelete = isSuperAdmin || user?.permissions?.includes("can_delete_employees"); // Permission-based override
     const canManageSalary = isSuperAdmin || user?.role_id === 2 || user?.permissions?.includes("can_manage_salaries");
     const canViewSalary = isSuperAdmin || user?.role_id === 2 || user?.role_id === 3 || user?.permissions?.includes("can_view_salaries") || canManageSalary;
 
@@ -363,7 +363,7 @@ const EmployeesPage = () => {
         const errors = {};
         if (!formData.name) errors.name = "Name is required";
         if (!formData.email) errors.email = "Email is required";
-        if (!formData.password && isAddModalOpen) errors.password = "Password is required"; // Only for add
+        // if (!formData.password && isAddModalOpen) errors.password = "Password is required"; // Auto-generated now
         // Department is optional in some logic, but usually required
         // if (!formData.department_id) errors.department_id = "Department is required";
 
@@ -419,9 +419,9 @@ const EmployeesPage = () => {
             fetchEmployees();
             closeModals();
 
-            // Show password modal if plain_password is returned
-            if (response.data.plain_password) {
-                setCreatedPassword(response.data.plain_password);
+            // Show password modal if plain_password or user.temp_password is returned
+            if (response.data.plain_password || response.data.user?.temp_password) {
+                setCreatedPassword(response.data.plain_password || response.data.user?.temp_password);
                 setIsPasswordModalOpen(true);
             }
         } catch (err) {
@@ -671,30 +671,18 @@ const EmployeesPage = () => {
                             <form onSubmit={handleAddSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div className="flex flex-col gap-1">
                                     <label htmlFor="add_name" className="text-sm font-medium text-gray-700 dark:text-gray-300">Name *</label>
-                                    <input id="add_name" name="name" type="text" autoComplete="name" value={formData.name} onChange={(e) => setFormData({ ...formData, name: e.target.value })} className="h-9 px-3 border border-gray-300 dark:border-gray-600 rounded-lg outline-none w-full bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 transition-colors text-sm" />
+                                    <input id="add_name" name="name" type="text" autoComplete="name" value={formData.name || ""} onChange={(e) => setFormData({ ...formData, name: e.target.value })} className="h-9 px-3 border border-gray-300 dark:border-gray-600 rounded-lg outline-none w-full bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 transition-colors text-sm" />
                                     {formErrors.name && <p className="text-xs text-red-600 dark:text-red-400">{formErrors.name}</p>}
                                 </div>
                                 <div className="flex flex-col gap-1">
                                     <label htmlFor="add_email" className="text-sm font-medium text-gray-700 dark:text-gray-300">Email *</label>
-                                    <input id="add_email" name="email" type="email" autoComplete="off" value={formData.email} onChange={(e) => setFormData({ ...formData, email: e.target.value })} className="h-9 px-3 border border-gray-300 dark:border-gray-600 rounded-lg outline-none w-full bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 transition-colors text-sm" />
+                                    <input id="add_email" name="email" type="email" autoComplete="off" value={formData.email || ""} onChange={(e) => setFormData({ ...formData, email: e.target.value })} className="h-9 px-3 border border-gray-300 dark:border-gray-600 rounded-lg outline-none w-full bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 transition-colors text-sm" />
                                     {formErrors.email && <p className="text-xs text-red-600 dark:text-red-400">{formErrors.email}</p>}
                                 </div>
-                                <div className="flex flex-col gap-1">
-                                    <label htmlFor="add_password" className="text-sm font-medium text-gray-700 dark:text-gray-300">Password *</label>
-                                    <input
-                                        id="add_password"
-                                        name="password"
-                                        type="password"
-                                        autoComplete="new-password"
-                                        value={formData.password || ""}
-                                        onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                                        className="h-9 px-3 border border-gray-300 dark:border-gray-600 rounded-lg outline-none w-full bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 transition-colors text-sm"
-                                    />
-                                    {formErrors.password && <p className="text-xs text-red-600 dark:text-red-400">{formErrors.password}</p>}
-                                </div>
+
                                 <div className="flex flex-col gap-1">
                                     <label htmlFor="add_department" className="text-sm font-medium text-gray-700 dark:text-gray-300">Department *</label>
-                                    <select id="add_department" name="department_id" autoComplete="off" value={formData.department_id} onChange={(e) => setFormData({ ...formData, department_id: e.target.value })} className="h-9 px-3 border border-gray-300 dark:border-gray-600 rounded-lg outline-none w-full bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 transition-colors text-sm">
+                                    <select id="add_department" name="department_id" autoComplete="off" value={formData.department_id || ""} onChange={(e) => setFormData({ ...formData, department_id: e.target.value })} className="h-9 px-3 border border-gray-300 dark:border-gray-600 rounded-lg outline-none w-full bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 transition-colors text-sm">
                                         <option value="">Select Department</option>
                                         {departments.map(d => <option key={d.id} value={d.id}>{d.name}</option>)}
                                     </select>
@@ -702,12 +690,29 @@ const EmployeesPage = () => {
                                 </div>
                                 <div className="flex flex-col gap-1">
                                     <label htmlFor="add_joining_category" className="text-sm font-medium text-gray-700 dark:text-gray-300">Joining Category *</label>
-                                    <select id="add_joining_category" name="joining_category" value={formData.joining_category} onChange={(e) => setFormData({ ...formData, joining_category: e.target.value })} className="h-9 px-3 border border-gray-300 dark:border-gray-600 rounded-lg outline-none w-full bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 transition-colors text-sm">
+                                    <select id="add_joining_category" name="joining_category" autoComplete="off" value={formData.joining_category || ""} onChange={(e) => setFormData({ ...formData, joining_category: e.target.value })} className="h-9 px-3 border border-gray-300 dark:border-gray-600 rounded-lg outline-none w-full bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 transition-colors text-sm">
                                         <option value="New Joinee">New Joinee</option>
                                         <option value="Intern">Intern</option>
                                         <option value="Permanent">Permanent</option>
                                     </select>
                                 </div>
+                                {formData.joining_category === "New Joinee" && (
+                                    <div className="flex flex-col gap-1">
+                                        <label htmlFor="add_probation" className="text-sm font-medium text-gray-700 dark:text-gray-300">Probation Period (Months)</label>
+                                        <select
+                                            id="add_probation"
+                                            name="probation_months"
+                                            autoComplete="off"
+                                            value={formData.probation_months || ""}
+                                            onChange={(e) => setFormData({ ...formData, probation_months: e.target.value })}
+                                            className="h-9 px-3 border border-gray-300 dark:border-gray-600 rounded-lg outline-none w-full bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 transition-colors text-sm"
+                                        >
+                                            <option value="">Select Duration</option>
+                                            <option value="3">3 Months</option>
+                                            <option value="6">6 Months</option>
+                                        </select>
+                                    </div>
+                                )}
                                 <div className="flex flex-col gap-1">
                                     <label htmlFor="add_designation" className="text-sm font-medium text-gray-700 dark:text-gray-300">Designation *</label>
                                     <input
@@ -716,7 +721,7 @@ const EmployeesPage = () => {
                                         list="designation_options"
                                         autoComplete="off"
                                         placeholder="Select or Type Designation"
-                                        value={formData.designation_name}
+                                        value={formData.designation_name || ""}
                                         onChange={(e) => setFormData({ ...formData, designation_name: e.target.value })}
                                         className="h-9 px-3 border border-gray-300 dark:border-gray-600 rounded-lg outline-none w-full bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 transition-colors text-sm"
                                     />
@@ -729,7 +734,7 @@ const EmployeesPage = () => {
                                 </div>
                                 <div className="flex flex-col gap-1">
                                     <label htmlFor="add_reports_to" className="text-sm font-medium text-gray-700 dark:text-gray-300">Reports To (Manager)</label>
-                                    <select id="add_reports_to" name="reports_to" autoComplete="off" value={formData.reports_to} onChange={(e) => setFormData({ ...formData, reports_to: e.target.value })} className="h-9 px-3 border border-gray-300 dark:border-gray-600 rounded-lg outline-none w-full bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 transition-colors text-sm">
+                                    <select id="add_reports_to" name="reports_to" autoComplete="off" value={formData.reports_to || ""} onChange={(e) => setFormData({ ...formData, reports_to: e.target.value })} className="h-9 px-3 border border-gray-300 dark:border-gray-600 rounded-lg outline-none w-full bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 transition-colors text-sm">
                                         <option value="">No Manager (Top Hierarchy)</option>
                                         {employees.map(e => (
                                             <option key={e.id} value={e.id}>{e.user?.name} ({e.designation?.name || 'N/A'})</option>
@@ -738,18 +743,11 @@ const EmployeesPage = () => {
                                 </div>
                                 <div className="flex flex-col gap-1">
                                     <label htmlFor="add_date_of_joining" className="text-sm font-medium text-gray-700 dark:text-gray-300">Date of Joining *</label>
-                                    <input id="add_date_of_joining" name="date_of_joining" type="date" autoComplete="off" value={formData.date_of_joining} onChange={(e) => setFormData({ ...formData, date_of_joining: e.target.value })} className="h-9 px-3 border border-gray-300 dark:border-gray-600 rounded-lg outline-none w-full bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 transition-colors text-sm" />
+                                    <input id="add_date_of_joining" name="date_of_joining" type="date" autoComplete="off" value={formData.date_of_joining || ""} onChange={(e) => setFormData({ ...formData, date_of_joining: e.target.value })} className="h-9 px-3 border border-gray-300 dark:border-gray-600 rounded-lg outline-none w-full bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 transition-colors text-sm" />
                                     {formErrors.date_of_joining && <p className="text-xs text-red-600 dark:text-red-400">{formErrors.date_of_joining}</p>}
                                 </div>
 
-                                <div className="flex flex-col gap-1">
-                                    <label htmlFor="add_aadhar_file" className="text-sm font-medium text-gray-700 dark:text-gray-300">Aadhar File</label>
-                                    <input id="add_aadhar_file" name="aadhar_file" type="file" onChange={handleFileChange} className="border border-gray-300 dark:border-gray-600 rounded p-1.5 bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm w-full" accept=".pdf,.jpg,.jpeg,.png" />
-                                </div>
-                                <div className="flex flex-col gap-1">
-                                    <label htmlFor="add_pan_file" className="text-sm font-medium text-gray-700 dark:text-gray-300">PAN File</label>
-                                    <input id="add_pan_file" name="pan_file" type="file" onChange={handleFileChange} className="border border-gray-300 dark:border-gray-600 rounded p-1.5 bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm w-full" accept=".pdf,.jpg,.jpeg,.png" />
-                                </div>
+
 
                                 <div className="col-span-1 md:col-span-2 border border-gray-200 dark:border-gray-700 rounded-lg p-4 mt-2 bg-gray-50 dark:bg-gray-800/50">
                                     <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">Payroll Configuration</h3>
@@ -763,7 +761,7 @@ const EmployeesPage = () => {
                                                 name="gross_salary"
                                                 type="number"
                                                 autoComplete="off"
-                                                value={formData.gross_salary}
+                                                value={formData.gross_salary || ""}
                                                 onChange={(e) => setFormData({ ...formData, gross_salary: e.target.value })}
                                                 className="h-9 pl-7 pr-3 border border-gray-300 dark:border-gray-600 rounded-lg outline-none w-full bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 transition-colors text-sm font-medium"
                                                 placeholder="0.00"
@@ -903,40 +901,66 @@ const EmployeesPage = () => {
                                             />
                                             <span className="text-sm text-gray-700 dark:text-gray-300 select-none">Opt-out PTAX</span>
                                         </label>
+
+                                        {/* Payslip Access - Permission Control */}
+                                        <div className="flex items-center justify-between p-3 border border-gray-200 dark:border-gray-700 rounded-lg bg-blue-50 dark:bg-blue-900/20 col-span-2 md:col-span-3">
+                                            <div className="flex flex-col">
+                                                <span className="text-sm font-bold text-gray-900 dark:text-white">Payslip Access</span>
+                                                <span className="text-xs text-gray-500 dark:text-gray-400">Allow employee to download payslips?</span>
+                                            </div>
+                                            <label className="relative inline-flex items-center cursor-pointer">
+                                                <input
+                                                    type="checkbox"
+                                                    className="sr-only peer"
+                                                    checked={formData.payslip_access || false}
+                                                    onChange={(e) => setFormData({ ...formData, payslip_access: e.target.checked })}
+                                                />
+                                                <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600"></div>
+                                            </label>
+                                        </div>
+
                                     </div>
                                 </div>
 
                                 <div className="flex flex-col gap-1">
                                     <label htmlFor="add_dob" className="text-sm font-medium text-gray-700 dark:text-gray-300">Date of Birth *</label>
-                                    <input id="add_dob" name="dob" type="date" autoComplete="off" value={formData.dob} onChange={(e) => setFormData({ ...formData, dob: e.target.value })} className="h-9 px-3 border border-gray-300 dark:border-gray-600 rounded-lg outline-none w-full bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 transition-colors text-sm" />
+                                    <input id="add_dob" name="dob" type="date" autoComplete="off" value={formData.dob || ""} onChange={(e) => setFormData({ ...formData, dob: e.target.value })} className="h-9 px-3 border border-gray-300 dark:border-gray-600 rounded-lg outline-none w-full bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 transition-colors text-sm" />
                                     {formErrors.dob && <p className="text-xs text-red-600 dark:text-red-400">{formErrors.dob}</p>}
                                 </div>
 
                                 <div className="flex flex-col gap-1">
                                     <label htmlFor="add_aadhar" className="text-sm font-medium text-gray-700 dark:text-gray-300">Aadhar Number</label>
-                                    <input id="add_aadhar" name="aadhar_number" type="text" autoComplete="off" value={formData.aadhar_number} onChange={(e) => setFormData({ ...formData, aadhar_number: e.target.value })} className="h-9 px-3 border border-gray-300 dark:border-gray-600 rounded-lg outline-none w-full bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 transition-colors text-sm" maxLength={12} />
+                                    <input id="add_aadhar" name="aadhar_number" type="text" autoComplete="off" value={formData.aadhar_number || ""} onChange={(e) => setFormData({ ...formData, aadhar_number: e.target.value })} className="h-9 px-3 border border-gray-300 dark:border-gray-600 rounded-lg outline-none w-full bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 transition-colors text-sm" maxLength={12} />
                                     {formErrors.aadhar_number && <p className="text-xs text-red-600 dark:text-red-400">{formErrors.aadhar_number}</p>}
                                 </div>
                                 <div className="flex flex-col gap-1">
+                                    <label htmlFor="add_aadhar_file" className="text-sm font-medium text-gray-700 dark:text-gray-300">Aadhar File</label>
+                                    <input id="add_aadhar_file" name="aadhar_file" type="file" onChange={handleFileChange} className="border border-gray-300 dark:border-gray-600 rounded p-1.5 bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm w-full" accept=".pdf,.jpg,.jpeg,.png" />
+                                </div>
+                                <div className="flex flex-col gap-1">
                                     <label htmlFor="add_pan" className="text-sm font-medium text-gray-700 dark:text-gray-300">PAN Number</label>
-                                    <input id="add_pan" name="pan_number" type="text" autoComplete="off" value={formData.pan_number} onChange={(e) => setFormData({ ...formData, pan_number: e.target.value })} className="h-9 px-3 border border-gray-300 dark:border-gray-600 rounded-lg outline-none w-full bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 transition-colors text-sm" maxLength={10} />
+                                    <input id="add_pan" name="pan_number" type="text" autoComplete="off" value={formData.pan_number || ""} onChange={(e) => setFormData({ ...formData, pan_number: e.target.value })} className="h-9 px-3 border border-gray-300 dark:border-gray-600 rounded-lg outline-none w-full bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 transition-colors text-sm" maxLength={10} />
                                     {formErrors.pan_number && <p className="text-xs text-red-600 dark:text-red-400">{formErrors.pan_number}</p>}
+                                </div>
+                                <div className="flex flex-col gap-1">
+                                    <label htmlFor="add_pan_file" className="text-sm font-medium text-gray-700 dark:text-gray-300">PAN File</label>
+                                    <input id="add_pan_file" name="pan_file" type="file" onChange={handleFileChange} className="border border-gray-300 dark:border-gray-600 rounded p-1.5 bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm w-full" accept=".pdf,.jpg,.jpeg,.png" />
                                 </div>
 
                                 <div className="flex flex-col gap-1">
                                     <label htmlFor="add_phone" className="text-sm font-medium text-gray-700 dark:text-gray-300">Phone *</label>
-                                    <input id="add_phone" name="phone" type="text" autoComplete="tel" value={formData.phone} onChange={(e) => setFormData({ ...formData, phone: e.target.value })} className="h-9 px-3 border border-gray-300 dark:border-gray-600 rounded-lg outline-none w-full bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 transition-colors text-sm" maxLength={10} />
+                                    <input id="add_phone" name="phone" type="text" autoComplete="tel" value={formData.phone || ""} onChange={(e) => setFormData({ ...formData, phone: e.target.value })} className="h-9 px-3 border border-gray-300 dark:border-gray-600 rounded-lg outline-none w-full bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 transition-colors text-sm" maxLength={10} />
                                     {formErrors.phone && <p className="text-xs text-red-600 dark:text-red-400">{formErrors.phone}</p>}
                                 </div>
                                 <div className="flex flex-col gap-1">
                                     <label htmlFor="add_emergency" className="text-sm font-medium text-gray-700 dark:text-gray-300">Emergency Contact</label>
-                                    <input id="add_emergency" name="emergency_contact" type="text" autoComplete="tel" value={formData.emergency_contact} onChange={(e) => setFormData({ ...formData, emergency_contact: e.target.value })} className="h-9 px-3 border border-gray-300 dark:border-gray-600 rounded-lg outline-none w-full bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 transition-colors text-sm" maxLength={10} />
+                                    <input id="add_emergency" name="emergency_contact" type="text" autoComplete="tel" value={formData.emergency_contact || ""} onChange={(e) => setFormData({ ...formData, emergency_contact: e.target.value })} className="h-9 px-3 border border-gray-300 dark:border-gray-600 rounded-lg outline-none w-full bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 transition-colors text-sm" maxLength={10} />
                                     {formErrors.emergency_contact && <p className="text-xs text-red-600 dark:text-red-400">{formErrors.emergency_contact}</p>}
                                 </div>
 
                                 <div className="flex flex-col gap-1">
                                     <label htmlFor="add_gender" className="text-sm font-medium text-gray-700 dark:text-gray-300">Gender</label>
-                                    <select id="add_gender" name="gender" autoComplete="off" value={formData.gender} onChange={(e) => setFormData({ ...formData, gender: e.target.value })} className="h-9 px-3 border border-gray-300 dark:border-gray-600 rounded-lg outline-none w-full bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 transition-colors text-sm">
+                                    <select id="add_gender" name="gender" autoComplete="off" value={formData.gender || ""} onChange={(e) => setFormData({ ...formData, gender: e.target.value })} className="h-9 px-3 border border-gray-300 dark:border-gray-600 rounded-lg outline-none w-full bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 transition-colors text-sm">
                                         <option value="">Select Gender</option>
                                         <option value="Male">Male</option>
                                         <option value="Female">Female</option>
@@ -945,7 +969,7 @@ const EmployeesPage = () => {
                                 </div>
                                 <div className="flex flex-col gap-1">
                                     <label htmlFor="add_marital" className="text-sm font-medium text-gray-700 dark:text-gray-300">Marital Status</label>
-                                    <select id="add_marital" name="marital_status" autoComplete="off" value={formData.marital_status} onChange={(e) => setFormData({ ...formData, marital_status: e.target.value })} className="h-9 px-3 border border-gray-300 dark:border-gray-600 rounded-lg outline-none w-full bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 transition-colors text-sm">
+                                    <select id="add_marital" name="marital_status" autoComplete="off" value={formData.marital_status || ""} onChange={(e) => setFormData({ ...formData, marital_status: e.target.value })} className="h-9 px-3 border border-gray-300 dark:border-gray-600 rounded-lg outline-none w-full bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 transition-colors text-sm">
                                         <option value="">Select Status</option>
                                         <option value="Single">Single</option>
                                         <option value="Married">Married</option>
@@ -955,7 +979,7 @@ const EmployeesPage = () => {
 
                                 <div className="col-span-1 md:col-span-2 flex flex-col gap-1">
                                     <label htmlFor="add_address" className="text-sm font-medium text-gray-700 dark:text-gray-300">Address</label>
-                                    <textarea id="add_address" name="address" autoComplete="street-address" value={formData.address} onChange={(e) => setFormData({ ...formData, address: e.target.value })} className="p-3 border border-gray-300 dark:border-gray-600 rounded-lg outline-none w-full bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 transition-colors text-sm" rows="2"></textarea>
+                                    <textarea id="add_address" name="address" autoComplete="street-address" value={formData.address || ""} onChange={(e) => setFormData({ ...formData, address: e.target.value })} className="p-3 border border-gray-300 dark:border-gray-600 rounded-lg outline-none w-full bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 transition-colors text-sm" rows="2"></textarea>
                                 </div>
 
                                 <div className="col-span-1 md:col-span-2 flex flex-col gap-1">
@@ -1007,14 +1031,7 @@ const EmployeesPage = () => {
                                     </select>
                                     {formErrors.department_id && <p className="text-xs text-red-600 dark:text-red-400">{formErrors.department_id}</p>}
                                 </div>
-                                <div className="flex flex-col gap-1">
-                                    <label htmlFor="edit_joining_category" className="text-sm font-medium text-gray-700 dark:text-gray-300">Joining Category *</label>
-                                    <select id="edit_joining_category" name="joining_category" value={formData.joining_category} onChange={(e) => setFormData({ ...formData, joining_category: e.target.value })} className="h-9 px-3 border border-gray-300 dark:border-gray-600 rounded-lg outline-none w-full bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 transition-colors text-sm">
-                                        <option value="New Joinee">New Joinee</option>
-                                        <option value="Intern">Intern</option>
-                                        <option value="Permanent">Permanent</option>
-                                    </select>
-                                </div>
+                                {/* Removed Duplicate Joining Category */}
                                 <div className="flex flex-col gap-1">
                                     <label htmlFor="edit_designation" className="text-sm font-medium text-gray-700 dark:text-gray-300">Designation *</label>
                                     <input
@@ -1047,6 +1064,31 @@ const EmployeesPage = () => {
                                     </select>
                                     {formErrors.reports_to && <p className="text-xs text-red-600 dark:text-red-400">{formErrors.reports_to}</p>}
                                 </div>
+                                <div className="flex flex-col gap-1">
+                                    <label htmlFor="edit_joining_category" className="text-sm font-medium text-gray-700 dark:text-gray-300">Joining Category *</label>
+                                    <select id="edit_joining_category" name="joining_category" autoComplete="off" value={formData.joining_category || ""} onChange={(e) => setFormData({ ...formData, joining_category: e.target.value })} className="h-9 px-3 border border-gray-300 dark:border-gray-600 rounded-lg outline-none w-full bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 transition-colors text-sm">
+                                        <option value="New Joinee">New Joinee</option>
+                                        <option value="Intern">Intern</option>
+                                        <option value="Permanent">Permanent</option>
+                                    </select>
+                                </div>
+                                {formData.joining_category === "New Joinee" && (
+                                    <div className="flex flex-col gap-1">
+                                        <label htmlFor="edit_probation" className="text-sm font-medium text-gray-700 dark:text-gray-300">Probation Period (Months)</label>
+                                        <select
+                                            id="edit_probation"
+                                            name="probation_months"
+                                            autoComplete="off"
+                                            value={formData.probation_months || ""}
+                                            onChange={(e) => setFormData({ ...formData, probation_months: e.target.value })}
+                                            className="h-9 px-3 border border-gray-300 dark:border-gray-600 rounded-lg outline-none w-full bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 transition-colors text-sm"
+                                        >
+                                            <option value="">Select Duration</option>
+                                            <option value="3">3 Months</option>
+                                            <option value="6">6 Months</option>
+                                        </select>
+                                    </div>
+                                )}
                                 <div className="flex flex-col gap-1">
                                     <label htmlFor="edit_date_of_joining" className="text-sm font-medium text-gray-700 dark:text-gray-300">Date of Joining *</label>
                                     <input id="edit_date_of_joining" name="date_of_joining" type="date" autoComplete="off" value={formData.date_of_joining} onChange={(e) => setFormData({ ...formData, date_of_joining: e.target.value })} className="h-9 px-3 border border-gray-300 dark:border-gray-600 rounded-lg outline-none w-full bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 transition-colors text-sm" />

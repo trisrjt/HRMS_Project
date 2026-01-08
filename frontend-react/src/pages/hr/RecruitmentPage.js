@@ -1,10 +1,8 @@
+import React from 'react';
+import SuperAdminRecruitment from '../superadmin/employees/RecruitmentPage';
+
 const RecruitmentPage = () => {
-    return (
-        <div>
-            <h1>HR Recruitment</h1>
-            <p>Manage recruitment view.</p>
-        </div>
-    );
+    return <SuperAdminRecruitment />;
 };
 
 export default RecruitmentPage;

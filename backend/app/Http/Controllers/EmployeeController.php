@@ -121,24 +121,25 @@ class EmployeeController extends Controller
     $validated = $request->validate([
         'name' => 'required|string|max:255',
         'email' => 'required|email|unique:users,email',
-        'temp_password' => 'required|min:6',
+        'temp_password' => 'nullable|min:6', // Made nullable
         'department_id' => 'required|exists:departments,id',
         'designation_name' => 'required|string|max:255', 
         'joining_category' => 'required|in:New Joinee,Intern,Permanent',
         'reports_to' => 'nullable|exists:employees,id',
-        'gross_salary' => 'nullable|numeric',  // Changed from salary to gross_salary
+        'gross_salary' => 'nullable|numeric',
         'pf_opt_out' => 'boolean',
         'esic_opt_out' => 'boolean',
         'ptax_opt_out' => 'boolean',
         'phone' => 'nullable|string|max:20',
         'address' => 'nullable|string',
         'date_of_joining' => 'nullable|date',
-        'dob' => 'nullable|date', // Added DOB
-        'aadhar_number' => 'nullable|digits:12', // Added Aadhar
-        'pan_number' => 'nullable|regex:/^[A-Z]{5}[0-9]{4}[A-Z]{1}$/i', // Added PAN
+        'dob' => 'nullable|date',
+        'aadhar_number' => 'nullable|digits:12',
+        'pan_number' => 'nullable|regex:/^[A-Z]{5}[0-9]{4}[A-Z]{1}$/i',
         'profile_photo' => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
         'aadhar_file' => 'nullable|mimes:pdf,jpg,jpeg,png|max:2048',
         'pan_file' => 'nullable|mimes:pdf,jpg,jpeg,png|max:2048',
+        'probation_months' => 'nullable|integer|min:0',
     ]);
 
     // Handle File Upload
@@ -154,12 +155,20 @@ class EmployeeController extends Controller
         ['is_active' => true]
     );
 
+    // Auto-generate password if not provided
+    $plainPassword = $request->temp_password;
+    if (empty($plainPassword)) {
+        // Format: firstname@123 (lowercase)
+        $firstName = explode(' ', trim($request->name))[0];
+        $plainPassword = strtolower($firstName) . '@123';
+    }
+
     // Step 1: Create USER
     $user = User::create([
         'name' => $request->name,
         'email' => $request->email,
-        'password' => Hash::make($request->temp_password), // hashed
-        'temp_password' => $request->temp_password,        // raw temp pass
+        'password' => Hash::make($plainPassword), // hashed
+        'temp_password' => $plainPassword,        // raw temp pass
         'role_id' => 4, // Employee
         'is_active' => true, // Default to Active
     ]);
@@ -203,6 +212,8 @@ class EmployeeController extends Controller
         'esic_opt_out' => $request->boolean('esic_opt_out'),
         'ptax_opt_out' => $request->boolean('ptax_opt_out'),
         'joining_category' => $request->joining_category,
+        'payslip_access' => $request->boolean('payslip_access'), // Save Logic
+        'probation_months' => $request->probation_months,
     ]);
 
     // Handle Aadhar Upload
@@ -326,8 +337,10 @@ class EmployeeController extends Controller
             'pf_opt_out' => 'boolean',
             'esic_opt_out' => 'boolean',
             'ptax_opt_out' => 'boolean',
+            'payslip_access' => 'boolean', // Validation
             'status' => ['sometimes', 'in:Active,Inactive'],
             'profile_photo'  => ['sometimes', 'nullable', 'image', 'mimes:jpg,jpeg,png', 'max:2048'],
+            'probation_months' => ['sometimes', 'nullable', 'integer', 'min:0'],
         ];
 
         // Conditional Validation for Email and Employee Code
@@ -339,25 +352,32 @@ class EmployeeController extends Controller
         $validated = $request->validate($rules);
 
         // Handle File Upload
+        $profilePhotoPath = $employee->profile_photo;
         if ($request->hasFile('profile_photo')) {
-            // Delete old photo if exists
+             // Delete old photo if exists
             if ($employee->profile_photo && \Illuminate\Support\Facades\Storage::disk('public')->exists($employee->profile_photo)) {
                 \Illuminate\Support\Facades\Storage::disk('public')->delete($employee->profile_photo);
             }
-            $validated['profile_photo'] = $request->file('profile_photo')->store('employees', 'public');
+            $profilePhotoPath = $request->file('profile_photo')->store('profile_photos', 'public');
         }
 
-        // Handle Designation (Hybrid)
+        // Update User
+        if ($employee->user) {
+            $userUpdateData = [];
+            if ($request->has('name')) $userUpdateData['name'] = $request->name;
+            if ($request->has('email')) $userUpdateData['email'] = $request->email;
+            if ($request->has('status')) $userUpdateData['is_active'] = ($request->status === 'Active');
+            $employee->user->update($userUpdateData);
+        }
+
+        // Handle Designation
         if ($request->has('designation_name')) {
-            $designationName = trim($request->designation_name);
-            if (!empty($designationName)) {
-                $designation = \App\Models\Designation::firstOrCreate(
-                    ['name' => $designationName],
-                    ['is_active' => true]
-                );
-                $validated['designation_id'] = $designation->id;
-                unset($validated['designation_name']);
-            }
+             $designationName = trim($request->designation_name);
+             $designation = \App\Models\Designation::firstOrCreate(
+                ['name' => $designationName],
+                ['is_active' => true]
+            );
+            $employee->designation_id = $designation->id;
         }
 
         // HIERARCHY & CIRCULAR CHECK
@@ -410,11 +430,10 @@ class EmployeeController extends Controller
                     'hra' => $salaryData['hra'],
                     'da' => $salaryData['da'],
                     'allowances' => $salaryData['allowances'],
-                    'deductions' => $salaryData['deductions'],
-                    'gross_salary' => $salaryData['gross_salary'],
                 ]);
             }
-             // Create Salary History
+
+            // Create Salary History
             \App\Models\SalaryHistory::create([
                 'employee_id' => $employee->id,
                 'basic' => $salaryData['basic'],
@@ -424,6 +443,7 @@ class EmployeeController extends Controller
                 'deductions' => $salaryData['deductions'],
                 'gross_salary' => $salaryData['gross_salary'],
             ]);
+
         }
         
         // Ensure opt-out flags are updated in employee record if passed
@@ -462,6 +482,20 @@ class EmployeeController extends Controller
             'message'  => 'Employee updated successfully.',
             'employee' => $employee->fresh()->load(['department', 'designation', 'manager', 'user:id,name,email', 'leavePolicy'])
         ]);
+    }
+
+    // Toggle Payslip Access (Lightweight)
+    public function togglePayslipAccess(Request $request, $id)
+    {
+        if (!in_array(auth()->user()->role_id, [1, 2, 3])) {
+            return response()->json(['message' => 'Unauthorized'], 403);
+        }
+        
+        $employee = Employee::findOrFail($id);
+        $employee->payslip_access = $request->boolean('payslip_access');
+        $employee->save();
+        
+        return response()->json(['message' => 'Payslip access updated', 'payslip_access' => $employee->payslip_access]);
     }
 
     // ==============================

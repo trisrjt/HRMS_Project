@@ -185,25 +185,35 @@ const DocumentsPage = () => {
                         <Filter size={18} /> <span className="text-sm font-medium">Filters:</span>
                     </div>
 
-                    <select
-                        className="border border-gray-300 dark:border-gray-600 rounded p-2 text-sm bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white outline-none focus:ring-2 focus:ring-blue-500 min-w-[200px]"
-                        value={filters.employee_id}
-                        onChange={(e) => setFilters({ ...filters, employee_id: e.target.value })}
-                    >
-                        <option value="">All Employees</option>
-                        {employees.map(emp => (
-                            <option key={emp.id} value={emp.id}>{emp.user?.name} ({emp.employee_code})</option>
-                        ))}
-                    </select>
+                    <div>
+                        <label htmlFor="filter_employee" className="sr-only">Filter by Employee</label>
+                        <select
+                            id="filter_employee"
+                            name="filter_employee"
+                            className="border border-gray-300 dark:border-gray-600 rounded p-2 text-sm bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white outline-none focus:ring-2 focus:ring-blue-500 min-w-[200px]"
+                            value={filters.employee_id}
+                            onChange={(e) => setFilters({ ...filters, employee_id: e.target.value })}
+                        >
+                            <option value="">All Employees</option>
+                            {employees.map(emp => (
+                                <option key={emp.id} value={emp.id}>{emp.user?.name} ({emp.employee_code})</option>
+                            ))}
+                        </select>
+                    </div>
 
-                    <select
-                        className="border border-gray-300 dark:border-gray-600 rounded p-2 text-sm bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white outline-none focus:ring-2 focus:ring-blue-500"
-                        value={filters.document_type}
-                        onChange={(e) => setFilters({ ...filters, document_type: e.target.value })}
-                    >
-                        <option value="">All Types</option>
-                        {docTypes.map(type => <option key={type} value={type}>{type}</option>)}
-                    </select>
+                    <div>
+                        <label htmlFor="filter_document_type" className="sr-only">Filter by Document Type</label>
+                        <select
+                            id="filter_document_type"
+                            name="filter_document_type"
+                            className="border border-gray-300 dark:border-gray-600 rounded p-2 text-sm bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white outline-none focus:ring-2 focus:ring-blue-500"
+                            value={filters.document_type}
+                            onChange={(e) => setFilters({ ...filters, document_type: e.target.value })}
+                        >
+                            <option value="">All Types</option>
+                            {docTypes.map(type => <option key={type} value={type}>{type}</option>)}
+                        </select>
+                    </div>
 
                     {(filters.employee_id || filters.document_type) && (
                         <button
@@ -235,6 +245,7 @@ const DocumentsPage = () => {
                                     <th className="p-4 font-semibold">Title</th>
                                     <th className="p-4 font-semibold">Size</th>
                                     <th className="p-4 font-semibold">Uploaded On</th>
+                                    {!isEmployee && <th className="p-4 font-semibold">Uploaded By</th>}
                                     <th className="p-4 font-semibold text-right">Actions</th>
                                 </tr>
                             </thead>
@@ -257,6 +268,22 @@ const DocumentsPage = () => {
                                         <td className="p-4 text-sm text-gray-500 dark:text-gray-400">
                                             {new Date(doc.created_at).toLocaleDateString()}
                                         </td>
+                                        {!isEmployee && (
+                                            <td className="p-4 text-sm text-gray-700 dark:text-gray-300">
+                                                {doc.uploader ? (
+                                                    <div>
+                                                        <div className="font-medium">{doc.uploader.name}</div>
+                                                        <div className="text-xs text-gray-500 dark:text-gray-400">
+                                                            {doc.uploader.role_id === 1 ? 'SuperAdmin' :
+                                                                doc.uploader.role_id === 2 ? 'Admin' :
+                                                                    doc.uploader.role_id === 3 ? 'HR' : 'Employee'}
+                                                        </div>
+                                                    </div>
+                                                ) : (
+                                                    <span className="text-gray-400">Unknown</span>
+                                                )}
+                                            </td>
+                                        )}
                                         <td className="p-4 text-right flex justify-end gap-2">
                                             <button
                                                 onClick={() => handleView(doc)}

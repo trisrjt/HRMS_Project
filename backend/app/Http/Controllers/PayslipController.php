@@ -11,11 +11,11 @@ class PayslipController extends Controller
 {
     // ======================================
     // GET ALL PAYSLIPS
-    // Only SuperAdmin + Admin
+    // Only SuperAdmin + Admin + HR (if permission)
     // ======================================
     public function index()
     {
-        if (!in_array(auth()->user()->role_id, [1, 2])) {
+        if (!in_array(auth()->user()->role_id, [1, 2, 3])) {
             return response()->json(['message' => 'Unauthorized'], 403);
         }
 
@@ -25,14 +25,11 @@ class PayslipController extends Controller
     }
 
     // ======================================
-    // GENERATE PAYSLIP (Admin + SuperAdmin)
-    // ======================================
-    // ======================================
-    // GENERATE PAYSLIP (Admin + SuperAdmin)
+    // GENERATE PAYSLIP (Admin + SuperAdmin + HR)
     // ======================================
     public function store(Request $request)
     {
-        if (!in_array(auth()->user()->role_id, [1, 2])) {
+        if (!in_array(auth()->user()->role_id, [1, 2, 3])) {
             return response()->json(['message' => 'Unauthorized'], 403);
         }
 
@@ -43,99 +40,112 @@ class PayslipController extends Controller
         ]);
 
         $employee = Employee::find($request->employee_id);
+        
+        // 1. Strict Date Validation
+        $joinDate = \Carbon\Carbon::parse($employee->date_of_joining);
+        // Create date object for the 1st of the requested payslip month
+        $payslipStart = \Carbon\Carbon::createFromDate($request->year, $request->month, 1);
+        $payslipEnd = $payslipStart->copy()->endOfMonth();
+
+        // If employee joined AFTER the requested month ends, error.
+        // e.g. Joined Aug 10. Request June. JoinDate > June 30. Error.
+        if ($joinDate->gt($payslipEnd)) {
+            return response()->json(['message' => 'Cannot generate payslip. Employee joined ('.$joinDate->format('Y-m-d').') after this month.'], 422);
+        }
+
+        // 2. Prevent Duplicates (Idempotency check)
+        $existing = Payslip::where('employee_id', $request->employee_id)
+            ->where('month', $request->month)
+            ->where('year', $request->year)
+            ->first();
+
+        if ($existing) {
+             return response()->json(['message' => 'Payslip already generated for this month', 'payslip' => $existing], 409);
+        }
+
         $salary = Salary::where('employee_id', $request->employee_id)->first();
 
         if (!$salary) {
-            return response()->json(['message' => 'Salary structure not found for this employee'], 404);
+            return response()->json(['message' => 'Salary structure not found for this employee. Please configure salary first.'], 404);
         }
 
-        // Prevent duplicate payslips for same month/year
-        if (Payslip::where('employee_id', $request->employee_id)
-            ->where('month', $request->month)
-            ->where('year', $request->year)
-            ->exists()) {
-            return response()->json(['message' => 'Payslip already generated for this month'], 409);
-        }
-
-        // --- PAYROLL CALCULATION ENGINE ---
-
-        // 1. Proration Logic (30-day fixed month)
-        $totalDaysInMonth = 30;
+        // 3. Proration Logic (30-day standard)
         $payableDays = 30;
 
-        $joinDate = \Carbon\Carbon::parse($employee->date_of_joining);
-        $payslipDate = \Carbon\Carbon::createFromDate($request->year, $request->month, 1);
-
-        if ($joinDate->gt($payslipDate->copy()->endOfMonth())) {
-            return response()->json(['message' => 'Employee joined after this month'], 422);
-        }
-
-        if ($joinDate->isSameMonth($payslipDate)) {
-            // e.g. Joined 15th. Pay = 30 - 15 + 1 = 16 days.
-            // If Joined 31st (in a 31 day month), simpler logic: limit day to 30?
-            // "Month = 30 days". We treat all months as having 30 days for calculation.
+        // If joined in the SAME month
+        if ($joinDate->year == $request->year && $joinDate->month == $request->month) {
+            // e.g. Joined 20th. Days = 30 - 20 + 1 = 11 days.
+            // Cap start day at 30 to avoid negative if joined on 31st (treat 31st as 30th)
             $dayOfJoining = min($joinDate->day, 30);
             $payableDays = 30 - $dayOfJoining + 1;
-        } elseif ($request->year == $joinDate->year && $request->month < $joinDate->month) {
-             return response()->json(['message' => 'Employee joined after this month'], 422);
         }
 
-        // Ensure 0 <= payableDays <= 30
         $payableDays = max(0, min(30, $payableDays));
         $prorationFactor = $payableDays / 30;
 
-        // 2. Fetch Policies
+        // 4. Calculate Earnings based on SALARY MODEL (Source of Truth)
+        // We do NOT recalculate split from gross. We use the stored values in `salaries` table.
+        // This ensures if manual override happened in salary structure, it persists.
+        
+        $basic = round($salary->basic * $prorationFactor, 2);
+        $hra   = round($salary->hra * $prorationFactor, 2);
+        $da    = round(($salary->da ?? 0) * $prorationFactor, 2);
+        $allowances = round(($salary->allowances ?? 0) * $prorationFactor, 2);
+        
+        // Gross for the month
+        // We sum up the prorated components to avoid rounding drift
+        $earnedGross = $basic + $hra + $da + $allowances;
+
+        // 5. Calculate Deductions (PF/ESIC/PTAX rules apply on Earned values)
+        // Fetch Policies for flags only
         $policies = \App\Models\PayrollPolicy::all()->pluck('value', 'key');
-        $basicPercent = floatval($policies['basic_percentage'] ?? 70);
         $pfEnabled    = filter_var($policies['pf_enabled'] ?? false, FILTER_VALIDATE_BOOLEAN);
         $esicEnabled  = filter_var($policies['esic_enabled'] ?? false, FILTER_VALIDATE_BOOLEAN);
         $ptaxEnabled  = filter_var($policies['ptax_enabled'] ?? false, FILTER_VALIDATE_BOOLEAN);
         $ptaxSlabs    = json_decode($policies['ptax_slabs'] ?? '[]', true);
 
-        // 3. Calculate Earnings
-        // Use 'gross_salary' from Salary table as the monthly rate
-        $monthlyGross = $salary->gross_salary;
-        $earnedGross  = $monthlyGross * $prorationFactor;
-
-        $basic = $earnedGross * ($basicPercent / 100);
-        $hra   = $earnedGross - $basic;
-
-        // 4. Calculate Deductions
         $pf = 0;
         $esic = 0;
         $ptax = 0;
 
-        // PF (12% of Basic)
+        // Note: Salary model stores employer/employee contribution expectations potentially? 
+        // Typically PTAX/ESIC/PF are calculated on Earning.
+        // If Salary structure has 'pf', 'esic' fields, those are usually "Projected" monthly values.
+        // Option A: Use stored Salary deductions * Proration.
+        // Option B: Recalculate deductions based on Earned Basic/Gross.
+        // Dynamic calculation (Option B) is safer for partial months to ensure compliance (e.g. if salary drops below ESIC limit).
+        // Let's stick to Dynamic Calculation for deductions using the flags.
+
+        // PF: 12% of Earned Basic
         if ($pfEnabled && !$employee->pf_opt_out) {
-            $pf = $basic * 0.12;
+            $pf = round($basic * 0.12, 2);
         }
 
-        // ESIC (0.75% of Gross)
-        if ($esicEnabled && !$employee->esic_opt_out) {
-            $esic = $earnedGross * 0.0075;
+        // ESIC: 0.75% of Earned Gross 
+        // Note: Eligibility check is usually on Monthly Gross. If Full Month Gross <= 21000, they are eligible.
+        // Even if prorated salary is low, eligibility is based on rate.
+        $isEsicEligible = ($salary->gross_salary <= 21000); 
+
+        if ($esicEnabled && !$employee->esic_opt_out && $isEsicEligible) {
+             // Calculate on EARNED gross
+             $esic = ceil($earnedGross * 0.0075); 
         }
 
-        // PTAX (Slab based on Gross)
+        // PTAX: on Earned Gross
         if ($ptaxEnabled && !$employee->ptax_opt_out) {
-            foreach ($ptaxSlabs as $slab) {
-                // Ensure we cast slab values to float/int
-                $min = floatval($slab['min']);
-                $max = floatval($slab['max']);
+             foreach ($ptaxSlabs as $slab) {
+                $min = floatval($slab['min_salary'] ?? 0);
+                $maxStr = $slab['max_salary'] ?? null;
+                $max = ($maxStr === null || $maxStr === "") ? INF : floatval($maxStr);
+                
+                // PTAX is usually based on Monthly Gross (Earnings)
                 if ($earnedGross >= $min && $earnedGross <= $max) {
-                    $ptax = floatval($slab['amount']);
-                    break;
+                     $ptax = floatval($slab['tax_amount'] ?? 0);
+                     break;
                 }
             }
         }
-
-        // Rounding
-        $basic = round($basic, 2);
-        $hra = round($hra, 2);
-        $pf = round($pf, 2);
-        $esic = round($esic, 2);
-        $ptax = round($ptax, 2);
-        $earnedGross = round($earnedGross, 2);
-
+        
         $totalDeductions = $pf + $esic + $ptax;
         $netPay = $earnedGross - $totalDeductions;
 
@@ -161,10 +171,66 @@ class PayslipController extends Controller
             'payslip' => $payslip->load('employee.user:id,name,email')
         ], 201);
     }
+    
+    // ======================================
+    // DOWNLOAD PAYSLIP PDF (Unified)
+    // ======================================
+    public function download(Request $request) 
+    {
+        // Auth Check
+        $user = auth()->user();
+        $targetEmployeeId = $request->employee_id;
+
+        // If Employee, can only download own AND if they have access enabled
+        if ($user->role_id == 4) {
+             // Employees cannot download 'all'
+             if ($targetEmployeeId === 'all' || $user->employee->id != $targetEmployeeId) {
+                return response()->json(['message' => 'Unauthorized'], 403);
+            }
+            
+            // CHECK ACCESSS PERMISSION
+            if (!$user->employee->payslip_access) {
+                return response()->json(['message' => 'Download permission denied for this employee.'], 403);
+            }
+        }
+        
+        // Roles 1, 2, 3 allowed if middleware permits.
+        // Removed explicit block for Role 3.
+
+        $request->validate([
+            'employee_id' => 'required', // Removed exists constraint to allow 'all'
+            'start_month' => 'required|integer|min:1|max:12',
+            'end_month'   => 'required|integer|min:1|max:12',
+            'year'        => 'required|integer',
+        ]);
+
+        $query = Payslip::with(['employee.user', 'employee.designation', 'employee.department'])
+            ->where('year', $request->year)
+            ->whereBetween('month', [$request->start_month, $request->end_month]);
+
+        if ($targetEmployeeId !== 'all') {
+            $query->where('employee_id', $targetEmployeeId);
+        }
+        
+        // Order by Employee then Month
+        $query->orderBy('employee_id', 'asc')
+              ->orderBy('month', 'asc');
+
+        $payslips = $query->get();
+
+        if ($payslips->isEmpty()) {
+             return response()->json(['message' => 'No payslips found for the selected range'], 404);
+        }
+
+        $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('pdf.payslip', compact('payslips'));
+        
+        $filename = 'payslips_' . ($targetEmployeeId === 'all' ? 'ALL' : $targetEmployeeId) . '_' . $request->year . '.pdf';
+        return $pdf->download($filename);
+    }
 
     // ======================================
     // VIEW SINGLE PAYSLIP
-    // Admin/SuperAdmin → any payslip
+    // Admin/SuperAdmin/HR → any payslip
     // Employee → only own payslip
     // ======================================
     public function show($id)
@@ -182,22 +248,23 @@ class PayslipController extends Controller
             if ($payslip->employee->user_id != $user->id) {
                 return response()->json(['message' => 'Unauthorized'], 403);
             }
+            // Check Access Permission
+            if (!$user->employee->payslip_access) {
+                return response()->json(['message' => 'Access to payslips is restricted.'], 403);
+            }
         }
 
-        // HR cannot view payslips
-        if ($user->role_id == 3) {
-            return response()->json(['message' => 'Unauthorized'], 403);
-        }
+        // Role 3 previously blocked. Removing block.
 
         return response()->json($payslip);
     }
 
     // ======================================
-    // UPDATE PAYSLIP (Admin + SuperAdmin)
+    // UPDATE PAYSLIP (Admin + SuperAdmin + HR)
     // ======================================
     public function update(Request $request, $id)
     {
-        if (!in_array(auth()->user()->role_id, [1, 2])) {
+        if (!in_array(auth()->user()->role_id, [1, 2, 3])) {
             return response()->json(['message' => 'Unauthorized'], 403);
         }
 
@@ -214,18 +281,19 @@ class PayslipController extends Controller
             'deductions'   => 'required|numeric|min:0',
         ]);
 
-        // Note: The database schema might not store basic/hra/allowances separately if they are not columns.
-        // The migration showed: total_earnings, total_deductions, net_pay.
-        // So we must calculate total_earnings from the input if we want to update it.
-        // But wait, the EditPayslipModal sends basic_salary, hra, allowances.
-        // If the DB only has total_earnings, we can only update total_earnings.
-        // However, for better data integrity, we should sum them up.
-        
+        // Recalculate based on manual edit
         $total_earnings = $request->basic_salary + $request->hra + $request->allowances;
         $total_deductions = $request->deductions;
         $net_pay = $total_earnings - $total_deductions;
 
+        // Also update standard components if columns exist, usually mapped 1:1
+        // DB columns: basic, hra, pf, esic, ptax.
+        // Frontend sends generic "allowances", "deductions".
+        // This update is partial. We'll update the main value columns.
+        
         $payslip->update([
+            'basic'            => $request->basic_salary,
+            'hra'              => $request->hra,
             'total_earnings'   => $total_earnings,
             'total_deductions' => $total_deductions,
             'net_pay'          => $net_pay,
@@ -239,11 +307,11 @@ class PayslipController extends Controller
 
     // ======================================
     // DELETE PAYSLIP
-    // Only Admin + SuperAdmin
+    // Only Admin + SuperAdmin + HR
     // ======================================
     public function destroy($id)
     {
-        if (!in_array(auth()->user()->role_id, [1, 2])) {
+        if (!in_array(auth()->user()->role_id, [1, 2, 3])) {
             return response()->json(['message' => 'Unauthorized'], 403);
         }
 
@@ -266,6 +334,8 @@ class PayslipController extends Controller
         $user = auth()->user();
 
         if ($user->role_id != 4) {
+             // If SuperAdmin calls this, they get their own if they are also employee? 
+             // Logic says check role 4. Sticking to old logic.
             return response()->json(['message' => 'Unauthorized'], 403);
         }
 
@@ -273,6 +343,12 @@ class PayslipController extends Controller
 
         if (!$employee) {
             return response()->json(['message' => 'Employee profile not found'], 404);
+        }
+
+        // Check Access Permission
+        if (!$employee->payslip_access) {
+             // Return empty list instead of 403 to avoid console errors on dashboard
+             return response()->json([]);
         }
 
         $payslips = Payslip::where('employee_id', $employee->id)

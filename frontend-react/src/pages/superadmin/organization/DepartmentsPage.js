@@ -6,6 +6,7 @@ import { useAuth } from "../../../context/AuthContext";
 const DepartmentsPage = () => {
     const { user } = useAuth();
     const canManage = user?.role_id === 1 || user?.role_id === 2 || user?.role_id === 3 || user?.permissions?.includes("can_manage_departments");
+    const canDelete = user?.role_id === 1 || user?.permissions?.includes("can_delete_departments"); // Permission-based override
 
     // State
     const [departments, setDepartments] = useState([]);
@@ -223,12 +224,14 @@ const DepartmentsPage = () => {
                                                         >
                                                             Edit
                                                         </button>
-                                                        <button
-                                                            onClick={() => openDeleteModal(dept)}
-                                                            className="text-red-600 dark:text-red-400 hover:text-red-900 dark:hover:text-red-300 transition-colors"
-                                                        >
-                                                            Delete
-                                                        </button>
+                                                        {canDelete && (
+                                                            <button
+                                                                onClick={() => openDeleteModal(dept)}
+                                                                className="text-red-600 dark:text-red-400 hover:text-red-900 dark:hover:text-red-300 transition-colors"
+                                                            >
+                                                                Delete
+                                                            </button>
+                                                        )}
                                                     </>
                                                 )}
                                             </td>

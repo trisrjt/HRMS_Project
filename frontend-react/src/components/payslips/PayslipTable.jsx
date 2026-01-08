@@ -34,12 +34,16 @@ const PayslipTable = ({ payslips, onView, onEdit, onDelete, onDownload }) => {
                                 >
                                     <td className="px-6 py-4">
                                         <div className="flex flex-col">
-                                            <span className="font-medium text-gray-900 dark:text-white">{payslip.employee_name}</span>
-                                            <span className="text-xs text-gray-500 dark:text-gray-400">{payslip.employee_code}</span>
+                                            <span className="font-medium text-gray-900 dark:text-white">
+                                                {payslip.employee?.user?.name || 'Unknown'}
+                                            </span>
+                                            <span className="text-xs text-gray-500 dark:text-gray-400">
+                                                {payslip.employee?.employee_code || '-'}
+                                            </span>
                                         </div>
                                     </td>
                                     <td className="px-6 py-4 text-sm text-gray-600 dark:text-gray-300 whitespace-nowrap">
-                                        {payslip.month_year}
+                                        {new Date(0, payslip.month - 1).toLocaleString('default', { month: 'long' })} {payslip.year}
                                     </td>
                                     <td className="px-4 py-4 text-right text-sm text-gray-600 dark:text-gray-300">
                                         {payslip.basic || '0.00'}

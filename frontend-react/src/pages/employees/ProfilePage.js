@@ -156,6 +156,25 @@ const ProfilePage = () => {
                                 <div className="font-medium text-gray-800 dark:text-gray-200">{profile?.employee?.joining_category || "N/A"}</div>
                             </div>
 
+                            {profile?.employee?.joining_category === "New Joinee" && profile?.employee?.probation_months > 0 && (
+                                <>
+                                    <div>
+                                        <label className="text-sm text-gray-500 dark:text-gray-400 block mb-1">Probation Period</label>
+                                        <div className="font-medium text-gray-800 dark:text-gray-200">{profile.employee.probation_months} Months</div>
+                                    </div>
+                                    <div>
+                                        <label className="text-sm text-gray-500 dark:text-gray-400 block mb-1">Probation Ends On</label>
+                                        <div className="font-medium text-amber-600 dark:text-amber-400">
+                                            {(() => {
+                                                const doj = new Date(profile.employee.date_of_joining);
+                                                doj.setMonth(doj.getMonth() + parseInt(profile.employee.probation_months));
+                                                return formatDate(doj);
+                                            })()}
+                                        </div>
+                                    </div>
+                                </>
+                            )}
+
                             <div className="mt-8 pt-6 border-t border-dashed border-gray-200 dark:border-gray-700">
                                 <div className="mb-5">
                                     <label className="text-sm text-gray-500 dark:text-gray-400 block mb-1">Aadhar Number</label>

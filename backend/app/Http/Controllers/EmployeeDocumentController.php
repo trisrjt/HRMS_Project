@@ -15,7 +15,10 @@ class EmployeeDocumentController extends Controller
     public function index(Request $request)
     {
         $user = auth()->user();
-        $query = EmployeeDocument::with('employee.user:id,name,email'); // Eager load for display
+        $query = EmployeeDocument::with([
+            'employee.user:id,name,email',
+            'uploader:id,name,role_id' // Eager load uploader
+        ]);
 
         if ($user->role_id == 4) {
             // Employee: View own only

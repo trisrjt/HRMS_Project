@@ -33,8 +33,10 @@ class LeaveController extends Controller
         $user = auth()->user();
 
         // Permission/Role Check
-        if (!$user->can('can_view_leaves') && !in_array($user->role_id, [1, 2, 3])) {
-            return response()->json(['message' => 'Unauthorized'], 403);
+        // Permission/Role Check
+        // Allow SuperAdmin (1) or anyone with view/manage permissions
+        if ($user->role_id !== 1 && !$user->can_view_leaves && !$user->can_manage_leaves) {
+             return response()->json(['message' => 'Unauthorized'], 403);
         }
 
         $query = Leave::with([
@@ -104,7 +106,7 @@ class LeaveController extends Controller
     public function summary(Request $request)
     {
         $user = auth()->user();
-        if (!$user->can('can_view_leaves') && !in_array($user->role_id, [1, 2, 3])) {
+        if ($user->role_id !== 1 && !$user->can_view_leaves && !$user->can_manage_leaves) {
             return response()->json(['message' => 'Unauthorized'], 403);
         }
 
@@ -143,7 +145,7 @@ class LeaveController extends Controller
     public function export(Request $request)
     {
         $user = auth()->user();
-        if (!$user->can('can_view_leaves') && !in_array($user->role_id, [1, 2, 3])) {
+        if ($user->role_id !== 1 && !$user->can_view_leaves && !$user->can_manage_leaves) {
             return response()->json(['message' => 'Unauthorized'], 403);
         }
 
@@ -228,9 +230,15 @@ class LeaveController extends Controller
 
         // 1. Policy: Probation Check
         if (!$leaveType->available_during_probation) {
-            $joinDate = \Carbon\Carbon::parse($employee->date_of_joining);
-            if ($joinDate->diffInMonths(now()) < 6) { // Assuming 6 months probation
-                return response()->json(['message' => 'This leave type is not available during probation period'], 400);
+            $probationMonths = (int) ($employee->probation_months ?? 0);
+            if ($probationMonths > 0) {
+                 $joinDate = \Carbon\Carbon::parse($employee->date_of_joining);
+                 $probationEnd = $joinDate->copy()->addMonths($probationMonths);
+                 
+                 // Check if the leave start date falls within probation
+                 if (\Carbon\Carbon::parse($request->start_date)->lt($probationEnd)) {
+                      return response()->json(['message' => 'This leave type is not available during probation period. Probation ends on: ' . $probationEnd->format('d M Y')], 400);
+                 }
             }
         }
 
@@ -252,9 +260,9 @@ class LeaveController extends Controller
             return response()->json(['message' => 'Insufficient leave balance. Available: ' . $balance->remaining_days . ' days, Requested: ' . $days . ' days'], 400);
         }
 
-        // 4. Determine Status (Auto Approve)
-        $status = $leaveType->auto_approve ? 'Approved' : 'Pending';
-        $approvedBy = $leaveType->auto_approve ? null : null; // System approval
+        // 4. Determine Status (Auto Approve DISABLED)
+        $status = 'Pending';
+        $approvedBy = null;
 
         // 5. Deduct Balance (Optimistic)
         $balance->increment('used_days', $days);
@@ -304,6 +312,12 @@ class LeaveController extends Controller
     public function show($id)
     {
         $user = auth()->user();
+
+        // Permission check for HR/Admin
+        if ($user->role_id !== 4 && $user->role_id !== 1 && !$user->can_view_leaves && !$user->can_manage_leaves) {
+            return response()->json(['message' => 'Unauthorized'], 403);
+        }
+
         $leave = Leave::with(['employee.user', 'leaveType', 'approver'])->find($id);
 
         if (!$leave) {
@@ -407,13 +421,7 @@ class LeaveController extends Controller
     }
 
     return response()->json(
-        Leave::with(['leaveType'])
-            ->where('employee_id', $employee->id)
-            ->orderByDesc('start_date')
-            ->get()
-    );
-    return response()->json(
-        Leave::with(['leaveType'])
+        Leave::with(['leaveType', 'approver:id,name,role_id'])
             ->where('employee_id', $employee->id)
             ->orderByDesc('start_date')
             ->get()

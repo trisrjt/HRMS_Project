@@ -61,6 +61,7 @@ class UserController extends Controller
                 'pan_number' => $user->employee->pan_number,
                 'profile_photo' => $user->employee->profile_photo,
                 'joining_category' => $user->employee->joining_category,
+                'probation_months' => $user->employee->probation_months,
                 'status' => $user->is_active ? 'Active' : 'Inactive',
             ] : null,
         ]);

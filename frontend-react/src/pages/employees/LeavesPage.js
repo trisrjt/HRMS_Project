@@ -281,6 +281,7 @@ const LeavesPage = () => {
                                 <th className="p-4 border-b border-gray-200 dark:border-gray-700 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Dates & Duration</th>
                                 <th className="p-4 border-b border-gray-200 dark:border-gray-700 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Reason</th>
                                 <th className="p-4 border-b border-gray-200 dark:border-gray-700 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Status</th>
+                                <th className="p-4 border-b border-gray-200 dark:border-gray-700 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Approved By</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
@@ -335,12 +336,26 @@ const LeavesPage = () => {
                                                     )}
                                                 </div>
                                             </td>
+                                            <td className="p-4 text-sm text-gray-700 dark:text-gray-300">
+                                                {leave.approver ? (
+                                                    <div>
+                                                        <div className="font-medium">{leave.approver.name}</div>
+                                                        <div className="text-xs text-gray-500 dark:text-gray-400">
+                                                            {leave.approver.role_id === 1 ? 'SuperAdmin' :
+                                                                leave.approver.role_id === 2 ? 'Admin' :
+                                                                    leave.approver.role_id === 3 ? 'HR' : 'Employee'}
+                                                        </div>
+                                                    </div>
+                                                ) : (
+                                                    <span className="text-gray-400 dark:text-gray-500 text-xs">-</span>
+                                                )}
+                                            </td>
                                         </tr>
                                     );
                                 })
                             ) : (
                                 <tr>
-                                    <td colSpan="4" className="p-8 text-center text-gray-500 dark:text-gray-400">
+                                    <td colSpan="5" className="p-8 text-center text-gray-500 dark:text-gray-400">
                                         No leave applications found.
                                     </td>
                                 </tr>

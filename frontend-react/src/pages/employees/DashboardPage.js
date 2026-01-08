@@ -38,8 +38,8 @@ const AttendanceActionCard = ({ attendance, onCheckIn, onCheckOut, loading }) =>
             <div className="flex justify-between items-center mb-6">
                 <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Today's Attendance</h3>
                 <span className={`px-3 py-1 rounded-full text-sm font-medium ${status === "Present"
-                        ? "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400"
-                        : "bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300"
+                    ? "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400"
+                    : "bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300"
                     }`}>
                     {status}
                 </span>
@@ -71,8 +71,8 @@ const AttendanceActionCard = ({ attendance, onCheckIn, onCheckOut, loading }) =>
                     onClick={onCheckIn}
                     disabled={loading || isCheckedIn}
                     className={`py-3.5 rounded-xl font-semibold text-base transition-all duration-200 ${isCheckedIn
-                            ? "bg-gray-100 text-gray-400 dark:bg-gray-700 dark:text-gray-500 cursor-not-allowed"
-                            : "bg-emerald-500 hover:bg-emerald-600 text-white shadow-md hover:shadow-lg"
+                        ? "bg-gray-100 text-gray-400 dark:bg-gray-700 dark:text-gray-500 cursor-not-allowed"
+                        : "bg-emerald-500 hover:bg-emerald-600 text-white shadow-md hover:shadow-lg"
                         }`}
                 >
                     {isCheckedIn ? "Checked In" : "Check In"}
@@ -81,8 +81,8 @@ const AttendanceActionCard = ({ attendance, onCheckIn, onCheckOut, loading }) =>
                     onClick={onCheckOut}
                     disabled={loading || !isCheckedIn || isCheckedOut}
                     className={`py-3.5 rounded-xl font-semibold text-base transition-all duration-200 ${(!isCheckedIn || isCheckedOut)
-                            ? "bg-gray-100 text-gray-400 dark:bg-gray-700 dark:text-gray-500 cursor-not-allowed"
-                            : "bg-rose-500 hover:bg-rose-600 text-white shadow-md hover:shadow-lg"
+                        ? "bg-gray-100 text-gray-400 dark:bg-gray-700 dark:text-gray-500 cursor-not-allowed"
+                        : "bg-rose-500 hover:bg-rose-600 text-white shadow-md hover:shadow-lg"
                         }`}
                 >
                     {isCheckedOut ? "Checked Out" : "Check Out"}
@@ -111,8 +111,8 @@ const RecentActivitySection = ({ leaves, announcements, payslips, navigate }) =>
                                 </div>
                             </div>
                             <span className={`px-2 py-1 rounded text-xs font-semibold ${leave.status === "Approved" ? "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400" :
-                                    leave.status === "Rejected" ? "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400" :
-                                        "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400"
+                                leave.status === "Rejected" ? "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400" :
+                                    "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400"
                                 }`}>
                                 {leave.status}
                             </span>
@@ -200,10 +200,25 @@ const DashboardPage = () => {
             const announcementsData = announcementsRes.data.data || announcementsRes.data; // Handle pagination
 
             // Fetch Leaves
-            const leavesRes = await api.get("/my-leaves");
+            let leavesData = [];
+            try {
+                const leavesRes = await api.get("/my-leaves");
+                leavesData = leavesRes.data;
+            } catch (error) {
+                console.warn("Failed to fetch leaves:", error);
+            }
 
-            // Fetch Payslips
-            const payslipsRes = await api.get("/my-payslips");
+            // Fetch Payslips (Handle 403 if access restricted)
+            let payslipsData = [];
+            try {
+                const payslipsRes = await api.get("/my-payslips");
+                payslipsData = payslipsRes.data;
+            } catch (error) {
+                // If 403, it means access is restricted, which is expected for some employees
+                if (error.response?.status !== 403) {
+                    console.warn("Failed to fetch payslips:", error);
+                }
+            }
 
             // Fetch Attendance (Get All and find today, or assume API returns today)
             // Using /my-attendance which returns list. finding today.
@@ -220,13 +235,14 @@ const DashboardPage = () => {
                 profile: profileRes.data,
                 attendance: todayAttendance, // Object or null
                 announcements: Array.isArray(announcementsData) ? announcementsData.slice(0, 3) : [],
-                leaves: Array.isArray(leavesRes.data) ? leavesRes.data.slice(0, 5) : [],
-                payslips: Array.isArray(payslipsRes.data) ? payslipsRes.data.slice(0, 3) : []
+                leaves: Array.isArray(leavesData) ? leavesData.slice(0, 5) : [],
+                payslips: Array.isArray(payslipsData) ? payslipsData.slice(0, 3) : []
             });
             setError(null);
         } catch (err) {
             console.error("Dashboard fetch error:", err);
-            // setError("Failed to load dashboard data. Please try again.");
+            // Only set fatal error if core profile/attendance fails
+            setError("Failed to load dashboard. Please try refreshing.");
         } finally {
             setIsLoading(false);
         }

@@ -91,8 +91,13 @@ const PayslipsPage = () => {
                 const list = data.data || data; // Handle pagination
                 setPayslips(Array.isArray(list) ? list : []);
             } catch (err) {
-                console.error("Fetch payslips error:", err);
-                setError("Failed to load payslips.");
+                if (err.response && err.response.status === 403) {
+                    // Access denied is expected for restricted employees, just show the message
+                    setError("You do not have permission to view or download payslips. Please contact your administrator.");
+                } else {
+                    console.error("Fetch payslips error:", err);
+                    setError("Failed to load payslips.");
+                }
             } finally {
                 setIsLoading(false);
             }

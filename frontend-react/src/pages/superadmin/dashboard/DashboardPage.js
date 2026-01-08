@@ -6,7 +6,7 @@ import {
 import {
     LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, AreaChart, Area,
     PieChart, Pie, Cell, BarChart, Bar, Legend, Sector, ResponsiveContainer,
-    RadialBarChart, RadialBar
+    RadialBarChart, RadialBar, LabelList
 } from 'recharts';
 import api from '../../../api/axios';
 
@@ -293,25 +293,43 @@ const DashboardPage = () => {
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 {/* Today's Attendance */}
                 <ChartCard title="Today's Attendance" loading={loading}>
-                    <RadialBarChart
-                        cx="50%"
-                        cy="50%"
-                        innerRadius="10%"
-                        outerRadius="80%"
-                        barSize={15}
-                        data={todayAttendance.map(d => ({ ...d, fill: d.color }))}
+                    <BarChart
+                        data={todayAttendance}
+                        layout="vertical"
+                        margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
+                        barSize={30}
                     >
-                        <RadialBar
-                            minAngle={15}
-                            label={{ position: 'insideStart', fill: '#fff', fontSize: 10, fontWeight: 'bold' }}
-                            background
-                            clockWise
-                            dataKey="value"
-                            cornerRadius={10}
+                        <defs>
+                            <linearGradient id="attendanceGradient" x1="0" y1="0" x2="1" y2="0">
+                                <stop offset="0%" stopColor="#3B82F6" stopOpacity={0.8} />
+                                <stop offset="100%" stopColor="#8B5CF6" stopOpacity={0.8} />
+                            </linearGradient>
+                        </defs>
+                        <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke={chartGridColor} />
+                        <XAxis type="number" hide />
+                        <YAxis
+                            dataKey="name"
+                            type="category"
+                            axisLine={false}
+                            tickLine={false}
+                            tick={{ fill: chartTextColor, fontSize: 13, fontWeight: 500 }}
+                            width={100}
                         />
-                        <Legend iconSize={10} layout="vertical" verticalAlign="middle" align="right" />
-                        <Tooltip cursor={{ fill: 'transparent' }} contentStyle={tooltipStyle} />
-                    </RadialBarChart>
+                        <Tooltip
+                            cursor={{ fill: isDarkMode ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)' }}
+                            contentStyle={tooltipStyle}
+                        />
+                        <Bar
+                            dataKey="value"
+                            radius={[0, 6, 6, 0]}
+                            animationDuration={1500}
+                        >
+                            {todayAttendance.map((entry, index) => (
+                                <Cell key={`cell-${index}`} fill={entry.color || COLORS[index % COLORS.length]} />
+                            ))}
+                            <LabelList dataKey="value" position="right" fill={chartTextColor} fontSize={12} fontWeight="bold" />
+                        </Bar>
+                    </BarChart>
                 </ChartCard>
 
                 {/* Activity Log */}

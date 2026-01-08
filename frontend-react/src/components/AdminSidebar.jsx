@@ -23,7 +23,9 @@ const AdminSidebar = () => {
         { key: "leaves", label: "Leaves", to: "/admin/leaves" },
         { key: "holidays", label: "Holidays", to: "/admin/holidays" },
         { key: "policies", label: "Leave Policies", to: "/admin/leave-policies" },
-        { key: "recruitment", label: "Recruitment", to: "/admin/recruitment" },
+
+        { key: "reviews", label: "Performance Reviews", to: "/admin/reviews" },
+        { key: "documents", label: "Documents", to: "/admin/documents" },
         { key: "announcements", label: "Announcements", to: "/admin/announcements" },
         // Explicitly EXCLUDING System Settings and User Management
     ];
@@ -32,10 +34,10 @@ const AdminSidebar = () => {
     // Admin (Role 2) or anyone with permission can access
     if (user?.role_id === 2 || hasPermission("can_manage_salaries") || hasPermission("can_view_salaries")) {
         menuItems.push({ key: "salaries", label: "Salaries", to: "/admin/salaries" });
-        // Payroll Settings hidden for Admin usually, but if needed:
-        // if (hasPermission("can_manage_salaries")) {
-        //    menuItems.push({ key: "payroll-settings", label: "Payroll Settings", to: "/admin/payroll-settings" });
-        // }
+        // Payroll Settings
+        if (hasPermission("can_manage_salaries")) {
+            menuItems.push({ key: "payroll-settings", label: "Payroll Settings", to: "/admin/payroll-settings" });
+        }
     }
 
     if (user?.role_id === 2 || hasPermission("can_manage_payslips")) {

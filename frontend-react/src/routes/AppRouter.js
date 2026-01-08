@@ -30,13 +30,23 @@ import AdminSalaries from "../pages/admin/SalariesPage";
 import AdminPayslips from "../pages/admin/PayslipsPage";
 import AdminCreateEmployee from "../pages/admin/CreateEmployeePage";
 
-// HR PAGES (Reusing SuperAdmin Pages where applicable)
-// import HRDashboard from "../pages/hr/DashboardPage";
-// import HRLeaves from "../pages/hr/LeavesPage"; // Replaced by SuperAdminLeaves
-// import HRAttendance from "../pages/hr/AttendancePage"; // Replaced by SuperAdminAttendance
-// import HRRecruitment from "../pages/hr/RecruitmentPage"; // Replaced by SuperAdminRecruitment
-// import HREmployees from "../pages/hr/EmployeesPage"; // Replaced by SuperAdminEmployees
-// import HRDesignations from "../pages/hr/DesignationsPage"; // Converted to lazy
+// HR PAGES (Using Wrapper Components)
+import HRDashboard from "../pages/hr/DashboardPage";
+import HREmployees from "../pages/hr/EmployeesPage";
+import HRDepartments from "../pages/hr/DepartmentsPage";
+// import HRDesignations from "../pages/hr/DesignationsPage"; // Lazy Loaded
+import HRAttendance from "../pages/hr/AttendancePage";
+import HRLeaves from "../pages/hr/LeavesPage";
+import HRHolidays from "../pages/hr/HolidaysPage";
+import HRLeavePolicies from "../pages/hr/LeavePoliciesPage";
+import HRRecruitment from "../pages/hr/RecruitmentPage";
+import HRAnnouncements from "../pages/hr/AnnouncementsPage";
+import HRPayrollSettings from "../pages/hr/PayrollSettingsPage";
+import HRSalaries from "../pages/hr/SalariesPage";
+import HRPayslips from "../pages/hr/PayslipsPage";
+import HRReports from "../pages/hr/ReportsPage";
+import HRDocuments from "../pages/hr/DocumentsPage";
+import HRPerformanceReviews from "../pages/hr/PerformanceReviewsPage";
 
 // SUPERADMIN PAGES
 import SuperAdminDashboard from "../pages/superadmin/dashboard/DashboardPage";
@@ -338,16 +348,7 @@ const AppRouter = () => (
             </ProtectedRoute>
           }
         />
-        <Route
-          path="/admin/recruitment"
-          element={
-            <ProtectedRoute roles={[2]}>
-              <AdminLayout>
-                <SuperAdminRecruitment />
-              </AdminLayout>
-            </ProtectedRoute>
-          }
-        />
+
         <Route
           path="/admin/reviews"
           element={
@@ -385,7 +386,7 @@ const AppRouter = () => (
           element={
             <ProtectedRoute roles={[3]}>
               <HRLayout>
-                <SuperAdminDashboard />
+                <HRDashboard />
               </HRLayout>
             </ProtectedRoute>
           }
@@ -402,13 +403,13 @@ const AppRouter = () => (
           }
         />
 
-        {/* REUSED SUPERADMIN COMPONENTS FOR HR */}
+        {/* HR COMPONENTS (Using Wrappers) */}
         <Route
           path="/hr/employees"
           element={
             <ProtectedRoute roles={[3]}>
               <HRLayout>
-                <SuperAdminEmployees />
+                <HREmployees />
               </HRLayout>
             </ProtectedRoute>
           }
@@ -428,7 +429,7 @@ const AppRouter = () => (
           element={
             <ProtectedRoute roles={[3]}>
               <HRLayout>
-                <SuperAdminAttendance />
+                <HRAttendance />
               </HRLayout>
             </ProtectedRoute>
           }
@@ -438,27 +439,19 @@ const AppRouter = () => (
           element={
             <ProtectedRoute roles={[3]}>
               <HRLayout>
-                <SuperAdminLeaves />
+                <HRLeaves />
               </HRLayout>
             </ProtectedRoute>
           }
         />
-        <Route
-          path="/hr/recruitment"
-          element={
-            <ProtectedRoute roles={[3]}>
-              <HRLayout>
-                <SuperAdminRecruitment />
-              </HRLayout>
-            </ProtectedRoute>
-          }
-        />
+
+        {/* Designations is lazy loaded */}
         <Route
           path="/hr/designations"
           element={
             <ProtectedRoute roles={[3]}>
               <HRLayout>
-                <SuperAdminDesignations />
+                <HRDesignations />
               </HRLayout>
             </ProtectedRoute>
           }
@@ -468,7 +461,7 @@ const AppRouter = () => (
           element={
             <ProtectedRoute roles={[3]}>
               <HRLayout>
-                <SuperAdminHolidays />
+                <HRHolidays />
               </HRLayout>
             </ProtectedRoute>
           }
@@ -478,7 +471,7 @@ const AppRouter = () => (
           element={
             <ProtectedRoute roles={[3]}>
               <HRLayout>
-                <SuperAdminLeavePolicies />
+                <HRLeavePolicies />
               </HRLayout>
             </ProtectedRoute>
           }
@@ -488,7 +481,7 @@ const AppRouter = () => (
           element={
             <ProtectedRoute roles={[3]}>
               <HRLayout>
-                <SuperAdminAnnouncements />
+                <HRAnnouncements />
               </HRLayout>
             </ProtectedRoute>
           }
@@ -498,7 +491,7 @@ const AppRouter = () => (
           element={
             <ProtectedRoute roles={[3]}>
               <HRLayout>
-                <SuperAdminPayrollSettings />
+                <HRPayrollSettings />
               </HRLayout>
             </ProtectedRoute>
           }
@@ -509,7 +502,7 @@ const AppRouter = () => (
           element={
             <ProtectedRoute roles={[3]}>
               <HRLayout>
-                <SuperAdminSalaries />
+                <HRSalaries />
               </HRLayout>
             </ProtectedRoute>
           }
@@ -519,7 +512,7 @@ const AppRouter = () => (
           element={
             <ProtectedRoute roles={[3]}>
               <HRLayout>
-                <SuperAdminPayslips />
+                <HRPayslips />
               </HRLayout>
             </ProtectedRoute>
           }
@@ -529,7 +522,7 @@ const AppRouter = () => (
           element={
             <ProtectedRoute roles={[3]}>
               <HRLayout>
-                <SuperAdminReports />
+                <HRReports />
               </HRLayout>
             </ProtectedRoute>
           }
@@ -594,22 +587,14 @@ const AppRouter = () => (
             </ProtectedRoute>
           }
         />
-        <Route
-          path="/hr/designations"
-          element={
-            <ProtectedRoute roles={[3]}>
-              <HRLayout>
-                <SuperAdminDesignations />
-              </HRLayout>
-            </ProtectedRoute>
-          }
-        />
+        {/* Duplicate /hr/designations removed */}
+
         <Route
           path="/hr/departments"
           element={
             <ProtectedRoute roles={[3]}>
               <HRLayout>
-                <SuperAdminDepartments />
+                <HRDepartments />
               </HRLayout>
             </ProtectedRoute>
           }
@@ -619,7 +604,7 @@ const AppRouter = () => (
           element={
             <ProtectedRoute roles={[3]}>
               <HRLayout>
-                <EmployeeDocumentsPage />
+                <HRDocuments />
               </HRLayout>
             </ProtectedRoute>
           }
@@ -629,7 +614,7 @@ const AppRouter = () => (
           element={
             <ProtectedRoute roles={[3]}>
               <HRLayout>
-                <SuperAdminPerformanceReviews />
+                <HRPerformanceReviews />
               </HRLayout>
             </ProtectedRoute>
           }
@@ -665,16 +650,7 @@ const AppRouter = () => (
           }
         />
 
-        <Route
-          path="/superadmin/recruitment"
-          element={
-            <ProtectedRoute roles={[1]}>
-              <SuperAdminLayout>
-                <SuperAdminRecruitment />
-              </SuperAdminLayout>
-            </ProtectedRoute>
-          }
-        />
+
         <Route
           path="/superadmin/designations"
           element={
@@ -795,6 +771,17 @@ const AppRouter = () => (
             </ProtectedRoute>
           }
         />
+        <Route
+          path="/admin/payroll-settings"
+          element={
+            <ProtectedRoute roles={[2]}>
+              <AdminLayout>
+                <SuperAdminPayrollSettings />
+              </AdminLayout>
+            </ProtectedRoute>
+          }
+        />
+
         <Route
           path="/superadmin/payroll-settings"
           element={

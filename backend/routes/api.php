@@ -73,6 +73,9 @@ Route::middleware(['auth:sanctum', 'role:1,2,3', 'permission:can_manage_employee
 
     // Set employee temp password
     Route::put('/users/{id}/set-temp-password', [UserController::class, 'setTempPassword']);
+
+    // Toggle Payslip Access
+    Route::patch('/employees/{id}/payslip-access', [EmployeeController::class, 'togglePayslipAccess']);
 });
 Route::post('/change-password', [AuthController::class, 'changePassword']);
 
@@ -151,8 +154,8 @@ Route::middleware(['auth:sanctum', 'role:4'])->group(function () {
     // LEAVE MANAGEMENT — HR, Admin, SuperAdmin
     // =====================================
     Route::middleware(['auth:sanctum', 'role:1,2,3'])->group(function () {
-        // View
-        Route::middleware('permission:can_view_leaves')->group(function() {
+        // View (Permission logic moved to Controller index/show methods to handle OR case safely)
+        Route::middleware([])->group(function() {
             Route::get('/leaves', [LeaveController::class, 'index']);
             Route::get('/leaves/summary', [LeaveController::class, 'summary']); // New
             Route::get('/leaves/export', [LeaveController::class, 'export']);   // New
@@ -207,13 +210,21 @@ Route::middleware(['auth:sanctum', 'role:4'])->group(function () {
 // PAYSLIP ROUTES
 // ======================================
 
-// Admin + SuperAdmin
-Route::middleware(['role:1,2', 'permission:can_manage_payslips'])->group(function () {
-    Route::get('/payslips', [PayslipController::class, 'index']);      // View all
-    Route::post('/payslips', [PayslipController::class, 'store']);     // Generate
-    Route::put('/payslips/{id}', [PayslipController::class, 'update']); // Update
-    Route::delete('/payslips/{id}', [PayslipController::class, 'destroy']); // Delete
-    Route::get('/payslips/{id}', [PayslipController::class, 'show']);  // View single
+// Payslips - Admin + SuperAdmin + HR
+Route::middleware(['role:1,2,3'])->group(function () {
+    // View (can_view_salaries covers payslips)
+    Route::middleware('permission:can_view_salaries')->group(function() {
+        Route::get('/payslips/download', [PayslipController::class, 'download']); // Bulk Download
+        Route::get('/payslips', [PayslipController::class, 'index']);      // View all
+        Route::get('/payslips/{id}', [PayslipController::class, 'show']);  // View single
+    });
+
+    // Manage (can_manage_salaries covers payslips generation)
+    Route::middleware('permission:can_manage_salaries')->group(function() {
+        Route::post('/payslips', [PayslipController::class, 'store']);     // Generate
+        Route::put('/payslips/{id}', [PayslipController::class, 'update']); // Update
+        Route::delete('/payslips/{id}', [PayslipController::class, 'destroy']); // Delete
+    });
 });
 
 // Employee can view OWN payslip only
@@ -334,6 +345,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
     
     // Admin/HR Managed Routes
     Route::middleware(['role:1,2,3'])->group(function () {
+        Route::post('/holidays/import', [App\Http\Controllers\HolidayController::class, 'import']); // Import Route
         Route::post('/holidays', [App\Http\Controllers\HolidayController::class, 'store']);
         Route::put('/holidays/{id}', [App\Http\Controllers\HolidayController::class, 'update']);
         Route::delete('/holidays/{id}', [App\Http\Controllers\HolidayController::class, 'destroy']);
@@ -345,6 +357,8 @@ Route::middleware(['auth:sanctum'])->group(function () {
         Route::post('/leave-policies', [App\Http\Controllers\LeavePolicyController::class, 'store']);
         Route::put('/leave-policies/{id}', [App\Http\Controllers\LeavePolicyController::class, 'update']);
         Route::delete('/leave-policies/{id}', [App\Http\Controllers\LeavePolicyController::class, 'destroy']);
+        Route::get('/leave-policies/{id}/carry-forward-candidates', [App\Http\Controllers\LeavePolicyController::class, 'getCarryForwardCandidates']);
+        Route::post('/leave-policies/{id}/process-carry-forward', [App\Http\Controllers\LeavePolicyController::class, 'processCarryForward']);
         Route::post('/leave-policies/{id}/recalculate', [App\Http\Controllers\LeavePolicyController::class, 'recalculate']);
     });
     

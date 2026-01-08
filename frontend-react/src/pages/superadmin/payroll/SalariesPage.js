@@ -5,7 +5,7 @@ import { useAuth } from "../../../context/AuthContext";
 
 const SalariesPage = () => {
     const { user } = useAuth();
-    const canManageSalary = user?.role_id === 1 || user?.role_id === 2 || user?.role_id === 3 || user?.permissions?.includes("can_manage_salaries");
+    const canManageSalary = user?.role_id === 1 || user?.permissions?.includes("can_manage_salaries");
 
     // State
     const [salaries, setSalaries] = useState({ data: [], current_page: 1, last_page: 1, total: 0 });
