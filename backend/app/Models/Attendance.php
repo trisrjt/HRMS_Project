@@ -23,7 +23,13 @@ class Attendance extends Model
         'device_id',
         'device_type',
         'browser',
-        'ip_address'
+        'ip_address',
+        'checked_in_by',
+        'checked_out_by',
+        'checkout_type',
+        'overtime_start',
+        'overtime_end',
+        'overtime_hours'
     ];
 
     public function employee()

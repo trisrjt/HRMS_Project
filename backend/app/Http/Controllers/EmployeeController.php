@@ -133,12 +133,20 @@ class EmployeeController extends Controller
         'aadhar_number' => 'nullable|digits:12', // Added Aadhar
         'pan_number' => 'nullable|regex:/^[A-Z]{5}[0-9]{4}[A-Z]{1}$/i', // Added PAN
         'profile_photo' => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
+        'face_image' => 'required|image|max:5120',
+        'face_descriptor' => 'required|string',
     ]);
 
     // Handle File Upload
     $profilePhotoPath = null;
     if ($request->hasFile('profile_photo')) {
         $profilePhotoPath = $request->file('profile_photo')->store('employees', 'public');
+    }
+
+    // Handle Face Data Upload
+    $faceDataPath = null;
+    if ($request->hasFile('face_image')) {
+        $faceDataPath = $request->file('face_image')->store('faces', 'public');
     }
 
     // Handle Designation (Hybrid: Select or Create)
@@ -156,6 +164,8 @@ class EmployeeController extends Controller
         'temp_password' => $request->temp_password,        // raw temp pass
         'role_id' => 4, // Employee
         'is_active' => true, // Default to Active
+        'face_data' => $faceDataPath,
+        'face_descriptor' => $request->face_descriptor,
     ]);
 
     // Step 2: Generate employee code
@@ -579,5 +589,37 @@ class EmployeeController extends Controller
         };
 
         return response()->stream($callback, 200, $headers);
+    }
+
+    
+    public function toggleOvertime(Request $request, $id)
+    {
+        if (!in_array(auth()->user()->role_id, [1, 2, 3])) {
+            return response()->json(['message' => 'Unauthorized'], 403);
+        }
+
+        $employee = Employee::with('user')->findOrFail($id);
+        
+        $validated = $request->validate([
+            'overtime_enabled' => 'required|boolean'
+        ]);
+
+        $employee->update([
+            'overtime_enabled' => $validated['overtime_enabled']
+        ]);
+
+        $status = $validated['overtime_enabled'] ? 'enabled' : 'disabled';
+        $this->notifications->sendToUser(
+            $employee->user->id,
+            'Overtime Permission Updated',
+            'Your overtime permission has been ' . $status . '.',
+            'employee',
+            '/employee/attendance'
+        );
+
+        return response()->json([
+            'message' => 'Overtime ' . $status . ' successfully',
+            'employee' => $employee
+        ], 200);
     }
 }

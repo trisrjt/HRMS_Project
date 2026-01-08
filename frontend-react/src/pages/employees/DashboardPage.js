@@ -367,6 +367,16 @@ const DashboardPage = () => {
     // Attendance Actions with Location
     const handleAttendanceAction = async (type) => {
         console.log(type === "check-in" ? "🔵 Check-in clicked from dashboard" : "🔴 Check-out clicked from dashboard");
+        
+        // Check if current time is after 9:00 PM for checkout
+        if (type === "check-out") {
+            const currentHour = new Date().getHours();
+            if (currentHour >= 21) { // 21:00 = 9:00 PM
+                alert("Checkout is not allowed after 9:00 PM. Please contact HR/Admin/SuperAdmin for assistance.");
+                return;
+            }
+        }
+        
         try {
             setPendingAction(type);
             
@@ -393,13 +403,24 @@ const DashboardPage = () => {
             // Location already captured, just get device info
             const deviceInfo = getDeviceInfo();
 
-            const payload = {
-                latitude: currentLocation.latitude,
-                longitude: currentLocation.longitude,
-                ...deviceInfo
-            };
+            let payload, endpoint;
+            
+            if (pendingAction === "check-in") {
+                payload = {
+                    latitude: currentLocation.latitude,
+                    longitude: currentLocation.longitude,
+                    force_checkin: true,
+                    ...deviceInfo
+                };
+                endpoint = "/my-attendance/check-in";
+            } else {
+                payload = {
+                    check_out_latitude: currentLocation.latitude,
+                    check_out_longitude: currentLocation.longitude,
+                };
+                endpoint = "/my-attendance/check-out";
+            }
 
-            const endpoint = pendingAction === "check-in" ? "/my-attendance/check-in" : "/my-attendance/check-out";
             await api.post(endpoint, payload);
             
             // Refresh data
@@ -407,7 +428,13 @@ const DashboardPage = () => {
             alert(`${pendingAction === "check-in" ? "Checked in" : "Checked out"} successfully at your current location!`);
         } catch (err) {
             console.error(`${pendingAction} error:`, err);
-            alert(err?.response?.data?.message || `Failed to ${pendingAction}`);
+            
+            // Check if it's a time restriction error
+            if (err.response?.data?.error === 'checkout_restricted') {
+                alert(err.response.data.message || "Checkout is not allowed after 9:00 PM. Please contact HR/Admin/SuperAdmin.");
+            } else {
+                alert(err?.response?.data?.message || `Failed to ${pendingAction}`);
+            }
         } finally {
             setActionLoading(false);
             setPendingAction(null);

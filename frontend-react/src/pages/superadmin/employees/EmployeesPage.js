@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import api from "../../../api/axios";
 import { useAuth } from "../../../context/AuthContext"; // Add AuthContext
+import FaceEnrollment from "../../../components/FaceEnrollment";
 
 import { formatDate } from "../../../utils/dateUtils";
 
@@ -351,6 +352,12 @@ const EmployeesPage = () => {
     const [createdPassword, setCreatedPassword] = useState(null);
     const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
 
+    // Face Enrollment States
+    const [showFaceEnrollment, setShowFaceEnrollment] = useState(false);
+    const [faceDescriptor, setFaceDescriptor] = useState(null);
+    const [faceImage, setFaceImage] = useState(null);
+    const [pendingEmployeeData, setPendingEmployeeData] = useState(null);
+
     // Form Submission
     const validateForm = () => {
         const errors = {};
@@ -389,28 +396,44 @@ const EmployeesPage = () => {
             return;
         }
 
+        // Store form data and open face enrollment
+        setPendingEmployeeData(formData);
+        setShowFaceEnrollment(true);
+    };
+
+    const handleFaceEnrolled = async (descriptor, imageBlob) => {
+        setFaceDescriptor(descriptor);
+        setFaceImage(imageBlob);
+        setShowFaceEnrollment(false);
+
+        // Now create the employee with face data
         setIsSubmitting(true);
         try {
             const data = new FormData();
-            Object.keys(formData).forEach(key => {
-                if (formData[key] !== null && formData[key] !== undefined) {
+            Object.keys(pendingEmployeeData).forEach(key => {
+                if (pendingEmployeeData[key] !== null && pendingEmployeeData[key] !== undefined) {
                     if (key === 'pf_opt_out' || key === 'esic_opt_out' || key === 'ptax_opt_out') {
-                        data.append(key, formData[key] ? '1' : '0');
+                        data.append(key, pendingEmployeeData[key] ? '1' : '0');
                     } else {
-                        data.append(key, formData[key]);
+                        data.append(key, pendingEmployeeData[key]);
                     }
                 }
             });
             // Append password as temp_password for backend
-            if (formData.password) {
-                data.append('temp_password', formData.password);
+            if (pendingEmployeeData.password) {
+                data.append('temp_password', pendingEmployeeData.password);
             }
+
+            // Add face data
+            data.append('face_descriptor', JSON.stringify(descriptor));
+            data.append('face_image', imageBlob, 'face.jpg');
 
             const response = await api.post(apiEndpoint, data, {
                 headers: { "Content-Type": "multipart/form-data" }
             });
             fetchEmployees();
             closeModals();
+            setPendingEmployeeData(null);
 
             // Show password modal if plain_password is returned
             if (response.data.plain_password) {
@@ -1373,6 +1396,49 @@ const EmployeesPage = () => {
                                             {selectedEmployee.user?.is_active ? "Active" : "Inactive"}
                                         </span>
                                     </div>
+                                    {canManage && (
+                                        <div>
+                                            <label className="text-xs text-gray-500 dark:text-gray-400 uppercase font-semibold">Overtime Permission</label>
+                                            <div className="mt-2 flex items-center gap-2">
+                                                <button
+                                                    onClick={async () => {
+                                                        try {
+                                                            await api.post(`/employees/${selectedEmployee.id}/toggle-overtime`, {
+                                                                overtime_enabled: !selectedEmployee.overtime_enabled
+                                                            });
+                                                            const updatedEmps = employees.map(emp => 
+                                                                emp.id === selectedEmployee.id 
+                                                                    ? { ...emp, overtime_enabled: !selectedEmployee.overtime_enabled }
+                                                                    : emp
+                                                            );
+                                                            setEmployees(updatedEmps);
+                                                            setSelectedEmployee({ ...selectedEmployee, overtime_enabled: !selectedEmployee.overtime_enabled });
+                                                        } catch (error) {
+                                                            alert(error?.response?.data?.message || 'Failed to toggle overtime permission');
+                                                        }
+                                                    }}
+                                                    className={`relative inline-flex h-6 w-11 items-center rounded-full transition-all duration-300 ease-in-out transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-offset-2 border-2 ${
+                                                        selectedEmployee.overtime_enabled
+                                                            ? 'bg-blue-400 border-blue-500 focus:ring-blue-400'
+                                                            : 'bg-gray-300 dark:bg-gray-600 border-gray-400 dark:border-gray-500 focus:ring-gray-400'
+                                                    }`}
+                                                >
+                                                    <span 
+                                                        className={`inline-block h-5 w-5 transform rounded-full shadow-lg transition-all duration-300 ease-in-out bg-white ${
+                                                            selectedEmployee.overtime_enabled 
+                                                                ? 'translate-x-5 scale-110' 
+                                                                : 'translate-x-0.5'
+                                                        }`} 
+                                                    />
+                                                </button>
+                                                <span className={`text-xs font-medium transition-colors duration-300 ${
+                                                    selectedEmployee.overtime_enabled ? 'text-blue-500 dark:text-blue-400' : 'text-gray-500 dark:text-gray-400'
+                                                }`}>
+                                                    {selectedEmployee.overtime_enabled ? 'Enabled' : 'Disabled'}
+                                                </span>
+                                            </div>
+                                        </div>
+                                    )}
                                 </div>
                             </div>
                             <div>
@@ -1486,6 +1552,18 @@ const EmployeesPage = () => {
                     </div>
                 )
             }
+
+            {/* Face Enrollment Modal */}
+            {showFaceEnrollment && pendingEmployeeData && (
+                <FaceEnrollment
+                    email={pendingEmployeeData.email}
+                    onFaceEnrolled={handleFaceEnrolled}
+                    onClose={() => {
+                        setShowFaceEnrollment(false);
+                        setPendingEmployeeData(null);
+                    }}
+                />
+            )}
 
             {/* End of Modals */}
         </>

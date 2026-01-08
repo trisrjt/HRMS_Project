@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import api from "../../api/axios";
 import { formatDate } from "../../utils/dateUtils";
 import { useAuth } from "../../context/AuthContext";
+import FaceEnrollment from "../../components/FaceEnrollment";
 
 const AdminEmployeesPage = () => {
     const { user } = useAuth();
@@ -61,6 +62,12 @@ const AdminEmployeesPage = () => {
     // Password Modal State
     const [createdPassword, setCreatedPassword] = useState(null);
     const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
+
+    // Face Enrollment States
+    const [showFaceEnrollment, setShowFaceEnrollment] = useState(false);
+    const [faceDescriptor, setFaceDescriptor] = useState(null);
+    const [faceImage, setFaceImage] = useState(null);
+    const [pendingEmployeeData, setPendingEmployeeData] = useState(null);
 
     // Initial Data Fetch
     useEffect(() => {
@@ -317,14 +324,29 @@ const AdminEmployeesPage = () => {
             return;
         }
 
+        // Store form data and open face enrollment
+        setPendingEmployeeData(formData);
+        setShowFaceEnrollment(true);
+    };
+
+    const handleFaceEnrolled = async (descriptor, imageBlob) => {
+        setFaceDescriptor(descriptor);
+        setFaceImage(imageBlob);
+        setShowFaceEnrollment(false);
+
+        // Now create the employee with face data
         setIsSubmitting(true);
         try {
             const data = new FormData();
-            Object.keys(formData).forEach(key => {
-                if (formData[key] !== null && formData[key] !== "") {
-                    data.append(key, formData[key]);
+            Object.keys(pendingEmployeeData).forEach(key => {
+                if (pendingEmployeeData[key] !== null && pendingEmployeeData[key] !== "") {
+                    data.append(key, pendingEmployeeData[key]);
                 }
             });
+
+            // Add face data
+            data.append('face_descriptor', JSON.stringify(descriptor));
+            data.append('face_image', imageBlob, 'face.jpg');
 
             // Using /employees endpoint
             const response = await api.post("/employees", data, {
@@ -332,6 +354,11 @@ const AdminEmployeesPage = () => {
             });
             fetchEmployees();
             closeModals();
+
+            // Reset face enrollment state
+            setFaceDescriptor(null);
+            setFaceImage(null);
+            setPendingEmployeeData(null);
 
             if (response.data.plain_password) {
                 setCreatedPassword(response.data.plain_password);
@@ -705,6 +732,18 @@ const AdminEmployeesPage = () => {
                         <button onClick={() => { setIsPasswordModalOpen(false); setCreatedPassword(null); }} className="w-full py-2 bg-blue-600 hover:bg-blue-700 text-white rounded">Close</button>
                     </div>
                 </div>
+            )}
+
+            {/* Face Enrollment Modal */}
+            {showFaceEnrollment && pendingEmployeeData && (
+                <FaceEnrollment
+                    email={pendingEmployeeData.email}
+                    onFaceEnrolled={handleFaceEnrolled}
+                    onClose={() => {
+                        setShowFaceEnrollment(false);
+                        setPendingEmployeeData(null);
+                    }}
+                />
             )}
         </div>
     );

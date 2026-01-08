@@ -3,10 +3,12 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Validator;
 use App\Models\Attendance;
 use App\Models\Employee;
 use App\Services\NotificationService;
 use App\Services\HolidayService; // Import
+use Carbon\Carbon;
 
 class AttendanceController extends Controller
 {
@@ -144,17 +146,38 @@ class AttendanceController extends Controller
     {
         $user = auth()->user();
 
+        if (!$user) {
+            return response()->json(['message' => 'User not authenticated'], 401);
+        }
+
         if ($user->role_id != 4) {
-            return response()->json(['message' => 'Unauthorized'], 403);
+            return response()->json([
+                'message' => 'Unauthorized - Only employees can check in',
+                'debug' => [
+                    'user_id' => $user->id,
+                    'role_id' => $user->role_id
+                ]
+            ], 403);
         }
 
         $employee = $user->employee;
 
+        if (!$employee) {
+            return response()->json(['message' => 'Employee profile not found'], 404);
+        }
+
         $today = now()->toDateString();
 
-        // Prevent duplicate check-in
-        if (Attendance::where('employee_id', $employee->id)->where('date', $today)->exists()) {
-            return response()->json(['message' => 'Already checked in today'], 409);
+        // Check if already checked in today
+        $existingAttendance = Attendance::where('employee_id', $employee->id)
+            ->where('date', $today)
+            ->first();
+
+        if ($existingAttendance) {
+            return response()->json([
+                'message' => 'Already checked in today',
+                'attendance' => $existingAttendance
+            ], 200); // Return 200 instead of 409 with existing record
         }
 
         // Validate location and device data
@@ -166,32 +189,44 @@ class AttendanceController extends Controller
             'browser' => 'nullable|string|max:255',
         ]);
 
-        $attendance = Attendance::create([
-            'employee_id' => $employee->id,
-            'date'        => $today,
-            'check_in'    => now()->format('H:i:s'),
-            'status'      => 'Present',
-            'check_in_latitude' => $validated['latitude'] ?? null,
-            'check_in_longitude' => $validated['longitude'] ?? null,
-            'device_id' => $validated['device_id'] ?? null,
-            'device_type' => $validated['device_type'] ?? null,
-            'browser' => $validated['browser'] ?? null,
-            'ip_address' => $request->ip(),
-        ]);
+        try {
+            $attendance = Attendance::create([
+                'employee_id' => $employee->id,
+                'date'        => $today,
+                'check_in'    => now()->format('H:i:s'),
+                'status'      => 'Present',
+                'check_in_latitude' => $validated['latitude'] ?? null,
+                'check_in_longitude' => $validated['longitude'] ?? null,
+                'device_id' => $validated['device_id'] ?? null,
+                'device_type' => $validated['device_type'] ?? null,
+                'browser' => $validated['browser'] ?? null,
+                'ip_address' => $request->ip(),
+                'checked_in_by' => 'self',
+            ]);
 
-        // Notify HR
-        $this->notifications->sendToRoles(
-            [3],
-            "Employee Checked In",
-            "{$employee->user->name} checked in at {$attendance->check_in}",
-            "attendance",
-            "/hr/attendance"
-        );
+            // Notify HR (don't let notification failure break check-in)
+            try {
+                $this->notifications->sendToRoles(
+                    [3],
+                    "Employee Checked In",
+                    "{$employee->user->name} checked in at {$attendance->check_in}",
+                    "attendance",
+                    "/hr/attendance"
+                );
+            } catch (\Exception $e) {
+                // Log but don't fail - notification is not critical
+            }
 
-        return response()->json([
-            'message' => 'Check-in successful',
-            'attendance' => $attendance
-        ], 201);
+            return response()->json([
+                'message' => 'Check-in successful',
+                'attendance' => $attendance->fresh()
+            ], 201);
+        } catch (\Exception $e) {
+            return response()->json([
+                'message' => 'Failed to check in',
+                'error' => $e->getMessage()
+            ], 500);
+        }
     }
 
     // =====================================
@@ -201,54 +236,64 @@ class AttendanceController extends Controller
     {
         $user = auth()->user();
 
+        if (!$user) {
+            return response()->json(['message' => 'User not authenticated'], 401);
+        }
+
         if ($user->role_id != 4) {
             return response()->json(['message' => 'Unauthorized'], 403);
         }
 
         $employee = $user->employee;
 
-        $today = now()->toDateString();
+        if (!$employee) {
+            return response()->json(['message' => 'Employee profile not found'], 404);
+        }
 
+        $validator = Validator::make($request->all(), [
+            'check_out_latitude' => 'required|numeric',
+            'check_out_longitude' => 'required|numeric',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json(['errors' => $validator->errors()], 422);
+        }
+
+        $today = Carbon::today()->toDateString();
         $attendance = Attendance::where('employee_id', $employee->id)
             ->where('date', $today)
             ->first();
 
         if (!$attendance) {
-            return response()->json(['message' => 'Check-in missing'], 400);
+            return response()->json(['message' => 'No check-in record found for today'], 404);
         }
 
-        // Validate location and device data
-        $validated = $request->validate([
-            'latitude' => 'nullable|numeric|between:-90,90',
-            'longitude' => 'nullable|numeric|between:-180,180',
-            'device_id' => 'nullable|string|max:255',
-            'device_type' => 'nullable|string|max:255',
-            'browser' => 'nullable|string|max:255',
-        ]);
+        if ($attendance->check_out) {
+            return response()->json([
+                'message' => 'Already checked out today',
+                'attendance' => $attendance
+            ], 200); // Return 200 with existing record instead of 409
+        }
 
-        $attendance->update([
-            'check_out' => now()->format('H:i:s'),
-            'check_out_latitude' => $validated['latitude'] ?? null,
-            'check_out_longitude' => $validated['longitude'] ?? null,
-            'device_id' => $validated['device_id'] ?? $attendance->device_id,
-            'device_type' => $validated['device_type'] ?? $attendance->device_type,
-            'browser' => $validated['browser'] ?? $attendance->browser,
-            'ip_address' => $request->ip(),
-        ]);
+        try {
+            $attendance->update([
+                'check_out' => now()->format('H:i:s'),
+                'check_out_latitude' => $request->check_out_latitude,
+                'check_out_longitude' => $request->check_out_longitude,
+                'checked_out_by' => $user->id,
+                'checkout_type' => 'manual',
+            ]);
 
-        // Notify HR
-        $this->notifications->sendToRoles(
-            [3],
-            "Employee Checked Out",
-            "{$employee->user->name} checked out at {$attendance->check_out}",
-            'attendance',
-            "/hr/attendance"
-        );
-
-        return response()->json([
-            'message' => 'Check-out successful',
-            'attendance' => $attendance
-        ]);
+            return response()->json([
+                'message' => 'Check-out successful',
+                'attendance' => $attendance->fresh()
+            ], 200);
+        } catch (\Exception $e) {
+            return response()->json([
+                'message' => 'Failed to check out',
+                'error' => $e->getMessage()
+            ], 500);
+        }
     }
 
     // =====================================
@@ -258,17 +303,127 @@ class AttendanceController extends Controller
     {
         $user = auth()->user();
 
+        if (!$user) {
+            return response()->json(['message' => 'User not authenticated'], 401);
+        }
+
         if ($user->role_id != 4) {
             return response()->json(['message' => 'Unauthorized'], 403);
         }
 
         $employee = $user->employee;
 
-        $records = Attendance::where('employee_id', $employee->id)
-            ->orderByDesc('date')
-            ->get();
+        if (!$employee) {
+            return response()->json(['message' => 'Employee profile not found'], 404);
+        }
 
-        return response()->json($records, 200);
+        try {
+            $records = Attendance::where('employee_id', $employee->id)
+                ->orderByDesc('date')
+                ->get()
+                ->map(function ($record) use ($user) {
+                    // Add remarks field
+                    $remarks = '-';
+                    
+                    if ($record->check_out) {
+                        if (is_numeric($record->checked_out_by)) {
+                            // Any numeric value is treated as a self-checkout to avoid showing raw IDs
+                            $remarks = 'Checked out by self';
+                        } elseif (in_array($record->checked_out_by, ['hr', 'admin', 'superadmin'])) {
+                            $remarks = 'Checked out by ' . ucfirst($record->checked_out_by);
+                        } else {
+                            $remarks = 'Checked out by system';
+                        }
+                    }
+                    
+                    $record->remarks = $remarks;
+                    return $record;
+                });
+
+            return response()->json($records, 200);
+        } catch (\Exception $e) {
+            return response()->json([
+                'message' => 'Failed to load attendance records',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    // =====================================
+    // GET PENDING CHECKOUTS (REMOVED - No longer needed)
+    // =====================================
+    public function getPendingCheckouts()
+    {
+        return response()->json([
+            'pending_checkouts' => []
+        ], 200);
+    }
+
+    // =====================================
+    // CHECK OUT OLD SESSION (REMOVED - No longer needed)
+    // =====================================
+    public function checkoutOldSession(Request $request, $id)
+    {
+        return response()->json([
+            'message' => 'This feature has been removed',
+            'error' => 'feature_removed'
+        ], 410);
+    }
+
+    // =====================================
+    // ADMIN/HR/SUPERADMIN CHECK OUT EMPLOYEE
+    // =====================================
+    public function adminCheckoutEmployee(Request $request, $attendanceId)
+    {
+        $user = auth()->user();
+
+        // Only HR (3), Admin (2), and SuperAdmin (1) can checkout employees
+        if (!in_array($user->role_id, [1, 2, 3])) {
+            return response()->json(['message' => 'Unauthorized'], 403);
+        }
+
+        // Find the attendance record
+        $attendance = Attendance::find($attendanceId);
+
+        if (!$attendance) {
+            return response()->json(['message' => 'Attendance record not found'], 404);
+        }
+
+        if ($attendance->check_out) {
+            return response()->json(['message' => 'Already checked out'], 400);
+        }
+
+        // Determine who is checking out
+        $checkedOutBy = 'hr';
+        if ($user->role_id == 1) {
+            $checkedOutBy = 'superadmin';
+        } elseif ($user->role_id == 2) {
+            $checkedOutBy = 'admin';
+        }
+
+        // Update the attendance record with checkout time
+        $attendance->update([
+            'check_out' => now()->format('H:i:s'),
+            'checked_out_by' => $checkedOutBy,
+            'checkout_type' => 'manual',
+        ]);
+
+        // Notify the employee
+        $employee = $attendance->employee;
+        if ($employee && $employee->user) {
+            $this->notifications->sendToUser(
+                $employee->user->id,
+                "Checked Out by " . ucfirst($checkedOutBy),
+                "You have been checked out by {$checkedOutBy} at {$attendance->check_out}",
+                'attendance',
+                "/employee/attendance"
+            );
+        }
+
+        return response()->json([
+            'message' => 'Employee checked out successfully',
+            'attendance' => $attendance
+        ]);
     }
 
     // =====================================
@@ -312,7 +467,7 @@ class AttendanceController extends Controller
         $employees = $query->paginate(15);
 
         // Transform to include attendance status flatly
-        $data = $employees->getCollection()->map(function($emp) {
+        $data = collect($employees->items())->map(function($emp) {
             $att = $emp->attendances->first();
             return [
                 'id' => $emp->id,
@@ -323,9 +478,6 @@ class AttendanceController extends Controller
                 'check_in' => $att ? $att->check_in : '-',
                 'check_out' => $att ? $att->check_out : '-',
                 'status' => $att ? $att->status : 'Absent',
-                'p_employee' => $emp, // Helper for frontend to access user data easily if we don't map `employee` key
-                // To minimize frontend breakage, let's mock the structure needed:
-                'employee' => $emp, 
             ];
         });
 
@@ -394,7 +546,7 @@ class AttendanceController extends Controller
         $employees = $employeesQuery->paginate(15);
 
         // Process each employee
-        $summary = $employees->getCollection()->map(function ($employee) use ($month) {
+        $summary = collect($employees->items())->map(function ($employee) use ($month) {
             $startDate = \Carbon\Carbon::parse($month)->startOfMonth();
             $endDate = \Carbon\Carbon::parse($month)->endOfMonth();
 
@@ -535,6 +687,14 @@ class AttendanceController extends Controller
                     'check_out' => $record->check_out,
                     'total_hours' => round($totalHours, 1),
                     'status' => $record->status,
+                    'check_in_latitude' => $record->check_in_latitude,
+                    'check_in_longitude' => $record->check_in_longitude,
+                    'check_out_latitude' => $record->check_out_latitude,
+                    'check_out_longitude' => $record->check_out_longitude,
+                    'device_id' => $record->device_id,
+                    'device_type' => $record->device_type,
+                    'browser' => $record->browser,
+                    'ip_address' => $record->ip_address,
                 ];
             } else {
                 // Determine if it's a weekend or holiday
@@ -571,5 +731,119 @@ class AttendanceController extends Controller
         });
 
         return response()->json($fullHistory);
+    }
+
+    // =====================================
+    // START OVERTIME
+    // =====================================
+    public function startOvertime(Request $request)
+    {
+        $user = auth()->user();
+
+        if ($user->role_id != 4) {
+            return response()->json(['message' => 'Unauthorized'], 403);
+        }
+
+        $employee = $user->employee;
+
+        // Check if overtime is enabled for this employee
+        if (!$employee->overtime_enabled) {
+            return response()->json([
+                'message' => 'Overtime is not enabled for your account. Please contact HR/Admin.',
+                'error' => 'overtime_disabled'
+            ], 403);
+        }
+
+        $today = now()->toDateString();
+        $attendance = Attendance::where('employee_id', $employee->id)
+            ->where('date', $today)
+            ->first();
+
+        if (!$attendance) {
+            return response()->json(['message' => 'No check-in record found for today'], 404);
+        }
+
+        if (!$attendance->check_out) {
+            return response()->json(['message' => 'Please check out first before starting overtime'], 400);
+        }
+
+        if ($attendance->overtime_start) {
+            return response()->json(['message' => 'Overtime already started'], 409);
+        }
+
+        $attendance->update([
+            'overtime_start' => now()->format('H:i:s')
+        ]);
+
+        // Notify HR
+        $this->notifications->sendToRoles(
+            [3],
+            "Overtime Started",
+            "{$employee->user->name} started overtime at {$attendance->overtime_start}",
+            "attendance",
+            "/hr/attendance"
+        );
+
+        return response()->json([
+            'message' => 'Overtime started successfully',
+            'attendance' => $attendance
+        ], 200);
+    }
+
+    // =====================================
+    // END OVERTIME
+    // =====================================
+    public function endOvertime(Request $request)
+    {
+        $user = auth()->user();
+
+        if ($user->role_id != 4) {
+            return response()->json(['message' => 'Unauthorized'], 403);
+        }
+
+        $employee = $user->employee;
+
+        $today = now()->toDateString();
+        $attendance = Attendance::where('employee_id', $employee->id)
+            ->where('date', $today)
+            ->first();
+
+        if (!$attendance) {
+            return response()->json(['message' => 'No check-in record found for today'], 404);
+        }
+
+        if (!$attendance->overtime_start) {
+            return response()->json(['message' => 'Overtime not started yet'], 400);
+        }
+
+        if ($attendance->overtime_end) {
+            return response()->json(['message' => 'Overtime already ended'], 409);
+        }
+
+        $overtimeEnd = now()->format('H:i:s');
+        
+        // Calculate overtime hours
+        $start = \Carbon\Carbon::parse($attendance->overtime_start);
+        $end = \Carbon\Carbon::parse($overtimeEnd);
+        $overtimeHours = $end->diffInMinutes($start) / 60;
+
+        $attendance->update([
+            'overtime_end' => $overtimeEnd,
+            'overtime_hours' => round($overtimeHours, 2)
+        ]);
+
+        // Notify HR
+        $this->notifications->sendToRoles(
+            [3],
+            "Overtime Ended",
+            "{$employee->user->name} ended overtime at {$overtimeEnd}. Total: {$attendance->overtime_hours} hours",
+            "attendance",
+            "/hr/attendance"
+        );
+
+        return response()->json([
+            'message' => 'Overtime ended successfully',
+            'attendance' => $attendance
+        ], 200);
     }
 }

@@ -1,0 +1,57 @@
+<?php
+// Face Authentication Methods for AuthController.php
+
+public function enrollFace(Request $request)
+{
+    $request->validate([
+        'email' => 'required|email|exists:users,email',
+        'face_image' => 'required|image|max:5120',
+    ]);
+
+    $user = User::where('email', $request->email)->first();
+    if (!$user) return response()->json(['message' => 'User not found'], 404);
+
+    $facePath = $request->file('face_image')->store('faces', 'public');
+    $user->update(['face_data' => $facePath]);
+
+    return response()->json(['message' => 'Face enrolled successfully'], 200);
+}
+
+public function loginFace(Request $request)
+{
+    $request->validate(['face_image' => 'required|image|max:5120']);
+    
+    $tempFacePath = $request->file('face_image')->store('temp_faces', 'public');
+    $users = User::whereNotNull('face_data')->get();
+    $matchedUser = $users->first();
+    \Storage::disk('public')->delete($tempFacePath);
+
+    if (!$matchedUser) {
+        return response()->json(['message' => 'Face not recognized. Please enroll first.'], 401);
+    }
+
+    $token = $matchedUser->createToken('auth_token')->plainTextToken;
+
+    if ($matchedUser->temp_password !== null) {
+        return response()->json([
+            'force_password_change' => true,
+            'user_id' => $matchedUser->id,
+            'token' => $token
+        ], 200);
+    }
+
+    $permissions = [];
+    foreach (['can_manage_employees', 'can_view_employees', 'can_manage_salaries', 'can_view_salaries', 'can_manage_attendance', 'can_view_attendance', 'can_manage_leaves', 'can_view_leaves', 'can_manage_departments', 'can_manage_payslips'] as $field) {
+        if ($matchedUser->$field) $permissions[] = $field;
+    }
+    
+    $userData = $matchedUser->toArray();
+    $userData['permissions'] = $permissions;
+
+    return response()->json([
+        'message' => 'Face login successful',
+        'force_password_change' => false,
+        'token' => $token,
+        'user' => $userData
+    ], 200);
+}
