@@ -90,8 +90,8 @@ const ProfilePage = () => {
                                 {profile?.role || "Employee"}
                             </span>
                             <span className={`px-3 py-1 rounded-full text-sm font-medium ${profile?.employee?.status === 'Inactive'
-                                    ? "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400"
-                                    : "bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-400"
+                                ? "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400"
+                                : "bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-400"
                                 }`}>
                                 {profile?.employee?.status || "Active"}
                             </span>
@@ -150,6 +150,10 @@ const ProfilePage = () => {
                             <div>
                                 <label className="text-sm text-gray-500 dark:text-gray-400 block mb-1">Date of Joining</label>
                                 <div className="font-medium text-gray-800 dark:text-gray-200">{formatDate(profile?.employee?.date_of_joining)}</div>
+                            </div>
+                            <div>
+                                <label className="text-sm text-gray-500 dark:text-gray-400 block mb-1">Joining Category</label>
+                                <div className="font-medium text-gray-800 dark:text-gray-200">{profile?.employee?.joining_category || "N/A"}</div>
                             </div>
 
                             <div className="mt-8 pt-6 border-t border-dashed border-gray-200 dark:border-gray-700">

@@ -20,7 +20,7 @@ import SuperAdminLayout from "../layouts/SuperAdminLayout";
 import AdminEmployees from "../pages/admin/EmployeesPage";
 import AdminDepartments from "../pages/admin/DepartmentsPage";
 // import AdminDesignations from "../pages/admin/DesignationsPage"; // Converted to lazy
-import AdminDocuments from "../pages/admin/DocumentsPage";
+
 import AdminRecruitment from "../pages/admin/RecruitmentPage";
 import AdminPerformanceReviews from "../pages/admin/PerformanceReviewsPage";
 import AdminAnnouncements from "../pages/admin/AnnouncementsPage";
@@ -49,7 +49,11 @@ import SuperAdminAttendance from "../pages/superadmin/attendance/AttendancePage"
 import SuperAdminLeaves from "../pages/superadmin/attendance/LeavesPage";
 import SuperAdminRecruitment from "../pages/superadmin/employees/RecruitmentPage";
 // import SuperAdminDesignations from "../pages/superadmin/organization/DesignationsPage"; // Converted to lazy
-import SuperAdminDocuments from "../pages/superadmin/organization/DocumentsPage";
+// UNIFIED DOCUMENT PAGE (Using logic in SuperAdminDocuments)
+import EmployeeDocumentsPage from "../pages/superadmin/organization/DocumentsPage";
+
+// ... [Keep other imports]
+
 import SuperAdminPayrollSettings from "../pages/admin/PayrollSettingsPage";
 import SuperAdminReports from "../pages/superadmin/dashboard/ReportsPage";
 import SuperAdminSystemControls from "../pages/superadmin/system/SystemControlsPage";
@@ -156,6 +160,16 @@ const AppRouter = () => (
             <ProtectedRoute roles={[4]}>
               <EmployeeLayout>
                 <EmployeeProfile />
+              </EmployeeLayout>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/employee/documents"
+          element={
+            <ProtectedRoute roles={[4]}>
+              <EmployeeLayout>
+                <EmployeeDocumentsPage />
               </EmployeeLayout>
             </ProtectedRoute>
           }
@@ -347,7 +361,7 @@ const AppRouter = () => (
           element={
             <ProtectedRoute roles={[2]}>
               <AdminLayout>
-                <SuperAdminDocuments />
+                <EmployeeDocumentsPage />
               </AdminLayout>
             </ProtectedRoute>
           }
@@ -633,7 +647,7 @@ const AppRouter = () => (
           element={
             <ProtectedRoute roles={[3]}>
               <HRLayout>
-                <SuperAdminDocuments />
+                <EmployeeDocumentsPage />
               </HRLayout>
             </ProtectedRoute>
           }
@@ -704,7 +718,7 @@ const AppRouter = () => (
           element={
             <ProtectedRoute roles={[1]}>
               <SuperAdminLayout>
-                <SuperAdminDocuments />
+                <EmployeeDocumentsPage />
               </SuperAdminLayout>
             </ProtectedRoute>
           }
@@ -838,7 +852,7 @@ const AppRouter = () => (
         <Route path="*" element={<Navigate to="/login" replace />} />
       </Routes>
     </Suspense>
-  </BrowserRouter>
+  </BrowserRouter >
 );
 
 export default AppRouter;

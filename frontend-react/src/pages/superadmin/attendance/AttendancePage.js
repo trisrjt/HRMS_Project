@@ -14,6 +14,10 @@ const SuperAdminAttendancePage = () => {
     const [statusFilter, setStatusFilter] = useState(""); // Today's Status: Present/Absent
     const [page, setPage] = useState(1);
 
+    // View Type State
+    const [viewType, setViewType] = useState('monthly'); // 'monthly' | 'weekly'
+    const [weekDate, setWeekDate] = useState(new Date().toISOString().slice(0, 10)); // Picked date for week view
+
     // Drawer state
     const [selectedEmployee, setSelectedEmployee] = useState(null);
     const [isDrawerOpen, setIsDrawerOpen] = useState(false);
@@ -34,7 +38,7 @@ const SuperAdminAttendancePage = () => {
         }, 5000);
 
         return () => clearInterval(intervalId);
-    }, [page, monthFilter, searchTerm, departmentId, statusFilter]);
+    }, [page, monthFilter, searchTerm, departmentId, statusFilter, viewType, weekDate]);
 
     const fetchDepartments = async () => {
         try {
@@ -48,15 +52,28 @@ const SuperAdminAttendancePage = () => {
     const fetchSummary = async (silent = false) => {
         if (!silent) setLoading(true);
         try {
-            const response = await api.get(`/attendance/summary`, {
-                params: {
-                    page: page,
-                    month: monthFilter,
-                    search: searchTerm,
-                    department_id: departmentId,
-                    status: statusFilter
-                }
-            });
+            const params = {
+                page: page,
+                search: searchTerm,
+                department_id: departmentId,
+                status: statusFilter
+            };
+
+            if (viewType === 'monthly') {
+                params.month = monthFilter;
+            } else {
+                // Calculate Start/End of Week (Monday to Sunday)
+                const date = new Date(weekDate);
+                const day = date.getDay(); // 0 (Sun) - 6 (Sat)
+                const diff = date.getDate() - day + (day === 0 ? -6 : 1); // adjust when day is sunday
+                const start = new Date(date.setDate(diff));
+                const end = new Date(date.setDate(start.getDate() + 6));
+
+                params.start_date = start.toISOString().slice(0, 10);
+                params.end_date = end.toISOString().slice(0, 10);
+            }
+
+            const response = await api.get(`/attendance/summary`, { params });
             setSummary(response.data.data);
             setPagination({
                 current_page: response.data.current_page,
@@ -105,7 +122,9 @@ const SuperAdminAttendancePage = () => {
                 <div>
                     <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Attendance Management</h1>
                     <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-                        Overview of employee attendance for {new Date(monthFilter).toLocaleString('default', { month: 'long', year: 'numeric' })}
+                        Overview of employee attendance for {viewType === 'monthly'
+                            ? new Date(monthFilter).toLocaleString('default', { month: 'long', year: 'numeric' })
+                            : `Week of ${new Date(weekDate).toLocaleDateString()}`}
                     </p>
                 </div>
 
@@ -149,16 +168,40 @@ const SuperAdminAttendancePage = () => {
                         <option value="Present">Present</option>
                         <option value="Absent">Absent</option>
                     </select>
-                    <label htmlFor="month_filter" className="sr-only">Filter by Month</label>
-                    <input
-                        id="month_filter"
-                        name="month"
-                        aria-label="Filter by Month"
-                        type="month"
-                        value={monthFilter}
-                        onChange={handleMonthChange}
+                    <select
+                        value={viewType}
+                        onChange={(e) => {
+                            setViewType(e.target.value);
+                            setPage(1);
+                        }}
                         className="p-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white outline-none focus:ring-2 focus:ring-blue-500"
-                    />
+                    >
+                        <option value="monthly">Monthly View</option>
+                        <option value="weekly">Weekly View</option>
+                    </select>
+
+                    {viewType === 'monthly' ? (
+                        <input
+                            id="month_filter"
+                            name="month"
+                            aria-label="Filter by Month"
+                            type="month"
+                            value={monthFilter}
+                            onChange={handleMonthChange}
+                            className="p-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white outline-none focus:ring-2 focus:ring-blue-500"
+                        />
+                    ) : (
+                        <input
+                            type="date"
+                            value={weekDate}
+                            onChange={(e) => {
+                                setWeekDate(e.target.value);
+                                setPage(1);
+                            }}
+                            className="p-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white outline-none focus:ring-2 focus:ring-blue-500"
+                            title="Select any date within the week"
+                        />
+                    )}
                 </div>
             </div>
 

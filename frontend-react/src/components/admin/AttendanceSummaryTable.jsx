@@ -1,6 +1,15 @@
 import React, { useState } from 'react';
 
 const AttendanceSummaryTable = ({ summary, loading, onEmployeeClick }) => {
+    const formatDuration = (hours) => {
+        if (!hours) return "-";
+        const h = Math.floor(hours);
+        const m = Math.round((hours - h) * 60);
+        if (h === 0) return `${m}m`;
+        if (m === 0) return `${h}h`;
+        return `${h}h ${m}m`;
+    };
+
     if (loading) {
         return <div className="text-center p-8 text-gray-500">Loading attendance summary...</div>;
     }
@@ -45,7 +54,7 @@ const AttendanceSummaryTable = ({ summary, loading, onEmployeeClick }) => {
                                 {employee.total_working_days} Days
                             </td>
                             <td className="px-6 py-4 text-sm text-gray-700 dark:text-gray-300">
-                                {employee.total_hours} Hrs
+                                {formatDuration(employee.total_hours)}
                             </td>
                             <td className="px-6 py-4">
                                 {employee.missing_punches > 0 && (

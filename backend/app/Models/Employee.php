@@ -30,6 +30,8 @@ class Employee extends Model
         'esic_opt_out',
         'ptax_opt_out',
         'overtime_enabled',
+        'joining_category',
+        'leave_policy_id',
     ];
 
     // Relationship: Employee → User
@@ -58,6 +60,11 @@ class Employee extends Model
     public function currentSalary()
     {
         return $this->hasOne(Salary::class, 'employee_id')->latestOfMany();
+    }
+
+    public function leavePolicy()
+    {
+        return $this->belongsTo(LeavePolicy::class, 'leave_policy_id');
     }
 
     public function leaves()

@@ -9,6 +9,15 @@ const AttendanceHistoryDrawer = ({ employee, isOpen, onClose, month }) => {
     // Local month state initiated with the passed prop month
     const [currentMonth, setCurrentMonth] = useState(month);
 
+    const formatDuration = (hours) => {
+        if (!hours) return "-";
+        const h = Math.floor(hours);
+        const m = Math.round((hours - h) * 60);
+        if (h === 0) return `${m}m`;
+        if (m === 0) return `${h}h`;
+        return `${h}h ${m}m`;
+    };
+
     useEffect(() => {
         if (isOpen && employee) {
             // Update local month if prop changes (e.g. parent filter changed), 
@@ -132,7 +141,7 @@ const AttendanceHistoryDrawer = ({ employee, isOpen, onClose, month }) => {
                                                         </div>
                                                         <div className="flex flex-col border-l pl-3 dark:border-gray-600 ml-auto text-right">
                                                             <span className="text-[10px] font-medium text-gray-700 dark:text-gray-300 uppercase tracking-wide">Duration</span>
-                                                            <span className="font-medium">{record.total_hours} hrs</span>
+                                                            <span className="font-medium">{formatDuration(record.total_hours)}</span>
                                                         </div>
                                                     </div>
                                                     {/* Overtime Information */}

@@ -9,6 +9,7 @@ const CreateEmployeePage = () => {
         email: "",
         role_id: 4, // Locked to Employee
         temp_password: "",
+        joining_category: "New Joinee",
         basic: "",
         hra: "",
         da: "",
@@ -19,6 +20,11 @@ const CreateEmployeePage = () => {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
     const [success, setSuccess] = useState(null);
+
+    const [files, setFiles] = useState({
+        aadhar_file: null,
+        pan_file: null
+    });
 
     const handleChange = (e) => {
         const { name, value } = e.target;
@@ -34,6 +40,10 @@ const CreateEmployeePage = () => {
             }
             return updated;
         });
+    };
+
+    const handleFileChange = (e) => {
+        setFiles({ ...files, [e.target.name]: e.target.files[0] });
     };
 
     const handleBasicChange = (e) => {
@@ -80,8 +90,15 @@ const CreateEmployeePage = () => {
         setError(null);
         setSuccess(null);
 
+        const data = new FormData();
+        Object.keys(formData).forEach(key => data.append(key, formData[key]));
+        if (files.aadhar_file) data.append('aadhar_file', files.aadhar_file);
+        if (files.pan_file) data.append('pan_file', files.pan_file);
+
         try {
-            const response = await api.post("/users", formData);
+            const response = await api.post("/users", data, {
+                headers: { "Content-Type": "multipart/form-data" }
+            });
             setSuccess("Employee created successfully!");
             setTimeout(() => {
                 navigate(`/superadmin/employees/${response.data.id}`);
@@ -172,6 +189,59 @@ const CreateEmployeePage = () => {
                         }}
                     />
                     <p style={{ fontSize: "12px", color: "#6b7280", marginTop: "0.5rem" }}>Admins can only create Employees.</p>
+                </div>
+
+                <div style={{ marginBottom: "1.5rem" }}>
+                    <label htmlFor="joining_category" style={{ display: "block", fontSize: "14px", fontWeight: "600", color: "#374151", marginBottom: "0.5rem" }}>
+                        Joining Category
+                    </label>
+                    <select
+                        id="joining_category"
+                        name="joining_category"
+                        value={formData.joining_category}
+                        onChange={handleChange}
+                        style={{
+                            width: "100%", padding: "0.75rem", borderRadius: "8px", border: "1px solid #d1d5db",
+                            fontSize: "14px", outline: "none", transition: "border-color 0.2s", backgroundColor: "white"
+                        }}
+                    >
+                        <option value="New Joinee">New Joinee</option>
+                        <option value="Intern">Intern</option>
+                        <option value="Permanent">Permanent</option>
+                    </select>
+                </div>
+
+                <div style={{ marginBottom: "1.5rem", display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1rem" }}>
+                    <div>
+                        <label style={{ display: "block", fontSize: "14px", fontWeight: "600", color: "#374151", marginBottom: "0.5rem" }}>
+                            Aadhar Card (PDF/Image)
+                        </label>
+                        <input
+                            type="file"
+                            name="aadhar_file"
+                            onChange={handleFileChange}
+                            accept=".pdf,.jpg,.jpeg,.png"
+                            style={{
+                                width: "100%", padding: "0.5rem", borderRadius: "8px", border: "1px solid #d1d5db",
+                                fontSize: "13px"
+                            }}
+                        />
+                    </div>
+                    <div>
+                        <label style={{ display: "block", fontSize: "14px", fontWeight: "600", color: "#374151", marginBottom: "0.5rem" }}>
+                            PAN Card (PDF/Image)
+                        </label>
+                        <input
+                            type="file"
+                            name="pan_file"
+                            onChange={handleFileChange}
+                            accept=".pdf,.jpg,.jpeg,.png"
+                            style={{
+                                width: "100%", padding: "0.5rem", borderRadius: "8px", border: "1px solid #d1d5db",
+                                fontSize: "13px"
+                            }}
+                        />
+                    </div>
                 </div>
 
                 <div style={{ marginBottom: "2rem" }}>

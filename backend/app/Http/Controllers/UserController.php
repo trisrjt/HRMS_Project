@@ -6,9 +6,16 @@ use App\Models\User;
 use App\Models\Employee;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
+use App\Services\LeavePolicyService;
 
 class UserController extends Controller
 {
+    protected $leavePolicyService;
+
+    public function __construct(LeavePolicyService $leavePolicyService)
+    {
+        $this->leavePolicyService = $leavePolicyService;
+    }
     public function me(Request $request)
     {
         $user = $request->user();
@@ -53,6 +60,7 @@ class UserController extends Controller
                 'aadhar_number' => $user->employee->aadhar_number,
                 'pan_number' => $user->employee->pan_number,
                 'profile_photo' => $user->employee->profile_photo,
+                'joining_category' => $user->employee->joining_category,
                 'status' => $user->is_active ? 'Active' : 'Inactive',
             ] : null,
         ]);
@@ -109,8 +117,12 @@ class UserController extends Controller
                 $employee = new Employee();
                 $employee->user_id = $user->id;
                 // Generate a simple code or use random
-                $employee->employee_code = 'EMP-' . str_pad($user->id, 4, '0', STR_PAD_LEFT); 
+                $employee->employee_code = 'EMP-' . str_pad($user->id, 4, '0', STR_PAD_LEFT);
+                $employee->joining_category = 'New Joinee'; // Default for quick adds
                 $employee->save();
+                
+                // Assign Leave Policy
+                $this->leavePolicyService->assignPolicyToEmployee($employee);
             } catch (\Exception $e) {
                 // Ignore if fails, or log it. 
                 // For now we proceed as the user is created.

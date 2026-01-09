@@ -56,7 +56,8 @@ const HREmployeesPage = () => {
         phone: "",
         address: "",
         status: "Active",
-        reports_to: ""
+        reports_to: "",
+        joining_category: "New Joinee"
     });
     const [formErrors, setFormErrors] = useState({});
     const [isSubmitting, setIsSubmitting] = useState(false);
@@ -179,7 +180,8 @@ const HREmployeesPage = () => {
             phone: "",
             address: "",
             status: "Active",
-            reports_to: ""
+            reports_to: "",
+            joining_category: "New Joinee"
         });
         setFormErrors({});
         setIsAddModalOpen(true);
@@ -209,7 +211,8 @@ const HREmployeesPage = () => {
             phone: emp.phone || "",
             address: emp.address || "",
             status: emp.user?.is_active ? "Active" : "Inactive",
-            reports_to: emp.reports_to || ""
+            reports_to: emp.reports_to || "",
+            joining_category: emp.joining_category || "New Joinee"
         });
         setFormErrors({});
         setIsEditModalOpen(true);
@@ -514,6 +517,14 @@ const HREmployeesPage = () => {
                                 </select>
                             </div>
                             <div className="flex flex-col gap-1">
+                                <label htmlFor="add_joining_category" className="text-sm font-medium text-gray-700 dark:text-gray-300">Joining Category *</label>
+                                <select id="add_joining_category" name="joining_category" value={formData.joining_category} onChange={(e) => setFormData({ ...formData, joining_category: e.target.value })} className="border border-gray-300 dark:border-gray-600 rounded p-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-white outline-none focus:ring-2 focus:ring-blue-500">
+                                    <option value="New Joinee">New Joinee</option>
+                                    <option value="Intern">Intern</option>
+                                    <option value="Permanent">Permanent</option>
+                                </select>
+                            </div>
+                            <div className="flex flex-col gap-1">
                                 <label htmlFor="add_designation" className="text-sm font-medium text-gray-700 dark:text-gray-300">Designation *</label>
                                 <input id="add_designation" name="designation_name" list="designation_options" autoComplete="off" placeholder="Select or Type Designation" value={formData.designation_name} onChange={(e) => setFormData({ ...formData, designation_name: e.target.value })} className="border border-gray-300 dark:border-gray-600 rounded p-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-white outline-none focus:ring-2 focus:ring-blue-500" />
                                 <datalist id="designation_options">
@@ -616,6 +627,14 @@ const HREmployeesPage = () => {
                                 </select>
                             </div>
                             <div className="flex flex-col gap-1">
+                                <label htmlFor="edit_joining_category" className="text-sm font-medium text-gray-700 dark:text-gray-300">Joining Category *</label>
+                                <select id="edit_joining_category" name="joining_category" value={formData.joining_category} onChange={(e) => setFormData({ ...formData, joining_category: e.target.value })} className="border border-gray-300 dark:border-gray-600 rounded p-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-white outline-none focus:ring-2 focus:ring-blue-500">
+                                    <option value="New Joinee">New Joinee</option>
+                                    <option value="Intern">Intern</option>
+                                    <option value="Permanent">Permanent</option>
+                                </select>
+                            </div>
+                            <div className="flex flex-col gap-1">
                                 <label htmlFor="edit_designation" className="text-sm font-medium text-gray-700 dark:text-gray-300">Designation *</label>
                                 <input id="edit_designation" name="designation_name" list="designation_options_edit" autoComplete="off" placeholder="Select or Type Designation" value={formData.designation_name} onChange={(e) => setFormData({ ...formData, designation_name: e.target.value })} className="border border-gray-300 dark:border-gray-600 rounded p-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-white outline-none focus:ring-2 focus:ring-blue-500" />
                                 <datalist id="designation_options_edit">
@@ -665,6 +684,115 @@ const HREmployeesPage = () => {
                             <button onClick={handleDeleteSubmit} className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded">
                                 {isSubmitting ? "Deleting..." : "Delete"}
                             </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {isViewModalOpen && selectedEmployee && (
+                <div className="fixed inset-0 bg-black/50 overflow-y-auto flex items-center justify-center p-4 z-50">
+                    <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl w-full max-w-3xl relative transition-colors duration-200 my-8">
+                        <button
+                            onClick={closeModals}
+                            className="absolute top-4 right-4 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+                        >
+                            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                        </button>
+
+                        <div className="p-8">
+                            <div className="flex items-center gap-6 mb-8">
+                                <div className="w-20 h-20 bg-blue-100 dark:bg-blue-900 rounded-full flex items-center justify-center text-2xl font-bold text-blue-600 dark:text-blue-300">
+                                    {selectedEmployee.profile_photo ? (
+                                        <img
+                                            src={getProfilePhotoUrl(selectedEmployee.profile_photo)}
+                                            alt={selectedEmployee.user?.name}
+                                            className="w-full h-full rounded-full object-cover"
+                                            onError={(e) => { e.target.style.display = 'none'; e.target.nextSibling.style.display = 'flex'; }}
+                                        />
+                                    ) : null}
+                                    <span style={{ display: selectedEmployee.profile_photo ? 'none' : 'flex' }}>
+                                        {selectedEmployee.user?.name?.charAt(0)}
+                                    </span>
+                                </div>
+                                <div>
+                                    <h2 className="text-2xl font-bold text-gray-900 dark:text-white">{selectedEmployee.user?.name}</h2>
+                                    <p className="text-gray-500 dark:text-gray-400">{selectedEmployee.designation?.name}</p>
+                                    <div className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium mt-2 ${selectedEmployee.user?.is_active
+                                        ? "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200"
+                                        : "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200"
+                                        }`}>
+                                        {selectedEmployee.user?.is_active ? "Active" : "Inactive"}
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                                <div>
+                                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4 border-b dark:border-gray-700 pb-2">Personal Details</h3>
+                                    <dl className="space-y-3">
+                                        <div>
+                                            <dt className="text-sm font-medium text-gray-500 dark:text-gray-400">Email</dt>
+                                            <dd className="text-sm text-gray-900 dark:text-white">{selectedEmployee.user?.email}</dd>
+                                        </div>
+                                        <div>
+                                            <dt className="text-sm font-medium text-gray-500 dark:text-gray-400">Phone</dt>
+                                            <dd className="text-sm text-gray-900 dark:text-white">{selectedEmployee.phone}</dd>
+                                        </div>
+                                        <div>
+                                            <dt className="text-sm font-medium text-gray-500 dark:text-gray-400">Date of Birth</dt>
+                                            <dd className="text-sm text-gray-900 dark:text-white">{formatDate(selectedEmployee.dob)}</dd>
+                                        </div>
+                                        <div>
+                                            <dt className="text-sm font-medium text-gray-500 dark:text-gray-400">Gender</dt>
+                                            <dd className="text-sm text-gray-900 dark:text-white">{selectedEmployee.gender}</dd>
+                                        </div>
+                                        <div>
+                                            <dt className="text-sm font-medium text-gray-500 dark:text-gray-400">Marital Status</dt>
+                                            <dd className="text-sm text-gray-900 dark:text-white">{selectedEmployee.marital_status}</dd>
+                                        </div>
+                                        <div>
+                                            <dt className="text-sm font-medium text-gray-500 dark:text-gray-400">Current Address</dt>
+                                            <dd className="text-sm text-gray-900 dark:text-white">{selectedEmployee.address}</dd>
+                                        </div>
+                                    </dl>
+                                </div>
+
+                                <div>
+                                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4 border-b dark:border-gray-700 pb-2">Employment Details</h3>
+                                    <dl className="space-y-3">
+                                        <div>
+                                            <dt className="text-sm font-medium text-gray-500 dark:text-gray-400">Employee Code</dt>
+                                            <dd className="text-sm text-gray-900 dark:text-white">{selectedEmployee.employee_code}</dd>
+                                        </div>
+                                        <div>
+                                            <dt className="text-sm font-medium text-gray-500 dark:text-gray-400">Department</dt>
+                                            <dd className="text-sm text-gray-900 dark:text-white">{selectedEmployee.department?.name}</dd>
+                                        </div>
+                                        <div>
+                                            <dt className="text-sm font-medium text-gray-500 dark:text-gray-400">Joining Category</dt>
+                                            <dd className="text-sm text-gray-900 dark:text-white">{selectedEmployee.joining_category || "N/A"}</dd>
+                                        </div>
+                                        <div>
+                                            <dt className="text-sm font-medium text-gray-500 dark:text-gray-400">Date of Joining</dt>
+                                            <dd className="text-sm text-gray-900 dark:text-white">{formatDate(selectedEmployee.date_of_joining)}</dd>
+                                        </div>
+                                        <div>
+                                            <dt className="text-sm font-medium text-gray-500 dark:text-gray-400">Aadhar Number</dt>
+                                            <dd className="text-sm text-gray-900 dark:text-white">{selectedEmployee.aadhar_number}</dd>
+                                        </div>
+                                        <div>
+                                            <dt className="text-sm font-medium text-gray-500 dark:text-gray-400">PAN Number</dt>
+                                            <dd className="text-sm text-gray-900 dark:text-white">{selectedEmployee.pan_number}</dd>
+                                        </div>
+                                        <div>
+                                            <dt className="text-sm font-medium text-gray-500 dark:text-gray-400">Emergency Contact</dt>
+                                            <dd className="text-sm text-gray-900 dark:text-white">{selectedEmployee.emergency_contact}</dd>
+                                        </div>
+                                    </dl>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>

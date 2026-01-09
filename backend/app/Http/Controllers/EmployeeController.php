@@ -9,14 +9,17 @@ use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 use Illuminate\Support\Facades\Hash;   
 use App\Services\NotificationService;
+use App\Services\LeavePolicyService;
 
 class EmployeeController extends Controller
 {
     protected $notifications;
+    protected $leavePolicyService;
 
-    public function __construct(NotificationService $notifications)
+    public function __construct(NotificationService $notifications, LeavePolicyService $leavePolicyService)
     {
         $this->notifications = $notifications;
+        $this->leavePolicyService = $leavePolicyService;
     }
     
     /**
@@ -121,6 +124,7 @@ class EmployeeController extends Controller
         'temp_password' => 'required|min:6',
         'department_id' => 'required|exists:departments,id',
         'designation_name' => 'required|string|max:255', 
+        'joining_category' => 'required|in:New Joinee,Intern,Permanent',
         'reports_to' => 'nullable|exists:employees,id',
         'gross_salary' => 'nullable|numeric',  // Changed from salary to gross_salary
         'pf_opt_out' => 'boolean',
@@ -135,6 +139,8 @@ class EmployeeController extends Controller
         'profile_photo' => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
         'face_image' => 'required|image|max:5120',
         'face_descriptor' => 'required|string',
+        'aadhar_file' => 'nullable|mimes:pdf,jpg,jpeg,png|max:2048',
+        'pan_file' => 'nullable|mimes:pdf,jpg,jpeg,png|max:2048',
     ]);
 
     // Handle File Upload
@@ -206,7 +212,37 @@ class EmployeeController extends Controller
         'pf_opt_out' => $request->boolean('pf_opt_out'),
         'esic_opt_out' => $request->boolean('esic_opt_out'),
         'ptax_opt_out' => $request->boolean('ptax_opt_out'),
+        'joining_category' => $request->joining_category,
     ]);
+
+    // Handle Aadhar Upload
+    if ($request->hasFile('aadhar_file')) {
+        $path = $request->file('aadhar_file')->store('employee_documents', 'public');
+        \App\Models\EmployeeDocument::create([
+            'employee_id' => $employee->id,
+            'document_type' => 'Aadhar',
+            'document_title' => 'Aadhar Card',
+            'file_path' => $path,
+            'file_size' => round($request->file('aadhar_file')->getSize() / 1024, 2),
+            'uploaded_by' => auth()->id(),
+        ]);
+    }
+
+    // Handle PAN Upload
+    if ($request->hasFile('pan_file')) {
+        $path = $request->file('pan_file')->store('employee_documents', 'public');
+        \App\Models\EmployeeDocument::create([
+            'employee_id' => $employee->id,
+            'document_type' => 'PAN',
+            'document_title' => 'PAN Card',
+            'file_path' => $path,
+            'file_size' => round($request->file('pan_file')->getSize() / 1024, 2),
+            'uploaded_by' => auth()->id(),
+        ]);
+    }
+
+    // Step 3.0: Assign Leave Policy
+    $this->leavePolicyService->assignPolicyToEmployee($employee);
 
     // Step 3.1: Create Salary Record
     Salary::create([
@@ -294,6 +330,7 @@ class EmployeeController extends Controller
             'aadhar_number'  => ['sometimes', 'nullable', 'digits:12'],
             'pan_number'     => ['sometimes', 'nullable', 'regex:/^[A-Z]{5}[0-9]{4}[A-Z]{1}$/i'],
             'designation_name' => ['sometimes', 'nullable', 'string', 'max:255'], 
+            'joining_category' => ['sometimes', 'in:New Joinee,Intern,Permanent'],
             'reports_to'     => ['sometimes', 'nullable', 'exists:employees,id'],
             'gross_salary'   => ['sometimes', 'nullable', 'numeric', 'min:0'],
             'pf_opt_out' => 'boolean',
@@ -421,11 +458,19 @@ class EmployeeController extends Controller
         $employeeData = \Illuminate\Support\Arr::except($validated, [
             'name', 'email', 'status', 'password', 'designation_name', 'gross_salary', 'profile_photo'
         ]);
+        
+        $oldCategory = $employee->joining_category;
+        
         $employee->update($employeeData);
+        
+        // If category changed, re-assign policy
+        if ($request->has('joining_category') && $request->joining_category !== $oldCategory) {
+            $this->leavePolicyService->assignPolicyToEmployee($employee);
+        }
 
         return response()->json([
             'message'  => 'Employee updated successfully.',
-            'employee' => $employee->fresh()->load(['department', 'designation', 'manager', 'user:id,name,email'])
+            'employee' => $employee->fresh()->load(['department', 'designation', 'manager', 'user:id,name,email', 'leavePolicy'])
         ]);
     }
 
