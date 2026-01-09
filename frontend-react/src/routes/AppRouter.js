@@ -1,5 +1,6 @@
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { lazy, Suspense } from "react";
+import { useAuth } from "../context/AuthContext";
 
 // AUTH
 import LoginPage from "../pages/LoginPage";
@@ -92,6 +93,33 @@ const LoadingFallback = () => (
     </div>
   </div>
 );
+
+// Role-based redirect component
+const RoleBasedRedirect = () => {
+  const { user, token, isBootstrapping } = useAuth();
+
+  if (isBootstrapping) {
+    return <LoadingFallback />;
+  }
+
+  if (!token || !user) {
+    return <Navigate to="/login" replace />;
+  }
+
+  // Redirect based on role
+  switch (user.role_id) {
+    case 4:
+      return <Navigate to="/employee/dashboard" replace />;
+    case 3:
+      return <Navigate to="/hr/dashboard" replace />;
+    case 2:
+      return <Navigate to="/admin/dashboard" replace />;
+    case 1:
+      return <Navigate to="/superadmin/dashboard" replace />;
+    default:
+      return <Navigate to="/login" replace />;
+  }
+};
 
 const AppRouter = () => (
   <BrowserRouter>
@@ -816,6 +844,9 @@ const AppRouter = () => (
             </ProtectedRoute>
           }
         />
+
+        {/* ROOT - Redirect based on role */}
+        <Route path="/" element={<RoleBasedRedirect />} />
 
         {/* DEFAULT */}
         <Route path="*" element={<Navigate to="/login" replace />} />

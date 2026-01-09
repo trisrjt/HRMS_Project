@@ -144,6 +144,108 @@ const AttendanceHistoryDrawer = ({ employee, isOpen, onClose, month }) => {
                                                             <span className="font-medium">{formatDuration(record.total_hours)}</span>
                                                         </div>
                                                     </div>
+                                                    {/* Overtime Information */}
+                                                    {record.overtime_start && (
+                                                        <div className="mt-2 p-2 bg-purple-50 dark:bg-purple-900/20 rounded border border-purple-200 dark:border-purple-800">
+                                                            <div className="flex items-center gap-2 mb-1">
+                                                                <svg className="w-4 h-4 text-purple-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                                                </svg>
+                                                                <span className="text-[10px] font-bold text-purple-700 dark:text-purple-400 uppercase tracking-wide">Overtime</span>
+                                                            </div>
+                                                            <div className="flex items-center gap-x-3 text-xs">
+                                                                <div className="flex flex-col">
+                                                                    <span className="text-[10px] font-medium text-gray-700 dark:text-gray-300">Start</span>
+                                                                    <span className="text-purple-600 font-medium">{record.overtime_start}</span>
+                                                                </div>
+                                                                <div className="flex flex-col border-l pl-3 dark:border-purple-300">
+                                                                    <span className="text-[10px] font-medium text-gray-700 dark:text-gray-300">End</span>
+                                                                    <span className="text-orange-600 font-medium">{record.overtime_end || 'In Progress'}</span>
+                                                                </div>
+                                                                {record.overtime_hours && (
+                                                                    <div className="flex flex-col border-l pl-3 dark:border-purple-300 ml-auto text-right">
+                                                                        <span className="text-[10px] font-medium text-gray-700 dark:text-gray-300">OT Hours</span>
+                                                                        <span className="font-bold text-green-600">{record.overtime_hours}h</span>
+                                                                    </div>
+                                                                )}
+                                                            </div>
+                                                        </div>
+                                                    )}
+                                                    {/* Location and Device Information */}
+                                                    {(record.check_in_latitude || record.device_id) && (
+                                                        <div className="mt-3 pt-3 border-t border-gray-200 dark:border-gray-600 space-y-2">
+                                                            {/* Check-in Location */}
+                                                            {record.check_in_latitude && record.check_in_longitude && (
+                                                                <div className="flex items-start gap-2">
+                                                                    <svg className="w-4 h-4 text-green-600 mt-0.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                                                                    </svg>
+                                                                    <div className="flex-1 min-w-0">
+                                                                        <p className="text-[10px] font-medium text-gray-700 dark:text-gray-300 uppercase tracking-wide">Check-in Location</p>
+                                                                        <p className="text-xs text-gray-600 dark:text-gray-400 truncate">
+                                                                            {record.check_in_latitude}, {record.check_in_longitude}
+                                                                        </p>
+                                                                        <a 
+                                                                            href={`https://www.google.com/maps?q=${record.check_in_latitude},${record.check_in_longitude}`}
+                                                                            target="_blank"
+                                                                            rel="noopener noreferrer"
+                                                                            className="text-xs text-blue-600 hover:underline"
+                                                                        >
+                                                                            View on Map
+                                                                        </a>
+                                                                    </div>
+                                                                </div>
+                                                            )}
+                                                            {/* Check-out Location */}
+                                                            {record.check_out_latitude && record.check_out_longitude && (
+                                                                <div className="flex items-start gap-2">
+                                                                    <svg className="w-4 h-4 text-blue-600 mt-0.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                                                                    </svg>
+                                                                    <div className="flex-1 min-w-0">
+                                                                        <p className="text-[10px] font-medium text-gray-700 dark:text-gray-300 uppercase tracking-wide">Check-out Location</p>
+                                                                        <p className="text-xs text-gray-600 dark:text-gray-400 truncate">
+                                                                            {record.check_out_latitude}, {record.check_out_longitude}
+                                                                        </p>
+                                                                        <a 
+                                                                            href={`https://www.google.com/maps?q=${record.check_out_latitude},${record.check_out_longitude}`}
+                                                                            target="_blank"
+                                                                            rel="noopener noreferrer"
+                                                                            className="text-xs text-blue-600 hover:underline"
+                                                                        >
+                                                                            View on Map
+                                                                        </a>
+                                                                    </div>
+                                                                </div>
+                                                            )}
+                                                            {/* Device Information */}
+                                                            {record.device_id && (
+                                                                <div className="flex items-start gap-2">
+                                                                    <svg className="w-4 h-4 text-gray-600 mt-0.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                                                                    </svg>
+                                                                    <div className="flex-1 min-w-0">
+                                                                        <p className="text-[10px] font-medium text-gray-700 dark:text-gray-300 uppercase tracking-wide">Device Info</p>
+                                                                        <p className="text-xs text-gray-600 dark:text-gray-400 truncate">
+                                                                            {record.device_type || 'Unknown'} - ID: {record.device_id}
+                                                                        </p>
+                                                                        {record.browser && (
+                                                                            <p className="text-xs text-gray-500 dark:text-gray-500 truncate">
+                                                                                {record.browser}
+                                                                            </p>
+                                                                        )}
+                                                                        {record.ip_address && (
+                                                                            <p className="text-xs text-gray-500 dark:text-gray-500">
+                                                                                IP: {record.ip_address}
+                                                                            </p>
+                                                                        )}
+                                                                    </div>
+                                                                </div>
+                                                            )}
+                                                        </div>
+                                                    )}
                                                 </div>
                                             </li>
                                         ))}

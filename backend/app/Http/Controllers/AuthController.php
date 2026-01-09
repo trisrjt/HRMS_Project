@@ -175,4 +175,104 @@ class AuthController extends Controller
     {
         return response()->json($request->user()->load(['employee', 'role']));
     }
+
+    public function enrollFace(Request $request)
+    {
+        $request->validate([
+            'email' => 'required|email|exists:users,email',
+            'face_image' => 'required|image|max:5120',
+            'face_descriptor' => 'required|string',
+        ]);
+
+        $user = User::where('email', $request->email)->first();
+        if (!$user) return response()->json(['message' => 'User not found'], 404);
+
+        $facePath = $request->file('face_image')->store('faces', 'public');
+        
+        // Store both image path and face descriptor
+        $user->update([
+            'face_data' => $facePath,
+            'face_descriptor' => $request->face_descriptor
+        ]);
+
+        return response()->json(['message' => 'Face enrolled successfully'], 200);
+    }
+
+    public function loginFace(Request $request)
+    {
+        $request->validate([
+            'face_image' => 'required|image|max:5120',
+            'face_descriptor' => 'required|string',
+        ]);
+        
+        $tempFacePath = $request->file('face_image')->store('temp_faces', 'public');
+        $inputDescriptor = json_decode($request->face_descriptor, true);
+        
+        // Find matching face by comparing descriptors
+        $users = User::whereNotNull('face_descriptor')->get();
+        $matchedUser = null;
+        $minDistance = PHP_FLOAT_MAX;
+        $threshold = 0.6; // Face-api.js recommended threshold
+        
+        foreach ($users as $user) {
+            $storedDescriptor = json_decode($user->face_descriptor, true);
+            if (!$storedDescriptor || count($storedDescriptor) !== count($inputDescriptor)) {
+                continue;
+            }
+            
+            // Calculate Euclidean distance between descriptors
+            $distance = $this->calculateEuclideanDistance($inputDescriptor, $storedDescriptor);
+            
+            if ($distance < $threshold && $distance < $minDistance) {
+                $minDistance = $distance;
+                $matchedUser = $user;
+            }
+        }
+        
+        \Storage::disk('public')->delete($tempFacePath);
+
+        if (!$matchedUser) {
+            return response()->json([
+                'message' => 'Face not recognized. Please enroll your face first or use email/password login.'
+            ], 401);
+        }
+
+        $token = $matchedUser->createToken('auth_token')->plainTextToken;
+
+        if ($matchedUser->temp_password !== null) {
+            return response()->json([
+                'force_password_change' => true,
+                'user_id' => $matchedUser->id,
+                'token' => $token
+            ], 200);
+        }
+
+        $permissions = [];
+        foreach (['can_manage_employees', 'can_view_employees', 'can_manage_salaries', 'can_view_salaries', 'can_manage_attendance', 'can_view_attendance', 'can_manage_leaves', 'can_view_leaves', 'can_manage_departments', 'can_manage_payslips'] as $field) {
+            if ($matchedUser->$field) $permissions[] = $field;
+        }
+        
+        $userData = $matchedUser->toArray();
+        $userData['permissions'] = $permissions;
+
+        return response()->json([
+            'message' => 'Face login successful',
+            'force_password_change' => false,
+            'token' => $token,
+            'user' => $userData
+        ], 200);
+    }
+    
+    /**
+     * Calculate Euclidean distance between two face descriptors
+     */
+    private function calculateEuclideanDistance($descriptor1, $descriptor2)
+    {
+        $sum = 0;
+        for ($i = 0; $i < count($descriptor1); $i++) {
+            $diff = $descriptor1[$i] - $descriptor2[$i];
+            $sum += $diff * $diff;
+        }
+        return sqrt($sum);
+    }
 }
