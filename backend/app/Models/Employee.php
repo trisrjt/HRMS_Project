@@ -29,6 +29,7 @@ class Employee extends Model
         'pf_opt_out',
         'esic_opt_out',
         'ptax_opt_out',
+        'overtime_enabled',
         'joining_category',
         'leave_policy_id',
         'payslip_access',

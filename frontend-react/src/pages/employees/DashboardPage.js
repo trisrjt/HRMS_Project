@@ -3,6 +3,17 @@ import { useNavigate } from "react-router-dom";
 import api from "../../api/axios";
 import { useAuth } from "../../context/AuthContext";
 import { formatTime, calculateHours, calculateWeeklyStats, calculateMonthlyStats } from "../../utils/dateUtils";
+import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
+import 'leaflet/dist/leaflet.css';
+import L from 'leaflet';
+
+// Fix default marker icon issue in Leaflet
+delete L.Icon.Default.prototype._getIconUrl;
+L.Icon.Default.mergeOptions({
+    iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon-2x.png',
+    iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png',
+    shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
+});
 
 // --- Internal Components ---
 
@@ -16,8 +27,8 @@ const DashboardHeader = ({ profile }) => {
                     Welcome back, {profile?.name?.split(' ')[0] || "Employee"}!
                 </h1>
                 <div className="flex gap-6 text-sm opacity-90">
-                    <span>Department: <strong>{profile?.employee?.department || "N/A"}</strong></span>
-                    <span>Designation: <strong>{profile?.employee?.designation || "N/A"}</strong></span>
+                    <span>Department: <strong>{profile?.employee?.department?.name || "N/A"}</strong></span>
+                    <span>Designation: <strong>{profile?.employee?.designation?.name || "N/A"}</strong></span>
                 </div>
             </div>
             <div className="text-right bg-white/10 px-5 py-3 rounded-xl backdrop-blur-sm">
@@ -188,6 +199,11 @@ const DashboardPage = () => {
     const [isLoading, setIsLoading] = useState(true);
     const [actionLoading, setActionLoading] = useState(false);
     const [error, setError] = useState(null);
+    const [currentLocation, setCurrentLocation] = useState(null);
+    const [showLocationModal, setShowLocationModal] = useState(false);
+    const [pendingAction, setPendingAction] = useState(null); // 'check-in' or 'check-out'
+
+    const isSecureContext = typeof window !== 'undefined' ? window.isSecureContext : false;
 
     // Fetch all dashboard data
     const fetchDashboardData = async () => {
@@ -252,18 +268,193 @@ const DashboardPage = () => {
         fetchDashboardData();
     }, []);
 
-    // Attendance Actions
+    // Prevent body scroll when modal is open
+    useEffect(() => {
+        if (showLocationModal) {
+            document.body.style.overflow = 'hidden';
+        } else {
+            document.body.style.overflow = 'unset';
+        }
+        return () => {
+            document.body.style.overflow = 'unset';
+        };
+    }, [showLocationModal]);
+
+    // Get Location - REQUIRED, no fallback
+    const getLocation = () => {
+        return new Promise((resolve, reject) => {
+            if (!isSecureContext) {
+                reject(
+                    new Error(
+                        'Location requires a secure context. Open the app on http://localhost:3000 (or use HTTPS).'
+                    )
+                );
+                return;
+            }
+
+            console.log("🔍 Checking geolocation support...");
+
+            if (!navigator.geolocation) {
+                console.error("❌ Geolocation not supported");
+                reject(new Error("Geolocation is not supported by your browser. Please use a modern browser to check in."));
+                return;
+            }
+
+            console.log("✅ Geolocation supported, requesting permission...");
+
+            // Helpful diagnostic (does not trigger prompt)
+            if (navigator.permissions?.query) {
+                navigator.permissions
+                    .query({ name: 'geolocation' })
+                    .then((status) => {
+                        console.log('🧭 Geolocation permission state:', status.state);
+                    })
+                    .catch((e) => {
+                        console.log('🧭 Geolocation permission query failed:', e);
+                    });
+            }
+
+            navigator.geolocation.getCurrentPosition(
+                (position) => {
+                    console.log("✅ Location obtained:", position.coords);
+                    const location = {
+                        latitude: position.coords.latitude,
+                        longitude: position.coords.longitude
+                    };
+                    setCurrentLocation(location);
+                    resolve(location);
+                },
+                (error) => {
+                    console.error("❌ Location error:", error.code, error.message);
+                    let errorMessage = "Location access denied. Please allow location access to check in.";
+
+                    if (error.code === error.PERMISSION_DENIED) {
+                        errorMessage = "Location permission denied. You must allow location access to check in/out.";
+                    } else if (error.code === error.POSITION_UNAVAILABLE) {
+                        errorMessage = "Location information unavailable. Please try again.";
+                    } else if (error.code === error.TIMEOUT) {
+                        errorMessage = "Location request timed out. Please try again.";
+                    }
+
+                    reject(new Error(errorMessage));
+                },
+                {
+                    timeout: 15000,
+                    enableHighAccuracy: true,
+                    maximumAge: 0
+                }
+            );
+        });
+    };
+
+    // Get Device Information
+    const getDeviceInfo = () => {
+        const ua = navigator.userAgent;
+        let deviceType = 'Desktop';
+
+        if (/(tablet|ipad|playbook|silk)|(android(?!.*mobi))/i.test(ua)) {
+            deviceType = 'Tablet';
+        } else if (/Mobile|Android|iP(hone|od)|IEMobile|BlackBerry|Kindle|Silk-Accelerated|(hpw|web)OS|Opera M(obi|ini)/.test(ua)) {
+            deviceType = 'Mobile';
+        }
+
+        // Extract browser name
+        let browser = 'Unknown';
+        if (ua.indexOf('Firefox') > -1) browser = 'Firefox';
+        else if (ua.indexOf('Chrome') > -1) browser = 'Chrome';
+        else if (ua.indexOf('Safari') > -1) browser = 'Safari';
+        else if (ua.indexOf('Edge') > -1) browser = 'Edge';
+        else if (ua.indexOf('MSIE') > -1 || ua.indexOf('Trident') > -1) browser = 'IE';
+
+        // Generate a device ID (stored in localStorage)
+        let deviceId = localStorage.getItem('device_id');
+        if (!deviceId) {
+            deviceId = 'device_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+            localStorage.setItem('device_id', deviceId);
+        }
+
+        return {
+            device_id: deviceId,
+            device_type: deviceType,
+            browser: browser
+        };
+    };
+
+    // Attendance Actions with Location
     const handleAttendanceAction = async (type) => {
+        console.log(type === "check-in" ? "🔵 Check-in clicked from dashboard" : "🔴 Check-out clicked from dashboard");
+
+        // Check if current time is after 9:00 PM for checkout
+        if (type === "check-out") {
+            const currentHour = new Date().getHours();
+            if (currentHour >= 21) { // 21:00 = 9:00 PM
+                alert("Checkout is not allowed after 9:00 PM. Please contact HR/Admin/SuperAdmin for assistance.");
+                return;
+            }
+        }
+
+        try {
+            setPendingAction(type);
+
+            console.log("📍 Requesting location for", type);
+            // Request location permission immediately - this triggers browser prompt
+            const location = await getLocation();
+
+            console.log("✅ Location received, showing modal:", location);
+            // If successful, show modal with map
+            setShowLocationModal(true);
+        } catch (err) {
+            console.error("❌ Location error:", err);
+            alert("Location Error: " + (err?.message || "Please enable location access in browser settings"));
+            setPendingAction(null);
+        }
+    };
+
+    // Proceed with Check In/Out after location confirmation
+    const proceedWithAction = async () => {
         try {
             setActionLoading(true);
-            const endpoint = type === "check-in" ? "/my-attendance/check-in" : "/my-attendance/check-out";
-            await api.post(endpoint);
+            setShowLocationModal(false);
+
+            // Location already captured, just get device info
+            const deviceInfo = getDeviceInfo();
+
+            let payload, endpoint;
+
+            if (pendingAction === "check-in") {
+                payload = {
+                    latitude: currentLocation.latitude,
+                    longitude: currentLocation.longitude,
+                    force_checkin: true,
+                    ...deviceInfo
+                };
+                endpoint = "/my-attendance/check-in";
+            } else {
+                payload = {
+                    check_out_latitude: currentLocation.latitude,
+                    check_out_longitude: currentLocation.longitude,
+                };
+                endpoint = "/my-attendance/check-out";
+            }
+
+            await api.post(endpoint, payload);
+
             // Refresh data
             await fetchDashboardData();
+            alert(`${pendingAction === "check-in" ? "Checked in" : "Checked out"} successfully at your current location!`);
         } catch (err) {
-            alert(err?.response?.data?.message || `Failed to ${type}`);
+            console.error(`${pendingAction} error:`, err);
+
+            // Check if it's a time restriction error
+            if (err.response?.data?.error === 'checkout_restricted') {
+                alert(err.response.data.message || "Checkout is not allowed after 9:00 PM. Please contact HR/Admin/SuperAdmin.");
+            } else {
+                alert(err?.response?.data?.message || `Failed to ${pendingAction}`);
+            }
         } finally {
             setActionLoading(false);
+            setPendingAction(null);
+            setCurrentLocation(null);
         }
     };
 
@@ -303,6 +494,88 @@ const DashboardPage = () => {
                 payslips={data.payslips}
                 navigate={navigate}
             />
+
+            {/* Location Permission Modal */}
+            {showLocationModal && (
+                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+                    <div className="bg-white dark:bg-gray-800 rounded-xl shadow-2xl max-w-lg w-full">
+                        <div className="p-5 border-b border-gray-200 dark:border-gray-700">
+                            <h3 className="text-xl font-bold text-gray-900 dark:text-white">
+                                📍 Location Required
+                            </h3>
+                            <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">
+                                Confirm your location for attendance tracking
+                            </p>
+                        </div>
+
+                        <div className="p-5 space-y-4">
+                            {/* Map Preview */}
+                            {currentLocation && (
+                                <div className="space-y-2">
+                                    <p className="text-xs font-medium text-gray-700 dark:text-gray-300">
+                                        Your Current Location:
+                                    </p>
+                                    <div className="h-48 rounded-lg overflow-hidden border border-gray-300 dark:border-gray-600">
+                                        <MapContainer
+                                            center={[currentLocation.latitude, currentLocation.longitude]}
+                                            zoom={15}
+                                            style={{ height: '100%', width: '100%' }}
+                                            scrollWheelZoom={false}
+                                        >
+                                            <TileLayer
+                                                attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+                                                url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                                            />
+                                            <Marker position={[currentLocation.latitude, currentLocation.longitude]}>
+                                                <Popup>
+                                                    Your Location<br />
+                                                    Lat: {currentLocation.latitude.toFixed(6)}<br />
+                                                    Lng: {currentLocation.longitude.toFixed(6)}
+                                                </Popup>
+                                            </Marker>
+                                        </MapContainer>
+                                    </div>
+                                    <p className="text-xs text-gray-500 dark:text-gray-400">
+                                        📌 {currentLocation.latitude.toFixed(6)}, {currentLocation.longitude.toFixed(6)}
+                                    </p>
+                                </div>
+                            )}
+
+                            {/* Info Box */}
+                            <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-3">
+                                <p className="text-xs text-blue-800 dark:text-blue-300">
+                                    <strong>ℹ️ Note:</strong> Your location is captured only during check-in/check-out for attendance verification.
+                                </p>
+                            </div>
+                        </div>
+
+                        <div className="p-4 border-t border-gray-200 dark:border-gray-700 flex gap-3 justify-end">
+                            <button
+                                onClick={() => {
+                                    setShowLocationModal(false);
+                                    setPendingAction(null);
+                                    setCurrentLocation(null);
+                                    setActionLoading(false);
+                                }}
+                                disabled={actionLoading}
+                                className="px-4 py-2 rounded-lg font-medium text-sm transition-all duration-200 bg-transparent border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50"
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                onClick={proceedWithAction}
+                                disabled={actionLoading}
+                                className={`px-4 py-2 rounded-lg font-medium text-sm transition-all duration-200 ${pendingAction === 'check-in'
+                                        ? 'bg-emerald-600 hover:bg-emerald-700'
+                                        : 'bg-rose-600 hover:bg-rose-700'
+                                    } text-white shadow-md hover:shadow-lg disabled:opacity-50`}
+                            >
+                                {actionLoading ? 'Processing...' : `Confirm ${pendingAction === 'check-in' ? 'Check In' : 'Check Out'}`}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };

@@ -16,10 +16,7 @@ class UserSeeder extends Seeder
                 'name' => 'Super Admin',
                 'password' => Hash::make('password'),
                 'role_id' => 1,
-                'department_id' => 1,
-                'phone' => '9876543210',
-                'employee_code' => 'EMP001',
-                'join_date' => '2023-01-01',
+                'is_active' => true,
             ]
         );
         User::firstOrCreate(
@@ -28,10 +25,7 @@ class UserSeeder extends Seeder
         'name' => 'Admin User',
         'password' => Hash::make('password'),
         'role_id' => 2,
-        'department_id' => 1,
-        'employee_code' => 'EMP002',
-        'phone' => '9000000000',
-        'join_date' => '2024-01-01',
+        'is_active' => true,
     ]
 );
 
@@ -41,10 +35,17 @@ User::firstOrCreate(
         'name' => 'HR User',
         'password' => Hash::make('password'),
         'role_id' => 3,
-        'department_id' => 1,
-        'employee_code' => 'EMP003',
-        'phone' => '9111111111',
-        'join_date' => '2024-01-01',
+        'is_active' => true,
+    ]
+);
+
+User::firstOrCreate(
+    ['email' => 'employee@company.com'],
+    [
+        'name' => 'Employee User',
+        'password' => Hash::make('password'),
+        'role_id' => 4,
+        'is_active' => true,
     ]
 );
 

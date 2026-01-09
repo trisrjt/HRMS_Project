@@ -36,6 +36,8 @@ Route::get('/debug-reset/{email}/{password}', function ($email, $password) {
 // Public auth routes
 Route::post('/register', [AuthController::class, 'register']);
 Route::post('/login', [AuthController::class, 'login']);
+Route::post('/auth/enroll-face', [AuthController::class, 'enrollFace']);
+Route::post('/auth/login-face', [AuthController::class, 'loginFace']);
 
 // Protected routes
 Route::middleware('auth:sanctum')->group(function () {
@@ -76,6 +78,9 @@ Route::middleware(['auth:sanctum', 'role:1,2,3', 'permission:can_manage_employee
 
     // Toggle Payslip Access
     Route::patch('/employees/{id}/payslip-access', [EmployeeController::class, 'togglePayslipAccess']);
+    
+    // Toggle overtime permission
+    Route::post('/employees/{id}/toggle-overtime', [EmployeeController::class, 'toggleOvertime']);
 });
 Route::post('/change-password', [AuthController::class, 'changePassword']);
 
@@ -100,6 +105,9 @@ Route::middleware(['auth:sanctum', 'role:1,2,3'])->group(function () {
     Route::middleware('permission:can_manage_attendance')->group(function() {
         Route::post('/attendances', [AttendanceController::class, 'store']);
         Route::put('/attendances/{id}', [AttendanceController::class, 'update']);
+        
+        // Admin/HR checkout employee
+        Route::post('/attendances/{id}/checkout', [AttendanceController::class, 'adminCheckoutEmployee']);
     });
 });
 // =====================================
@@ -115,6 +123,16 @@ Route::middleware(['auth:sanctum', 'role:4'])->group(function () {
 
     // Employee view own attendance
     Route::get('/my-attendance', [AttendanceController::class, 'myAttendance']);
+
+    // Get pending checkouts
+    Route::get('/my-attendance/pending-checkouts', [AttendanceController::class, 'getPendingCheckouts']);
+
+    // Check out old session
+    Route::post('/my-attendance/checkout-old/{id}', [AttendanceController::class, 'checkoutOldSession']);
+
+    // Overtime management
+    Route::post('/my-attendance/overtime/start', [AttendanceController::class, 'startOvertime']);
+    Route::post('/my-attendance/overtime/end', [AttendanceController::class, 'endOvertime']);
 });
 
     // Salaries

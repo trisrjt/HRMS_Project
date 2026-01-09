@@ -12,8 +12,12 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('leaves', function (Blueprint $table) {
-            $table->foreignId('approved_by')->nullable()->after('status')->constrained('users')->onDelete('set null');
-            $table->foreignId('rejected_by')->nullable()->after('approved_by')->constrained('users')->onDelete('set null');
+            if (!Schema::hasColumn('leaves', 'approved_by')) {
+                $table->foreignId('approved_by')->nullable()->after('status')->constrained('users')->onDelete('set null');
+            }
+            if (!Schema::hasColumn('leaves', 'rejected_by')) {
+                $table->foreignId('rejected_by')->nullable()->after('approved_by')->constrained('users')->onDelete('set null');
+            }
         });
     }
 

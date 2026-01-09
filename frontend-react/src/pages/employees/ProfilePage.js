@@ -141,11 +141,11 @@ const ProfilePage = () => {
                         <div className="space-y-5">
                             <div>
                                 <label className="text-sm text-gray-500 dark:text-gray-400 block mb-1">Department</label>
-                                <div className="font-medium text-gray-800 dark:text-gray-200">{profile?.employee?.department || "N/A"}</div>
+                                <div className="font-medium text-gray-800 dark:text-gray-200">{profile?.employee?.department?.name || "N/A"}</div>
                             </div>
                             <div>
                                 <label className="text-sm text-gray-500 dark:text-gray-400 block mb-1">Designation</label>
-                                <div className="font-medium text-gray-800 dark:text-gray-200">{profile?.employee?.designation || "N/A"}</div>
+                                <div className="font-medium text-gray-800 dark:text-gray-200">{profile?.employee?.designation?.name || "N/A"}</div>
                             </div>
                             <div>
                                 <label className="text-sm text-gray-500 dark:text-gray-400 block mb-1">Date of Joining</label>

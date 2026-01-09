@@ -21,6 +21,8 @@ class User extends Authenticatable
         'email',
         'password',
         'temp_password',
+        'face_data',
+        'face_descriptor',
         'role_id',
         'is_active',
         // Permissions
