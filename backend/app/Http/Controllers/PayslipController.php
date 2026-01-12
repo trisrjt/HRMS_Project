@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use App\Models\Payslip;
 use App\Models\Salary;
 use App\Models\Employee;
+use Barryvdh\DomPDF\Facade\Pdf;
 
 class PayslipController extends Controller
 {
@@ -222,9 +223,50 @@ class PayslipController extends Controller
              return response()->json(['message' => 'No payslips found for the selected range'], 404);
         }
 
-        $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('pdf.payslip', compact('payslips'));
+        // Add digital signature info and timestamp to payslips
+        $signatureData = [
+            'generated_by' => $user->name,
+            'generated_at' => now()->format('Y-m-d H:i:s'),
+            'company' => 'MIND & MATTER MARKETING SOLUTIONS PRIVATE LIMITED',
+            'signature_id' => 'DOC-' . strtoupper(uniqid())
+        ];
+
+        // Get password for encryption
+        $password = null;
         
+        // For single employee download, use their login password
+        if ($targetEmployeeId !== 'all') {
+            $employee = Employee::with('user')->find($targetEmployeeId);
+            if ($employee && $employee->user) {
+                // Use last 8 characters of employee code + first 4 of name as visible password hint
+                // But encrypt with actual password hash (stored password is hashed, so we'll use a derived key)
+                // Since we can't decrypt the password, we'll use employee_code + DOB as password
+                $dobPart = $employee->dob ? date('dmY', strtotime($employee->dob)) : '01012000';
+                $password = $employee->employee_code . $dobPart;
+            }
+        }
+
+        // Generate PDF filename
         $filename = 'payslips_' . ($targetEmployeeId === 'all' ? 'ALL' : $targetEmployeeId) . '_' . $request->year . '.pdf';
+        
+        $pdf = Pdf::loadView('pdf.payslip', compact('payslips', 'signatureData'))
+            ->setOption('enable-javascript', true)
+            ->setOption('enable-smart-shrinking', true);
+        
+        // Apply password protection if single employee
+        if ($password) {
+            $pdf->setOption('user-password', $password)
+                ->setOption('owner-password', $password . '_admin')
+                ->setOption('encryption', true);
+            
+            // Add password hint to response header
+            $employee = Employee::find($targetEmployeeId);
+            $passwordHint = $employee->employee_code . ' + DOB (DDMMYYYY format)';
+            
+            return $pdf->download($filename)
+                ->header('X-Password-Hint', $passwordHint);
+        }
+        
         return $pdf->download($filename);
     }
 
@@ -347,8 +389,8 @@ class PayslipController extends Controller
 
         // Check Access Permission
         if (!$employee->payslip_access) {
-             // Return empty list instead of 403 to avoid console errors on dashboard
-             return response()->json([]);
+             // Return 403 so frontend can show proper message
+             return response()->json(['message' => 'You do not have permission to view payslips. Please contact your administrator.'], 403);
         }
 
         $payslips = Payslip::where('employee_id', $employee->id)

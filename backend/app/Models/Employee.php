@@ -89,6 +89,11 @@ class Employee extends Model
         return $this->hasMany(Attendance::class);
     }
 
+    public function payslips()
+    {
+        return $this->hasMany(Payslip::class);
+    }
+
     // Hierarchy: Reports To (Manager)
     public function manager()
     {
