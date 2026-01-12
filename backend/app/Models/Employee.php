@@ -36,6 +36,16 @@ class Employee extends Model
         'probation_months',
     ];
 
+    protected $casts = [
+        'pf_opt_out' => 'boolean',
+        'esic_opt_out' => 'boolean',
+        'ptax_opt_out' => 'boolean',
+        'overtime_enabled' => 'boolean',
+        'payslip_access' => 'boolean',
+        'date_of_joining' => 'date',
+        'dob' => 'date',
+    ];
+
     // Relationship: Employee → User
     public function user()
 {

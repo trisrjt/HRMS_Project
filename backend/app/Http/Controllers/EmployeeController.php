@@ -501,11 +501,15 @@ class EmployeeController extends Controller
             return response()->json(['message' => 'Unauthorized'], 403);
         }
         
-        $employee = Employee::findOrFail($id);
+        $employee = Employee::with(['user:id,name,email', 'designation:id,name'])->findOrFail($id);
         $employee->payslip_access = $request->boolean('payslip_access');
         $employee->save();
         
-        return response()->json(['message' => 'Payslip access updated', 'payslip_access' => $employee->payslip_access]);
+        return response()->json([
+            'message' => 'Payslip access updated', 
+            'payslip_access' => $employee->payslip_access,
+            'employee' => $employee
+        ]);
     }
 
     // ==============================
