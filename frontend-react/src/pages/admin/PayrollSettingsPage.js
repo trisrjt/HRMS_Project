@@ -236,6 +236,7 @@ const PayrollSettingsPage = () => {
                                             <label htmlFor={`ptax_min_${index}`} className="sr-only">Min Salary</label>
                                             <input
                                                 id={`ptax_min_${index}`}
+                                                name={`ptax_min_${index}`}
                                                 type="number"
                                                 placeholder="Min Salary"
                                                 value={slab.min_salary}
@@ -250,9 +251,10 @@ const PayrollSettingsPage = () => {
                                             <label htmlFor={`ptax_max_${index}`} className="sr-only">Max Salary</label>
                                             <input
                                                 id={`ptax_max_${index}`}
+                                                name={`ptax_max_${index}`}
                                                 type="number"
                                                 placeholder="Max Salary"
-                                                value={slab.max_salary}
+                                                value={slab.max_salary || ""}
                                                 onChange={(e) => handleSlabChange(index, 'max_salary', e.target.value)}
                                                 className="w-full border rounded px-3 py-2 text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-white"
                                                 aria-label={`Maximum Salary for Slab ${index + 1}`}
@@ -264,6 +266,7 @@ const PayrollSettingsPage = () => {
                                             <label htmlFor={`ptax_amount_${index}`} className="sr-only">Tax Amount</label>
                                             <input
                                                 id={`ptax_amount_${index}`}
+                                                name={`ptax_amount_${index}`}
                                                 type="number"
                                                 placeholder="Tax Amount"
                                                 value={slab.tax_amount}

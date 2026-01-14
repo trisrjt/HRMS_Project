@@ -1,5 +1,4 @@
-import React, { useEffect, useState } from "react";
-import api from "../../api/axios";
+import api, { STORAGE_URL } from "../../api/axios";
 import { formatDate } from "../../utils/dateUtils";
 import { useAuth } from "../../context/AuthContext";
 import FaceEnrollment from "../../components/FaceEnrollment";
@@ -436,7 +435,7 @@ const AdminEmployeesPage = () => {
 
     const getProfilePhotoUrl = (path) => {
         if (!path) return null;
-        return `http://localhost:8000/storage/${path}`;
+        return `${STORAGE_URL}/${path}`;
     };
 
     return (

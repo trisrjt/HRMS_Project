@@ -295,25 +295,7 @@ class SalaryController extends Controller
      */
     public function getPayrollPolicy()
     {
-        $policy = \App\Models\PayrollPolicy::first();
-
-        if (!$policy) {
-            return response()->json([
-                'basic_percentage' => 40,
-                'hra_percentage' => 20,
-                'da_percentage' => 10,
-                'pf_enabled' => false,
-                'pf_employee_share' => 12,
-                'pf_employer_share' => 12,
-                'esic_enabled' => false,
-                'esic_employee_share' => 0.75,
-                'esic_employer_share' => 3.25,
-                'ptax_enabled' => false,
-                'ptax_slabs' => json_encode([])
-            ]);
-        }
-
-        return response()->json($policy);
+        return response()->json($this->getPoliciesWithDefaults());
     }
 
     public function mySalary()
@@ -330,17 +312,53 @@ class SalaryController extends Controller
         return response()->json($salary);
     }
     
+    // Helper: Shared Defaults
+    private function getPoliciesWithDefaults()
+    {
+        $defaults = collect([
+            'basic_percentage' => 40,
+            'hra_percentage' => 20,
+            'da_percentage' => 10,
+            'pf_enabled' => true,
+            'pf_employee_share' => 12,
+            'pf_employer_share' => 12,
+            'esic_enabled' => true,
+            'esic_employee_share' => 0.75,
+            'esic_employer_share' => 3.25,
+            'ptax_enabled' => true,
+            'ptax_slabs' => json_encode([
+                ['min_salary' => 0, 'max_salary' => 10000, 'tax_amount' => 0],
+                ['min_salary' => 10001, 'max_salary' => 15000, 'tax_amount' => 110],
+                ['min_salary' => 15001, 'max_salary' => 25000, 'tax_amount' => 130],
+                ['min_salary' => 25001, 'max_salary' => 40000, 'tax_amount' => 150],
+                ['min_salary' => 40001, 'max_salary' => null, 'tax_amount' => 200],
+            ])
+        ]);
+
+        $dbPolicies = \App\Models\PayrollPolicy::all()->pluck('value', 'key');
+        
+        // Force Defaults if DB has empty/invalid ptax_slabs
+        if (isset($dbPolicies['ptax_slabs'])) {
+            $decoded = json_decode($dbPolicies['ptax_slabs'], true);
+            if (empty($decoded)) {
+                unset($dbPolicies['ptax_slabs']); // Remove from DB collection so merge uses default
+            }
+        }
+        
+        return $defaults->merge($dbPolicies);
+    }
+
     // Helper: Calculation Logic
     private function calculateSalaryComponents($gross_salary, $pf_opt_out, $esic_opt_out, $ptax_opt_out)
     {
-        $policies = \App\Models\PayrollPolicy::all()->pluck('value', 'key');
+        $policies = $this->getPoliciesWithDefaults();
         
-        $basicPercent = $policies['basic_percentage'] ?? 70;
-        $pfEnabled = filter_var($policies['pf_enabled'] ?? false, FILTER_VALIDATE_BOOLEAN);
-        $esicEnabled = filter_var($policies['esic_enabled'] ?? false, FILTER_VALIDATE_BOOLEAN);
-        $ptaxEnabled = filter_var($policies['ptax_enabled'] ?? false, FILTER_VALIDATE_BOOLEAN);
+        $basicPercent = $policies['basic_percentage']; // Defaults handle existence
+        $pfEnabled = filter_var($policies['pf_enabled'], FILTER_VALIDATE_BOOLEAN);
+        $esicEnabled = filter_var($policies['esic_enabled'], FILTER_VALIDATE_BOOLEAN);
+        $ptaxEnabled = filter_var($policies['ptax_enabled'], FILTER_VALIDATE_BOOLEAN);
         
-        $ptaxSlabsVal = $policies['ptax_slabs'] ?? '[]';
+        $ptaxSlabsVal = $policies['ptax_slabs'];
         $ptaxSlabs = is_string($ptaxSlabsVal) ? json_decode($ptaxSlabsVal, true) : $ptaxSlabsVal;
 
         $basic = round(floatval($gross_salary) * ($basicPercent / 100));

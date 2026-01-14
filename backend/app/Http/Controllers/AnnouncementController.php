@@ -23,46 +23,49 @@ class AnnouncementController extends Controller
     // ==========================================
     public function index(Request $request)
     {
-        $user = auth()->user();
-        $query = Announcement::with('user:id,name,email')
-            ->orderBy('created_at', 'desc');
+        try {
+            $user = auth()->user();
+            $query = Announcement::with('user:id,name,email')
+                ->orderBy('created_at', 'desc');
 
-        // Filter by Role for Employees (Role 4)
-        if ($user->role_id == 4) {
-            $query->whereJsonContains('target_audience', 'Employee')
-                  ->where('status', 'Active');
-            
-            // Filter by Joining Date
-            if ($user->employee && $user->employee->date_of_joining) {
-                $query->whereDate('created_at', '>=', $user->employee->date_of_joining);
+            if ($user->role_id == 4) {
+                $query->whereJsonContains('target_audience', 'Employee')
+                      ->where('status', 'Active');
+                
+                // Filter by Joining Date (Safely)
+                if ($user->employee && $user->employee->date_of_joining) {
+                    $query->whereDate('created_at', '>=', $user->employee->date_of_joining);
+                }
             }
-        }
-        // Filter by Role for HR (Role 3) - Optional, can see HR + Employee?
-        elseif ($user->role_id == 3) {
-             $query->where(function($q) {
-                 $q->whereJsonContains('target_audience', 'HR')
-                   ->orWhereJsonContains('target_audience', 'Employee');
-             });
-        }
+            // Filter by Role for HR (Role 3) - Optional, can see HR + Employee?
+            elseif ($user->role_id == 3) {
+                 $query->where(function($q) {
+                     $q->whereJsonContains('target_audience', 'HR')
+                       ->orWhereJsonContains('target_audience', 'Employee');
+                 });
+            }
 
-        // Optional: Backend filtering
-        if ($request->has('category') && $request->category) {
-            $query->where('category', $request->category);
-        }
-        if ($request->has('status') && $request->status) {
-            $query->where('status', $request->status);
-        }
-        if ($request->has('search') && $request->search) {
-            $query->where(function($q) use ($request) {
-                $q->where('title', 'like', "%{$request->search}%")
-                  ->orWhere('message', 'like', "%{$request->search}%");
-            });
-        }
+            // Optional: Backend filtering
+            if ($request->has('category') && $request->category) {
+                $query->where('category', $request->category);
+            }
+            if ($request->has('status') && $request->status) {
+                $query->where('status', $request->status);
+            }
+            if ($request->has('search') && $request->search) {
+                $query->where(function($q) use ($request) {
+                    $q->where('title', 'like', "%{$request->search}%")
+                      ->orWhere('message', 'like', "%{$request->search}%");
+                });
+            }
 
-        // Pagination
-        $announcements = $query->paginate(10);
+            // Pagination
+            $announcements = $query->paginate(10);
 
-        return response()->json($announcements);
+            return response()->json($announcements);
+        } catch (\Exception $e) {
+            return response()->json(['error' => $e->getMessage(), 'trace' => $e->getTraceAsString()], 500);
+        }
     }
 
     // ==========================================

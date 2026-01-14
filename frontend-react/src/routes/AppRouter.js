@@ -27,7 +27,7 @@ import AdminAnnouncements from "../pages/admin/AnnouncementsPage";
 import AdminSettings from "../pages/admin/SettingsPage";
 import AdminLeaves from "../pages/admin/LeavesPage";
 // import AdminAttendance from "../pages/admin/AttendancePage";
-import AdminSalaries from "../pages/admin/SalariesPage";
+import AdminSalaries from "../pages/superadmin/payroll/SalariesPage"; // Reuse robust component
 import AdminPayslips from "../pages/admin/PayslipsPage";
 import AdminCreateEmployee from "../pages/admin/CreateEmployeePage";
 
@@ -87,8 +87,12 @@ const EmployeeSalaries = lazy(() => import("../pages/employees/SalariesPage"));
 const EmployeePayslips = lazy(() => import("../pages/employees/PayslipsPage"));
 const EmployeeProfile = lazy(() => import("../pages/employees/ProfilePage"));
 const EmployeeAnnouncements = lazy(() => import("../pages/employees/AnnouncementsPage"));
+const EmployeeEmailSettings = lazy(() => import("../pages/employees/EmailSettingsPage"));
+const EmployeeHolidayCalendar = lazy(() => import("../pages/employees/HolidayCalendarPage"));
 
-// --- LAZY LOADED DESIGNATION PAGES ---
+// ...
+
+
 const AdminDesignations = lazy(() => import("../pages/admin/DesignationsPage"));
 const HRDesignations = lazy(() => import("../pages/hr/DesignationsPage"));
 const SuperAdminDesignations = lazy(() => import("../pages/superadmin/organization/DesignationsPage"));
@@ -235,11 +239,31 @@ const AppRouter = () => (
           }
         />
         <Route
+          path="/employee/email-settings"
+          element={
+            <ProtectedRoute roles={[4]}>
+              <EmployeeLayout>
+                <EmployeeEmailSettings />
+              </EmployeeLayout>
+            </ProtectedRoute>
+          }
+        />
+        <Route
           path="/employee/notifications"
           element={
             <ProtectedRoute roles={[4]}>
               <EmployeeLayout>
                 <NotificationsPage />
+              </EmployeeLayout>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/employee/holidays"
+          element={
+            <ProtectedRoute roles={[4]}>
+              <EmployeeLayout>
+                <EmployeeHolidayCalendar />
               </EmployeeLayout>
             </ProtectedRoute>
           }

@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import api from "../../../api/axios";
+import api, { STORAGE_URL } from "../../../api/axios";
 import { useAuth } from "../../../context/AuthContext"; // Add AuthContext
 import FaceEnrollment from "../../../components/FaceEnrollment";
 
@@ -933,6 +933,8 @@ const EmployeesPage = () => {
                                             </div>
                                             <label className="relative inline-flex items-center cursor-pointer">
                                                 <input
+                                                    id="add_payslip_access"
+                                                    name="payslip_access"
                                                     type="checkbox"
                                                     className="sr-only peer"
                                                     checked={formData.payslip_access || false}
@@ -1385,7 +1387,7 @@ const EmployeesPage = () => {
                                 <div className="w-16 h-16 bg-blue-600 rounded-full flex items-center justify-center text-white text-2xl font-bold overflow-hidden border-2 border-white shadow-sm">
                                     {selectedEmployee.profile_photo ? (
                                         <img
-                                            src={`http://localhost:8000/storage/${selectedEmployee.profile_photo}`}
+                                            src={`${STORAGE_URL}/${selectedEmployee.profile_photo}`}
                                             alt={selectedEmployee.user?.name}
                                             className="w-full h-full object-cover"
                                             onError={(e) => { e.target.style.display = 'none'; e.target.nextSibling.style.display = 'flex'; }}
@@ -1484,8 +1486,8 @@ const EmployeesPage = () => {
                                                             await api.post(`/employees/${selectedEmployee.id}/toggle-overtime`, {
                                                                 overtime_enabled: !selectedEmployee.overtime_enabled
                                                             });
-                                                            const updatedEmps = employees.map(emp => 
-                                                                emp.id === selectedEmployee.id 
+                                                            const updatedEmps = employees.map(emp =>
+                                                                emp.id === selectedEmployee.id
                                                                     ? { ...emp, overtime_enabled: !selectedEmployee.overtime_enabled }
                                                                     : emp
                                                             );
@@ -1495,23 +1497,20 @@ const EmployeesPage = () => {
                                                             alert(error?.response?.data?.message || 'Failed to toggle overtime permission');
                                                         }
                                                     }}
-                                                    className={`relative inline-flex h-6 w-11 items-center rounded-full transition-all duration-300 ease-in-out transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-offset-2 border-2 ${
-                                                        selectedEmployee.overtime_enabled
-                                                            ? 'bg-blue-400 border-blue-500 focus:ring-blue-400'
-                                                            : 'bg-gray-300 dark:bg-gray-600 border-gray-400 dark:border-gray-500 focus:ring-gray-400'
-                                                    }`}
+                                                    className={`relative inline-flex h-6 w-11 items-center rounded-full transition-all duration-300 ease-in-out transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-offset-2 border-2 ${selectedEmployee.overtime_enabled
+                                                        ? 'bg-blue-400 border-blue-500 focus:ring-blue-400'
+                                                        : 'bg-gray-300 dark:bg-gray-600 border-gray-400 dark:border-gray-500 focus:ring-gray-400'
+                                                        }`}
                                                 >
-                                                    <span 
-                                                        className={`inline-block h-5 w-5 transform rounded-full shadow-lg transition-all duration-300 ease-in-out bg-white ${
-                                                            selectedEmployee.overtime_enabled 
-                                                                ? 'translate-x-5 scale-110' 
-                                                                : 'translate-x-0.5'
-                                                        }`} 
+                                                    <span
+                                                        className={`inline-block h-5 w-5 transform rounded-full shadow-lg transition-all duration-300 ease-in-out bg-white ${selectedEmployee.overtime_enabled
+                                                            ? 'translate-x-5 scale-110'
+                                                            : 'translate-x-0.5'
+                                                            }`}
                                                     />
                                                 </button>
-                                                <span className={`text-xs font-medium transition-colors duration-300 ${
-                                                    selectedEmployee.overtime_enabled ? 'text-blue-500 dark:text-blue-400' : 'text-gray-500 dark:text-gray-400'
-                                                }`}>
+                                                <span className={`text-xs font-medium transition-colors duration-300 ${selectedEmployee.overtime_enabled ? 'text-blue-500 dark:text-blue-400' : 'text-gray-500 dark:text-gray-400'
+                                                    }`}>
                                                     {selectedEmployee.overtime_enabled ? 'Enabled' : 'Disabled'}
                                                 </span>
                                             </div>

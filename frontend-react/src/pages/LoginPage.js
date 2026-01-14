@@ -82,7 +82,7 @@ const LoginPage = () => {
         }
       }
     };
-    
+
     // Wait for script to load
     if (window.faceapi) {
       loadModels();
@@ -93,7 +93,7 @@ const LoginPage = () => {
           loadModels();
         }
       }, 100);
-      
+
       return () => clearInterval(checkInterval);
     }
   }, [modelsLoaded]);
@@ -180,11 +180,11 @@ const LoginPage = () => {
     setFaceAuthMode(isEnroll ? 'enroll' : 'login');
     setError("");
     setSuccessMessage("");
-    
+
     try {
       // Start webcam
-      const mediaStream = await navigator.mediaDevices.getUserMedia({ 
-        video: { width: 640, height: 480 } 
+      const mediaStream = await navigator.mediaDevices.getUserMedia({
+        video: { width: 640, height: 480 }
       });
       setStream(mediaStream);
     } catch (err) {
@@ -211,15 +211,15 @@ const LoginPage = () => {
         const attendanceResponse = await api.get("/my-attendance", {
           headers: { Authorization: `Bearer ${token}` },
         });
-        
+
         const today = new Date().toISOString().split("T")[0];
         const todayRecord = attendanceResponse.data?.find(
           (record) => record.date === today
         );
-        
+
         if (todayRecord?.check_in) {
           setSuccessMessage(`You are already checked in today at ${todayRecord.check_in}!`);
-          
+
           // Redirect after 2 seconds
           setTimeout(() => {
             navigate("/employee/dashboard", { replace: true });
@@ -290,7 +290,7 @@ const LoginPage = () => {
 
       // Success!
       setSuccessMessage(`Checked in successfully at ${new Date().toLocaleTimeString()}!`);
-      
+
       // Redirect after 3 seconds
       setTimeout(() => {
         navigate("/employee/dashboard", { replace: true });
@@ -313,36 +313,36 @@ const LoginPage = () => {
       setError('Face recognition system is still loading. Please wait...');
       return;
     }
-    
+
     setFaceAuthLoading(true);
     try {
       const video = document.getElementById('faceAuthVideo');
-      
+
       // Detect face and extract descriptor
       const detection = await window.faceapi
         .detectSingleFace(video, new window.faceapi.TinyFaceDetectorOptions())
         .withFaceLandmarks()
         .withFaceDescriptor();
-      
+
       if (!detection) {
         setError('No face detected. Please position your face in the center.');
         setFaceAuthLoading(false);
         return;
       }
-      
+
       // Get face descriptor (128-dimensional vector)
       const descriptor = Array.from(detection.descriptor);
-      
+
       // Also capture image for visual verification (optional)
       const canvas = document.createElement('canvas');
       canvas.width = video.videoWidth;
       canvas.height = video.videoHeight;
       const ctx = canvas.getContext('2d');
       ctx.drawImage(video, 0, 0);
-      
+
       // Convert canvas to blob
       const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/jpeg', 0.95));
-      
+
       if (faceAuthMode === 'enroll') {
         // Enrollment: Need email to associate face data
         if (!formValues.email) {
@@ -350,17 +350,17 @@ const LoginPage = () => {
           closeFaceAuth();
           return;
         }
-        
+
         // Upload face descriptor for enrollment
         const formData = new FormData();
         formData.append('email', formValues.email);
         formData.append('face_descriptor', JSON.stringify(descriptor));
         formData.append('face_image', blob, 'face.jpg');
-        
+
         const { data } = await api.post('/auth/enroll-face', formData, {
           headers: { 'Content-Type': 'multipart/form-data' }
         });
-        
+
         setSuccessMessage("✓ Face enrolled successfully! You can now login using face authentication.");
         closeFaceAuth();
       } else {
@@ -368,30 +368,30 @@ const LoginPage = () => {
         const formData = new FormData();
         formData.append('face_descriptor', JSON.stringify(descriptor));
         formData.append('face_image', blob, 'face.jpg');
-        
+
         const { data } = await api.post('/auth/login-face', formData, {
           headers: { 'Content-Type': 'multipart/form-data' }
         });
-        
+
         if (!data?.token) {
           setError("Face not recognized. Please try again or use email/password.");
           closeFaceAuth();
           return;
         }
-        
+
         localStorage.setItem("token", data.token);
-        
+
         if (data.force_password_change) {
           if (data.user_id) localStorage.setItem("temp_user_id", data.user_id);
           navigate("/change-password", { replace: true });
           closeFaceAuth();
           return;
         }
-        
+
         if (data.user) login(data.token, data.user);
         setSuccessMessage("Face authentication successful!");
         closeFaceAuth();
-        
+
         // If this is quick check-in flow, proceed with location and check-in
         if (isQuickCheckInFlow) {
           await completeQuickCheckIn(data.token, data.user);
@@ -438,7 +438,7 @@ const LoginPage = () => {
           zIndex: 1,
           backgroundColor: "#f6f8fb",
           // backgroundImage: "url('https://i.pinimg.com/736x/3c/9c/fb/3c9cfbd4cf4fd763e29b0a5843b9fafe.jpg')",
-          backgroundImage:"url('/bg1.jpg')",
+          backgroundImage: "url('/bg1.jpg')",
           backgroundSize: "cover",
           backgroundPosition: "center",
           backgroundRepeat: "no-repeat",
@@ -512,11 +512,11 @@ const LoginPage = () => {
           <div style={{ marginBottom: "32px" }}>
             <h1 style={{ fontSize: "32px", fontWeight: 700, marginBottom: "8px", color: "#111827", letterSpacing: "-0.02em" }}>Welcome Back</h1>
             <p style={{ fontSize: "15px", color: "#6b7280", lineHeight: "1.5" }}>Sign in to access your HRMS dashboard</p>
-            
+
             {/* Digital Clock */}
-            <div style={{ 
-              marginTop: "16px", 
-              padding: "8px 14px", 
+            <div style={{
+              marginTop: "16px",
+              padding: "8px 14px",
               background: "linear-gradient(135deg, rgba(59,130,246,0.06), rgba(37,99,235,0.06))",
               borderRadius: "8px",
               border: "1px solid rgba(59,130,246,0.15)",
@@ -524,9 +524,9 @@ const LoginPage = () => {
             }}>
               <div style={{ display: "flex", alignItems: "center", gap: "10px", justifyContent: "center" }}>
                 {/* <span style={{ fontSize: "14px" }}>🕐</span> */}
-                <div style={{ 
-                  fontSize: "18px", 
-                  fontWeight: 700, 
+                <div style={{
+                  fontSize: "18px",
+                  fontWeight: 700,
                   color: "#1c93e1ff",
                   letterSpacing: "0.5px",
                   fontFamily: "monospace"
@@ -539,10 +539,12 @@ const LoginPage = () => {
 
           <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
             <div>
-              <label style={{ display: "block", fontSize: "14px", fontWeight: 600, marginBottom: "8px", color: "#374151" }}>Email Address</label>
+              <label htmlFor="email" style={{ display: "block", fontSize: "14px", fontWeight: 600, marginBottom: "8px", color: "#374151" }}>Email Address</label>
               <input
+                id="email"
                 type="email"
                 name="email"
+                autoComplete="email"
                 value={formValues.email}
                 onChange={handleChange}
                 disabled={isLoading}
@@ -575,11 +577,13 @@ const LoginPage = () => {
             </div>
 
             <div>
-              <label style={{ display: "block", fontSize: "14px", fontWeight: 600, marginBottom: "8px", color: "#374151" }}>Password</label>
+              <label htmlFor="password" style={{ display: "block", fontSize: "14px", fontWeight: 600, marginBottom: "8px", color: "#374151" }}>Password</label>
               <div style={{ position: "relative" }}>
                 <input
+                  id="password"
                   type={showPassword ? "text" : "password"}
                   name="password"
+                  autoComplete="current-password"
                   value={formValues.password}
                   onChange={handleChange}
                   disabled={isLoading}
@@ -690,7 +694,7 @@ const LoginPage = () => {
                 {isLoading && isQuickCheckIn ? "Checking in..." : "Quick Check-In"}
               </button>
             </div>
-            
+
             <p style={{ marginTop: "12px", fontSize: "12px", color: "#6b7280", textAlign: "center", lineHeight: "1.5" }}>
               Use <strong>Quick Check-In</strong> for fast attendance marking during rush hours
             </p>
@@ -711,7 +715,7 @@ const LoginPage = () => {
         background: "linear-gradient(to top, rgba(0,0,0,0.05), transparent)"
       }}>
         <p style={{ fontSize: "13px", color: "#6b7280", margin: 0, fontWeight: 500 }}>
-          © 2026 HRMS. All rights reserved.
+          © 2026 Mind & Matter. All rights reserved.
         </p>
       </div>
 
@@ -907,8 +911,8 @@ const LoginPage = () => {
                     {faceAuthMode === 'enroll' ? 'Enroll Face Authentication' : (isQuickCheckInFlow ? 'Quick Check-In - Face Authentication' : 'Face Login')}
                   </h3>
                   <p style={{ margin: "4px 0 0 0", fontSize: "13px", opacity: 0.9 }}>
-                    {faceAuthMode === 'enroll' 
-                      ? 'Position your face in the center and capture' 
+                    {faceAuthMode === 'enroll'
+                      ? 'Position your face in the center and capture'
                       : (isQuickCheckInFlow ? 'Authenticate your face to proceed with check-in' : 'Look at the camera to authenticate')}
                   </p>
                 </div>
@@ -954,7 +958,7 @@ const LoginPage = () => {
                   objectFit: "cover",
                 }}
               />
-              
+
               {/* Face Detection Overlay */}
               <div style={{
                 position: "absolute",
@@ -989,8 +993,8 @@ const LoginPage = () => {
                   padding: "14px 24px",
                   borderRadius: "10px",
                   border: "none",
-                  background: faceAuthLoading 
-                    ? "linear-gradient(135deg, #9ca3af, #9ca3af)" 
+                  background: faceAuthLoading
+                    ? "linear-gradient(135deg, #9ca3af, #9ca3af)"
                     : "linear-gradient(135deg, #8b5cf6, #7c3aed)",
                   color: "#ffffff",
                   fontSize: "16px",
@@ -1011,10 +1015,10 @@ const LoginPage = () => {
                   </span>
                 )}
               </button>
-              
+
               <p style={{ margin: 0, fontSize: "12px", color: "#6b7280", textAlign: "center" }}>
-                {faceAuthMode === 'enroll' 
-                  ? '⚠️ Make sure to enter your email first before enrolling' 
+                {faceAuthMode === 'enroll'
+                  ? '⚠️ Make sure to enter your email first before enrolling'
                   : '💡 Ensure good lighting and look directly at the camera'}
               </p>
             </div>

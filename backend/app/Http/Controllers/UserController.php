@@ -21,7 +21,7 @@ class UserController extends Controller
         $user = $request->user();
         
         // Load relationships - avoid loading designation if it doesn't exist
-        $user->load(['employee.department', 'role']);
+        $user->load(['employee.department', 'employee.manager.user', 'role']);
 
         // Format response
         $permissions = [];
@@ -63,7 +63,12 @@ class UserController extends Controller
                 'joining_category' => $user->employee->joining_category,
                 'probation_months' => $user->employee->probation_months,
                 'status' => $user->is_active ? 'Active' : 'Inactive',
+                'manager' => $user->employee->manager ? [
+                    'name' => $user->employee->manager->user->name,
+                    'email' => $user->employee->manager->user->email,
+                ] : null,
             ] : null,
+            'hr_email' => \App\Models\User::where('role_id', 3)->value('email') ?? \App\Models\Setting::value('company_email') ?? 'hr@email.com',
         ]);
     }
 

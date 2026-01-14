@@ -88,6 +88,7 @@ const ApprovalModal = ({ leave, isOpen, onClose, onAction }) => {
                                 <input
                                     id="start-date"
                                     name="start_date"
+                                    autoComplete="off"
                                     type="date"
                                     value={dates.start}
                                     min={leave.start_date}
@@ -101,6 +102,7 @@ const ApprovalModal = ({ leave, isOpen, onClose, onAction }) => {
                                 <input
                                     id="end-date"
                                     name="end_date"
+                                    autoComplete="off"
                                     type="date"
                                     value={dates.end}
                                     min={dates.start}
@@ -495,6 +497,7 @@ const LeavesPage = () => {
                     placeholder="Search employee..."
                     value={search}
                     onChange={e => setSearch(e.target.value)}
+                    autoComplete="off"
                     className="p-2 border rounded-lg bg-transparent dark:text-white dark:border-gray-600 outline-none focus:ring-2 focus:ring-blue-500"
                 />
                 <label htmlFor="department-filter" className="sr-only">Filter by Department</label>
@@ -503,6 +506,7 @@ const LeavesPage = () => {
                     name="department_filter"
                     value={departmentId}
                     onChange={e => setDepartmentId(e.target.value)}
+                    autoComplete="off"
                     className="p-2 border rounded-lg bg-transparent dark:text-white dark:border-gray-600 outline-none focus:ring-2 focus:ring-blue-500"
                 >
                     <option value="">All Departments</option>
@@ -514,6 +518,7 @@ const LeavesPage = () => {
                     name="status_filter"
                     value={status}
                     onChange={e => setStatus(e.target.value)}
+                    autoComplete="off"
                     className="p-2 border rounded-lg bg-transparent dark:text-white dark:border-gray-600 outline-none focus:ring-2 focus:ring-blue-500"
                 >
                     <option value="">All Status</option>

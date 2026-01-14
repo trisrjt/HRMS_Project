@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import api from "../../../api/axios";
+import api, { STORAGE_URL } from "../../../api/axios";
 import { ArrowLeft, Save, Edit2, X } from "lucide-react";
 import { useAuth } from "../../../context/AuthContext";
 
@@ -102,7 +102,7 @@ const EmployeeProfilePage = () => {
 
     const getProfilePhotoUrl = (path) => {
         if (!path) return null;
-        return `http://localhost:8000/storage/${path}`;
+        return `${STORAGE_URL}/${path}`;
     };
 
     const handleSaveSalary = async () => {

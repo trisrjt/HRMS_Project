@@ -14,6 +14,7 @@ class Leave extends Model
         'leave_type_id',
         'start_date',
         'end_date',
+        'days',
         'reason',
         'status',
         'approved_by',

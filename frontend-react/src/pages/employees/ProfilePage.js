@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import api from "../../api/axios";
+import api, { STORAGE_URL } from "../../api/axios";
 
 const ProfilePage = () => {
     const [profile, setProfile] = useState(null);
@@ -41,7 +41,7 @@ const ProfilePage = () => {
     const getProfilePhotoUrl = (path) => {
         if (!path) return null;
         // Adjust base URL as needed, assuming localhost:8000 for backend storage
-        return `http://localhost:8000/storage/${path}`;
+        return `${STORAGE_URL}/${path}`;
     };
 
     if (isLoading) {

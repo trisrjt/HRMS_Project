@@ -356,6 +356,7 @@ const LeavePoliciesPage = () => {
                                         <input
                                             id="policyName"
                                             name="name"
+                                            autoComplete="off"
                                             required
                                             className="w-full px-4 py-2.5 rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all shadow-sm"
                                             value={formData.name}
@@ -368,6 +369,7 @@ const LeavePoliciesPage = () => {
                                         <select
                                             id="joiningCategory"
                                             name="joining_category"
+                                            autoComplete="off"
                                             className="w-full px-4 py-2.5 rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all shadow-sm"
                                             value={formData.joining_category}
                                             onChange={e => setFormData({ ...formData, joining_category: e.target.value })}
@@ -382,6 +384,7 @@ const LeavePoliciesPage = () => {
                                         <select
                                             id="policyStatus"
                                             name="status"
+                                            autoComplete="off"
                                             className="w-full px-4 py-2.5 rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all shadow-sm"
                                             value={formData.status}
                                             onChange={e => setFormData({ ...formData, status: e.target.value })}

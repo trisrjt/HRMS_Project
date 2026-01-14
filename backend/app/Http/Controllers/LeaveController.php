@@ -209,7 +209,7 @@ class LeaveController extends Controller
 
         $request->validate([
             'leave_type_id' => 'required|exists:leave_types,id',
-            'start_date'    => 'required|date',
+            'start_date'    => 'required|date|after_or_equal:today',
             'end_date'      => 'required|date|after_or_equal:start_date',
             'reason'        => 'nullable|string',
         ]);
@@ -272,11 +272,118 @@ class LeaveController extends Controller
             'leave_type_id' => $request->leave_type_id,
             'start_date'    => $request->start_date,
             'end_date'      => $request->end_date,
-            'days'          => $days, // Ensure Leave model has 'days' column? Wait, Leave model might not have 'days' column.
+            'days'          => $days,
             'reason'        => $request->reason,
             'status'        => $status,
             'approved_by'   => $approvedBy,
         ]);
+
+        // ==========================================
+        // AUTOMATED EMAIL LOGIC
+        // ==========================================
+        try {
+            // A. Fetch Template
+            $template = \App\Models\EmployeeEmailTemplate::where('employee_id', $employee->id)
+                ->where('leave_type_id', $leave->leave_type_id)
+                ->first();
+
+            // Default Recipients
+            $toEmails = [];
+            
+            // Default: Reporting Manager
+            if ($employee->reports_to) {
+                $manager = \App\Models\Employee::find($employee->reports_to);
+                if ($manager && $manager->user) {
+                    $toEmails[] = $manager->user->email;
+                }
+            }
+            
+            // If no manager, maybe fallback to Admin? For now, we proceed.
+            // Override with Template TO emails if present
+            if ($template && !empty($template->to_emails)) {
+                $customTos = array_map('trim', explode(',', $template->to_emails));
+                $toEmails = array_merge($toEmails, $customTos);
+            }
+            $toEmails = array_unique($toEmails);
+
+            // B. Prepare Content
+            $subject = $template ? $template->subject_template : "Leave Application - {$employee->user->name}";
+            $body = $template ? $template->body_template : "Hi Manager,\n\nI have applied for leave.\n\nReason: " . ($request->reason ?? 'N/A') . "\n\nThanks,\n{$employee->user->name}";
+
+            // C. Variable Substitution
+            $managerName = ($employee->manager && $employee->manager->user) ? $employee->manager->user->name : 'Manager';
+            
+            $replacements = [
+                '{EmployeeName}' => $employee->user->name,
+                '{ManagerName}' => $managerName,
+                '{FromDate}' => $leave->start_date,
+                '{ToDate}' => $leave->end_date,
+                '{Reason}' => $leave->reason ?? 'N/A',
+                '{EmployeeCode}' => $employee->employee_code ?? 'N/A',
+            ];
+
+            foreach ($replacements as $key => $value) {
+                $subject = str_replace($key, $value, $subject);
+                $body = str_replace($key, $value, $body);
+            }
+
+            // D. Recipients (CC/BCC)
+            $ccEmails = ($template && !empty($template->cc_emails)) ? array_map('trim', explode(',', $template->cc_emails)) : [];
+            $bccEmails = ($template && !empty($template->bcc_emails)) ? array_map('trim', explode(',', $template->bcc_emails)) : [];
+
+            // E. Send Email
+            if (!empty($toEmails)) {
+                \Illuminate\Support\Facades\Mail::raw($body, function ($message) use ($toEmails, $ccEmails, $bccEmails, $subject, $employee) {
+                    $message->to($toEmails)
+                        ->subject($subject)
+                        ->from(env('MAIL_FROM_ADDRESS', 'hrms@example.com'), $employee->user->name);
+                    
+                    if (!empty($ccEmails)) $message->cc($ccEmails);
+                    if (!empty($bccEmails)) $message->bcc($bccEmails);
+                });
+
+                // F. Log Success
+                \App\Models\EmailLog::create([
+                    'leave_id' => $leave->id,
+                    'employee_id' => $employee->id,
+                    'to_recipients' => implode(', ', $toEmails),
+                    'cc_recipients' => implode(', ', $ccEmails),
+                    'bcc_recipients' => implode(', ', $bccEmails),
+                    'subject' => $subject,
+                    'body' => $body,
+                    'status' => 'Sent',
+                    'sent_at' => now(),
+                ]);
+            } else {
+                // Log Failure (No Recipient)
+                \App\Models\EmailLog::create([
+                    'leave_id' => $leave->id,
+                    'employee_id' => $employee->id,
+                    'to_recipients' => 'N/A',
+                    'subject' => $subject,
+                    'body' => $body,
+                    'error_message' => 'No TO recipients found (No Manager assigned and no custom TO).',
+                ]);
+            }
+
+        } catch (\Exception $e) {
+            \Log::error("Leave Email Failed: " . $e->getMessage());
+            \Log::error($e->getTraceAsString()); // Add trace
+            // Update Leave Status
+            $leave->update(['status' => 'Pending_Email_Failed']);
+
+            // Log Error
+            \App\Models\EmailLog::create([
+                'leave_id' => $leave->id,
+                'employee_id' => $employee->id,
+                'to_recipients' => 'N/A',
+                'subject' => 'N/A',
+                'body' => 'N/A',
+                'status' => 'Failed',
+                'error_message' => $e->getMessage(),
+            ]);
+        }
+        // ==========================================
 
         // Notify Admins & HR & SuperAdmin (only if Pending?)
         if ($status === 'Pending') {
@@ -299,7 +406,7 @@ class LeaveController extends Controller
         }
 
         return response()->json([
-            'message' => $status === 'Approved' ? 'Leave auto-approved successfully' : 'Leave request submitted successfully',
+            'message' => 'Leave request submitted successfully',
             'leave'   => $leave
         ], 201);
     }
@@ -423,7 +530,7 @@ class LeaveController extends Controller
     return response()->json(
         Leave::with(['leaveType', 'approver:id,name,role_id'])
             ->where('employee_id', $employee->id)
-            ->orderByDesc('start_date')
+            ->orderByDesc('created_at')
             ->get()
     );
 }
@@ -484,12 +591,12 @@ class LeaveController extends Controller
         }
 
         // Check status
-        if (!in_array($leave->status, ['Pending', 'Submitted'])) {
-            return response()->json(['message' => 'Cannot withdraw processed leave'], 400);
-        }
+    if (!in_array($leave->status, ['Pending', 'Submitted', 'Pending_Email_Failed'])) {
+        return response()->json(['message' => 'Cannot withdraw processed leave'], 400);
+    }
 
-        // Check start date (must be in future or today)
-        if (strtotime($leave->start_date) < strtotime(date('Y-m-d'))) {
+        // Check start date (must be in future or today), UNLESS it's a failed email (allow cleanup)
+        if ($leave->status !== 'Pending_Email_Failed' && strtotime($leave->start_date) < strtotime(date('Y-m-d'))) {
             return response()->json(['message' => 'Cannot withdraw leave that has already passed'], 400);
         }
 
@@ -508,7 +615,7 @@ class LeaveController extends Controller
             $balance->decrement('used_days', $days);
         }
 
-        // Notify Admin/HR/SuperAdmin
+        // Notify Admin/HR/SuperAdmin (Internal Notification)
         $this->notifications->sendToRoles(
             [1, 2, 3],
             "Leave Withdrawn",
@@ -516,6 +623,100 @@ class LeaveController extends Controller
             "leave",
             "/admin/leaves"
         );
+
+        // ==========================================
+        // AUTOMATED EMAIL LOGIC (WITHDRAWAL)
+        // ==========================================
+        try {
+            $employee = $leave->employee;
+            
+            // A. Fetch Template (Same as Application)
+            $template = \App\Models\EmployeeEmailTemplate::where('employee_id', $employee->id)
+                ->where('leave_type_id', $leave->leave_type_id)
+                ->first();
+
+            // Default Recipients
+            $toEmails = [];
+            
+            // Default: Reporting Manager
+            if ($employee->reports_to) {
+                $manager = \App\Models\Employee::find($employee->reports_to);
+                if ($manager && $manager->user) {
+                    $toEmails[] = $manager->user->email;
+                }
+            }
+            
+            // Override/Add from Template
+            if ($template && !empty($template->to_emails)) {
+                $customTos = array_map('trim', explode(',', $template->to_emails));
+                $toEmails = array_merge($toEmails, $customTos);
+            }
+            $toEmails = array_unique($toEmails);
+
+            // B. Prepare Content (WITHDRAWAL SPECIFIC)
+            // Use template subject but prefix, or default
+            $baseSubject = $template ? $template->subject_template : "Leave Application - {$employee->user->name}";
+            $subject = "WITHDRAWN: " . $baseSubject;
+            
+            $baseBody = $template ? "Original Request:\n" . $template->body_template : "I had applied for leave from {$leave->start_date} to {$leave->end_date}.";
+            $body = "Hi Manager,\n\nI have WITHDRAWN my leave request.\n\n" . $baseBody . "\n\nReason for withdrawal: User Action";
+
+            // C. Variable Substitution
+            $managerName = ($employee->manager && $employee->manager->user) ? $employee->manager->user->name : 'Manager';
+            
+            $replacements = [
+                '{EmployeeName}' => $employee->user->name,
+                '{ManagerName}' => $managerName,
+                '{FromDate}' => $leave->start_date,
+                '{ToDate}' => $leave->end_date,
+                '{Reason}' => $leave->reason ?? 'N/A',
+                '{EmployeeCode}' => $employee->employee_code ?? 'N/A',
+            ];
+
+            foreach ($replacements as $key => $value) {
+                $subject = str_replace($key, $value, $subject);
+                $body = str_replace($key, $value, $body);
+            }
+
+            // D. Recipients (CC/BCC)
+            $ccEmails = ($template && !empty($template->cc_emails)) ? array_map('trim', explode(',', $template->cc_emails)) : [];
+            $bccEmails = ($template && !empty($template->bcc_emails)) ? array_map('trim', explode(',', $template->bcc_emails)) : [];
+
+            // E. Send Email
+            if (!empty($toEmails)) {
+                \Illuminate\Support\Facades\Mail::raw($body, function ($message) use ($toEmails, $ccEmails, $bccEmails, $subject, $employee) {
+                    $message->to($toEmails)
+                        ->subject($subject)
+                        ->from(env('MAIL_FROM_ADDRESS', 'hrms@example.com'), $employee->user->name);
+                    
+                    if (!empty($ccEmails)) $message->cc($ccEmails);
+                    if (!empty($bccEmails)) $message->bcc($bccEmails);
+                });
+
+                // F. Log Success
+                \App\Models\EmailLog::create([
+                    'leave_id' => $leave->id,
+                    'employee_id' => $employee->id,
+                    'to_recipients' => implode(', ', $toEmails),
+                    'cc_recipients' => implode(', ', $ccEmails),
+                    'bcc_recipients' => implode(', ', $bccEmails),
+                    'subject' => $subject,
+                    'body' => $body,
+                    'status' => 'Sent (Withdrawn)',
+                    'sent_at' => now(),
+                ]);
+            }
+
+        } catch (\Exception $e) {
+            \Log::error("Withdraw Email Failed: " . $e->getMessage());
+            // We don't fail the withdrawal if email fails, but we log it
+            \App\Models\EmailLog::create([
+                'leave_id' => $leave->id,
+                'employee_id' => $employee->id,
+                'status' => 'Failed (Withdrawn)',
+                'error_message' => $e->getMessage()
+            ]);
+        }
 
         return response()->json(['message' => 'Leave withdrawn successfully']);
     }

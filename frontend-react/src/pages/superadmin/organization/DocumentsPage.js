@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import axios from "axios";
+import api from "../../../api/axios";
 import { useAuth } from "../../../context/AuthContext";
 import { FileText, Download, Trash2, Upload, Search, Filter, X, Eye } from "lucide-react";
 
@@ -41,8 +41,11 @@ const DocumentsPage = () => {
             if (filters.employee_id) params.employee_id = filters.employee_id;
             if (filters.document_type) params.document_type = filters.document_type;
 
-            const response = await axios.get("http://localhost:8000/api/employee-documents", {
-                headers: { Authorization: `Bearer ${token}` },
+            if (filters.document_type) params.document_type = filters.document_type;
+
+            // Refactored to use api instance (baseURL is already set)
+            // No need to pass token manually as interceptor handles it
+            const response = await api.get("/employee-documents", {
                 params: params
             });
             setDocuments(response.data);
@@ -57,10 +60,7 @@ const DocumentsPage = () => {
 
     const fetchEmployees = async () => {
         try {
-            const token = localStorage.getItem("token");
-            const response = await axios.get("http://localhost:8000/api/employees", {
-                headers: { Authorization: `Bearer ${token}` }
-            });
+            const response = await api.get("/employees");
             setEmployees(response.data);
         } catch (err) {
             console.error("Error fetching employees:", err);
@@ -86,9 +86,8 @@ const DocumentsPage = () => {
                 formData.append("employee_id", uploadData.employee_id);
             }
 
-            await axios.post("http://localhost:8000/api/employee-documents", formData, {
+            await api.post("/employee-documents", formData, {
                 headers: {
-                    Authorization: `Bearer ${token}`,
                     "Content-Type": "multipart/form-data"
                 }
             });
@@ -107,10 +106,8 @@ const DocumentsPage = () => {
     const handleDelete = async (id) => {
         if (!window.confirm("Are you sure you want to delete this document?")) return;
         try {
-            const token = localStorage.getItem("token");
-            await axios.delete(`http://localhost:8000/api/employee-documents/${id}`, {
-                headers: { Authorization: `Bearer ${token}` }
-            });
+            await api.delete(`/employee-documents/${id}`);
+            setDocuments(documents.filter(doc => doc.id !== id));
             setDocuments(documents.filter(doc => doc.id !== id));
         } catch (err) {
             console.error("Delete failed", err);
@@ -120,9 +117,7 @@ const DocumentsPage = () => {
 
     const handleView = async (doc) => {
         try {
-            const token = localStorage.getItem("token");
-            const response = await axios.get(`http://localhost:8000/api/employee-documents/${doc.id}/download`, {
-                headers: { Authorization: `Bearer ${token}` },
+            const response = await api.get(`/employee-documents/${doc.id}/download`, {
                 responseType: 'blob',
             });
 
@@ -137,9 +132,7 @@ const DocumentsPage = () => {
 
     const handleDownload = async (doc) => {
         try {
-            const token = localStorage.getItem("token");
-            const response = await axios.get(`http://localhost:8000/api/employee-documents/${doc.id}/download`, {
-                headers: { Authorization: `Bearer ${token}` },
+            const response = await api.get(`/employee-documents/${doc.id}/download`, {
                 responseType: 'blob', // Important
             });
 

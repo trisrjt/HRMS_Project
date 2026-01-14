@@ -1,6 +1,8 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+
 import api from "../../api/axios";
+import ConfirmationModal from "../../components/ui/ConfirmationModal";
 
 // --- UI Components ---
 
@@ -101,6 +103,8 @@ const LeavesPage = () => {
         reason: "",
     });
 
+
+
     const [balances, setBalances] = useState([]);
 
     // Fetch Data
@@ -110,6 +114,17 @@ const LeavesPage = () => {
             setBalances(response.data || []);
         } catch (err) {
             console.error("Fetch balances error:", err);
+        }
+    };
+
+    // Fetch User Profile for Manager Details
+    const [userProfile, setUserProfile] = useState(null);
+    const fetchProfile = async () => {
+        try {
+            const response = await api.get("/user"); // Hits UserController::me
+            setUserProfile(response.data);
+        } catch (err) {
+            console.error("Fetch profile error:", err);
         }
     };
 
@@ -136,10 +151,28 @@ const LeavesPage = () => {
         }
     };
 
+    // Modal State
+    const [confirmModal, setConfirmModal] = useState({
+        isOpen: false,
+        title: "",
+        message: "",
+        onConfirm: () => { },
+        variant: "warning"
+    });
+
+    const openConfirm = (title, message, onConfirm, variant = "warning") => {
+        setConfirmModal({ isOpen: true, title, message, onConfirm, variant });
+    };
+
+    const closeConfirm = () => {
+        setConfirmModal((prev) => ({ ...prev, isOpen: false }));
+    };
+
     useEffect(() => {
         const loadData = async () => {
             setIsLoading(true);
             await Promise.all([fetchLeaves(), fetchBalances(), fetchLeaveTypes()]);
+            await fetchProfile();
             setIsLoading(false);
         };
         loadData();
@@ -160,25 +193,43 @@ const LeavesPage = () => {
     };
 
     const handleWithdraw = async (id) => {
-        if (!window.confirm("Are you sure you want to withdraw this leave request?")) return;
-
-        try {
-            await api.put(`/leaves/${id}/withdraw`);
-            setSuccessMessage("Leave withdrawn successfully.");
-            fetchLeaves();
-            fetchBalances(); // Refresh balance
-            setTimeout(() => setSuccessMessage(null), 3000);
-        } catch (err) {
-            console.error("Withdraw error:", err);
-            setError(err?.response?.data?.message || "Failed to withdraw leave.");
-            setTimeout(() => setError(null), 3000);
-        }
+        openConfirm(
+            "Withdraw Leave Request",
+            "Are you sure you want to withdraw this leave request? This action cannot be undone.",
+            async () => {
+                try {
+                    await api.put(`/leaves/${id}/withdraw`);
+                    setSuccessMessage("Leave withdrawn successfully.");
+                    fetchLeaves();
+                    fetchBalances();
+                    setTimeout(() => setSuccessMessage(null), 3000);
+                } catch (err) {
+                    console.error("Withdraw error:", err);
+                    setError(err?.response?.data?.message || "Failed to withdraw leave.");
+                    setTimeout(() => setError(null), 3000);
+                }
+            },
+            "danger"
+        );
     };
 
     const validateForm = () => {
         if (!formData.leave_type_id) return "Please select a leave type.";
         if (!formData.start_date) return "Start date is required.";
         if (!formData.end_date) return "End date is required.";
+
+        // Past date validation
+        // Parse the input date string (YYYY-MM-DD) as a local date
+        const [sy, sm, sd] = formData.start_date.split('-').map(Number);
+        const startDate = new Date(sy, sm - 1, sd); // Local midnight
+
+        const today = new Date();
+        today.setHours(0, 0, 0, 0); // Local midnight today
+
+        if (startDate < today) {
+            return "Start date cannot be in the past. Please select today or a future date.";
+        }
+
         if (new Date(formData.end_date) < new Date(formData.start_date)) {
             return "End date cannot be before start date.";
         }
@@ -196,6 +247,8 @@ const LeavesPage = () => {
             return;
         }
 
+
+
         setIsSubmitting(true);
 
         try {
@@ -203,7 +256,10 @@ const LeavesPage = () => {
             // Using /leaves to be safe with standard REST
             await api.post("/leaves", formData);
 
-            setSuccessMessage("Leave application submitted successfully!");
+            setSuccessMessage("Leave application submitted successfully. Email notification sent.");
+
+
+
             setIsModalOpen(false);
             setFormData({ leave_type_id: "", start_date: "", end_date: "", reason: "" });
             await fetchLeaves(); // Reload list
@@ -289,7 +345,8 @@ const LeavesPage = () => {
                                 leaves.map((leave) => {
                                     const start = new Date(leave.start_date);
                                     const end = new Date(leave.end_date);
-                                    const days = (end - start) / (1000 * 60 * 60 * 24) + 1;
+                                    // Use backend days if available, else naive calculation (fallback)
+                                    const days = leave.days ? parseFloat(leave.days) : ((end - start) / (1000 * 60 * 60 * 24) + 1);
                                     const returnedDays = leave.approved_days ? days - leave.approved_days : 0;
 
                                     return (
@@ -326,7 +383,7 @@ const LeavesPage = () => {
                                                     <Badge variant={leave.status}>
                                                         {leave.status}
                                                     </Badge>
-                                                    {leave.status === 'Pending' && leave.start_date >= new Date().toISOString().split('T')[0] && (
+                                                    {(leave.status === 'Pending' || leave.status === 'Pending_Email_Failed') && leave.start_date >= new Date().toISOString().split('T')[0] && (
                                                         <button
                                                             onClick={() => handleWithdraw(leave.id)}
                                                             className="px-3 py-1 bg-red-600 hover:bg-red-700 text-white text-xs rounded transition-colors shadow-sm font-medium"
@@ -432,6 +489,8 @@ const LeavesPage = () => {
                         ></textarea>
                     </div>
 
+
+
                     <div className="flex justify-end gap-3 mt-4">
                         <Button variant="secondary" onClick={() => setIsModalOpen(false)}>
                             Cancel
@@ -443,6 +502,17 @@ const LeavesPage = () => {
                 </form>
             </Modal>
 
+            {/* Confirmation Modal */}
+            <ConfirmationModal
+                isOpen={confirmModal.isOpen}
+                onClose={closeConfirm}
+                onConfirm={confirmModal.onConfirm}
+                title={confirmModal.title}
+                message={confirmModal.message}
+                variant={confirmModal.variant}
+                confirmText="Yes, Proceed"
+                cancelText="Cancel"
+            />
         </div>
     );
 };

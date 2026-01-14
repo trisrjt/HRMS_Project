@@ -17,7 +17,9 @@ const EmployeeSidebar = () => {
     { key: "leaves", label: "Leaves", to: "/employee/leaves" },
     { key: "salary", label: "Salary", to: "/employee/salary" },
     { key: "payslips", label: "Payslips", to: "/employee/payslips" },
+    { key: "holidays", label: "Holiday Calendar", to: "/employee/holidays" },
     { key: "announcements", label: "Announcements", to: "/employee/announcements" },
+    { key: "email-settings", label: "Email Settings", to: "/employee/email-settings" },
   ];
 
   const handleLogout = () => {

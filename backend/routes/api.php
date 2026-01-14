@@ -13,7 +13,14 @@ use App\Http\Controllers\LeaveController;
 use App\Http\Controllers\PayslipController;
 use App\Http\Controllers\DepartmentController;
 use App\Http\Controllers\DesignationController;
+
+use App\Http\Controllers\EmailTemplateController;
 use App\Http\Controllers\AnnouncementController;
+
+// ...
+
+
+
 
 use App\Http\Controllers\RecruitmentController;
 use App\Http\Controllers\PerformanceReviewController;
@@ -39,9 +46,18 @@ Route::post('/login', [AuthController::class, 'login']);
 Route::post('/auth/enroll-face', [AuthController::class, 'enrollFace']);
 Route::post('/auth/login-face', [AuthController::class, 'loginFace']);
 
+
+
+
+
+
 // Protected routes
 Route::middleware('auth:sanctum')->group(function () {
 
+    // Email Preferences
+    Route::get('/email-preferences', [EmailTemplateController::class, 'getPreferences']);
+    Route::post('/email-preferences', [EmailTemplateController::class, 'savePreference']);
+    
     // User creation (Super Admin & Admin only)
     Route::get('/users', [UserController::class, 'index']);
     Route::post('/users', [UserController::class, 'store']);

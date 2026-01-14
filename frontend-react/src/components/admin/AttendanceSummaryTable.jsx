@@ -27,7 +27,7 @@ const AttendanceSummaryTable = ({ summary, loading, onEmployeeClick }) => {
                         <th className="px-6 py-3 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase">Today's Status</th>
                         <th className="px-6 py-3 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase">Working Days</th>
                         <th className="px-6 py-3 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase">Total Hours</th>
-                        <th className="px-6 py-3 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase">Issues</th>
+
                         <th className="px-6 py-3 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase text-right">Actions</th>
                     </tr>
                 </thead>
@@ -56,18 +56,7 @@ const AttendanceSummaryTable = ({ summary, loading, onEmployeeClick }) => {
                             <td className="px-6 py-4 text-sm text-gray-700 dark:text-gray-300">
                                 {formatDuration(employee.total_hours)}
                             </td>
-                            <td className="px-6 py-4">
-                                {employee.missing_punches > 0 && (
-                                    <span className="px-2 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
-                                        {employee.missing_punches} Missing Punches
-                                    </span>
-                                )}
-                                {employee.missing_punches === 0 && (
-                                    <span className="text-xs text-green-600 bg-green-50 px-2 py-1 rounded-full">
-                                        No Issues
-                                    </span>
-                                )}
-                            </td>
+
                             <td className="px-6 py-4 text-right">
                                 <button className="text-blue-600 hover:text-blue-800 text-sm font-medium">
                                     View History
