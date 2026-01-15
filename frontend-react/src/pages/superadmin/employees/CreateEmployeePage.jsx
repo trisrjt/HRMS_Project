@@ -75,11 +75,12 @@ const CreateUserPage = () => {
 
             <form onSubmit={handleSubmit} className="bg-white dark:bg-gray-800 p-8 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm transition-colors duration-200">
                 <div className="mb-6">
-                    <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+                    <label htmlFor="name" className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
                         Name
                     </label>
                     <input
                         type="text"
+                        id="name"
                         name="name"
                         value={formData.name}
                         onChange={handleChange}
@@ -89,11 +90,12 @@ const CreateUserPage = () => {
                 </div>
 
                 <div className="mb-6">
-                    <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+                    <label htmlFor="email" className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
                         Email
                     </label>
                     <input
                         type="email"
+                        id="email"
                         name="email"
                         value={formData.email}
                         onChange={handleChange}
@@ -103,10 +105,11 @@ const CreateUserPage = () => {
                 </div>
 
                 <div className="mb-6">
-                    <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+                    <label htmlFor="role_id" className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
                         Role
                     </label>
                     <select
+                        id="role_id"
                         name="role_id"
                         value={formData.role_id}
                         onChange={handleChange}
@@ -121,10 +124,11 @@ const CreateUserPage = () => {
                 {parseInt(formData.role_id) === 4 && (
                     <>
                         <div className="mb-6">
-                            <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+                            <label htmlFor="joining_category" className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
                                 Joining Category
                             </label>
                             <select
+                                id="joining_category"
                                 name="joining_category"
                                 value={formData.joining_category}
                                 onChange={handleChange}
@@ -138,11 +142,12 @@ const CreateUserPage = () => {
 
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
                             <div>
-                                <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+                                <label htmlFor="aadhar_file" className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
                                     Aadhar Card (PDF/Image)
                                 </label>
                                 <input
                                     type="file"
+                                    id="aadhar_file"
                                     name="aadhar_file"
                                     onChange={handleFileChange}
                                     accept=".pdf,.jpg,.jpeg,.png"
@@ -150,11 +155,12 @@ const CreateUserPage = () => {
                                 />
                             </div>
                             <div>
-                                <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+                                <label htmlFor="pan_file" className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
                                     PAN Card (PDF/Image)
                                 </label>
                                 <input
                                     type="file"
+                                    id="pan_file"
                                     name="pan_file"
                                     onChange={handleFileChange}
                                     accept=".pdf,.jpg,.jpeg,.png"
@@ -166,11 +172,12 @@ const CreateUserPage = () => {
                 )}
 
                 <div className="mb-8">
-                    <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+                    <label htmlFor="temp_password" className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
                         Temporary Password
                     </label>
                     <input
                         type="text"
+                        id="temp_password"
                         name="temp_password"
                         value={formData.temp_password}
                         onChange={handleChange}

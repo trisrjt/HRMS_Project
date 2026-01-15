@@ -26,7 +26,7 @@ const SuperAdminSidebar = () => {
         { key: "settings", label: "System Settings", to: "/superadmin/settings" },
         //{ key: "system-controls", label: "System Controls", to: "/superadmin/system-controls" },
 
-        { key: "activity-log", label: "Activity Log", to: "/superadmin/activity-log" },
+
         { key: "users", label: "User Management", to: "/superadmin/users" },
         //{ key: "reports", label: "Reports / Analytics", to: "/superadmin/reports" },
     ];

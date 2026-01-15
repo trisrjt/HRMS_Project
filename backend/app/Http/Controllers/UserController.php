@@ -48,8 +48,8 @@ class UserController extends Controller
             'permissions' => $permissions,
             'employee' => $user->employee ? [
                 'employee_code' => $user->employee->employee_code,
-                'designation' => $user->employee->designation ?? null, // String field, not relationship
-                'department' => $user->employee->department ? $user->employee->department->name : null,
+                'designation' => $user->employee->designation ?? null,
+                'department' => $user->employee->department ?? null,
                 'phone' => $user->employee->phone,
                 'address' => $user->employee->address,
                 'date_of_joining' => $user->employee->date_of_joining,

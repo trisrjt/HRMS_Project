@@ -23,9 +23,12 @@ export const AuthProvider = ({ children }) => {
   }, []);
 
   const refreshUser = useCallback(async (currentToken) => {
+    const tokenToUse = currentToken || token || localStorage.getItem("token");
+    if (!tokenToUse) return;
+
     try {
       const response = await api.get("/user", {
-        headers: { Authorization: `Bearer ${currentToken}` }
+        headers: { Authorization: `Bearer ${tokenToUse}` }
       });
       const userData = response.data;
       setUser(userData);
@@ -38,7 +41,7 @@ export const AuthProvider = ({ children }) => {
         logout();
       }
     }
-  }, [logout]);
+  }, [token, logout]);
 
   useEffect(() => {
     const initAuth = async () => {

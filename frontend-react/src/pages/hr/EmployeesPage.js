@@ -245,21 +245,17 @@ const EmployeesPage = () => {
         } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
             errors.email = "Invalid email format";
         }
-        if (!formData.department_id) errors.department_id = "Department is required";
-        if (!formData.designation_name) errors.designation_name = "Designation is required";
-        if (!formData.date_of_joining) errors.date_of_joining = "Joining Date is required";
-        if (!formData.dob) errors.dob = "Date of Birth is required";
-        if (!formData.aadhar_number) {
-            errors.aadhar_number = "Aadhar Number is required";
-        } else if (!/^\d{12}$/.test(formData.aadhar_number)) {
+        // if (!formData.department_id) errors.department_id = "Department is required";
+        // if (!formData.designation_name) errors.designation_name = "Designation is required";
+
+        // Use loose validation to match backend 'nullable' rules
+        if (formData.aadhar_number && !/^\d{12}$/.test(formData.aadhar_number)) {
             errors.aadhar_number = "Aadhar must be 12 digits";
         }
         if (formData.pan_number && !/^[A-Z]{5}[0-9]{4}[A-Z]{1}$/i.test(formData.pan_number)) {
             errors.pan_number = "Invalid PAN format";
         }
-        if (!formData.phone) {
-            errors.phone = "Phone is required";
-        } else if (!/^\d{10}$/.test(formData.phone)) {
+        if (formData.phone && !/^\d{10}$/.test(formData.phone)) {
             errors.phone = "Phone number must be exactly 10 digits";
         }
         if (formData.emergency_contact && !/^\d{10}$/.test(formData.emergency_contact)) {

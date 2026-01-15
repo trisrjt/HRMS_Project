@@ -169,6 +169,9 @@ const SuperAdminAttendancePage = () => {
                         <option value="Absent">Absent</option>
                     </select>
                     <select
+                        id="view_type"
+                        name="view_type"
+                        aria-label="View Type"
                         value={viewType}
                         onChange={(e) => {
                             setViewType(e.target.value);
@@ -192,6 +195,9 @@ const SuperAdminAttendancePage = () => {
                         />
                     ) : (
                         <input
+                            id="week_date"
+                            name="week_date"
+                            aria-label="Select Week"
                             type="date"
                             value={weekDate}
                             onChange={(e) => {

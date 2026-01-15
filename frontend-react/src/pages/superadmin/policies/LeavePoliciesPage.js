@@ -430,6 +430,7 @@ const LeavePoliciesPage = () => {
                                                         <td className="p-4">
                                                             <input
                                                                 type="number" step="0.5" min="0"
+                                                                id={`total_leaves_per_year_${lt.id}`}
                                                                 aria-label={`Total leaves for ${lt.name}`}
                                                                 name={`total_leaves_per_year_${lt.id}`}
                                                                 className="w-full px-3 py-1.5 border border-gray-200 dark:border-gray-600 rounded-lg dark:bg-gray-700/50 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all text-center font-medium"
@@ -439,6 +440,7 @@ const LeavePoliciesPage = () => {
                                                         </td>
                                                         <td className="p-4">
                                                             <select
+                                                                id={`accrual_frequency_${lt.id}`}
                                                                 aria-label={`Accrual frequency for ${lt.name}`}
                                                                 name={`accrual_frequency_${lt.id}`}
                                                                 className="w-full px-3 py-1.5 border border-gray-200 dark:border-gray-600 rounded-lg dark:bg-gray-700/50 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none cursor-pointer"
@@ -452,12 +454,13 @@ const LeavePoliciesPage = () => {
 
 
                                                         <td className="p-4 text-center">
-                                                            <label className="inline-flex items-center gap-2 cursor-pointer group/check">
+                                                            <label htmlFor={`probation_restriction_${lt.id}`} className="inline-flex items-center gap-2 cursor-pointer group/check">
                                                                 <div className={`w-4 h-4 rounded border flex items-center justify-center transition-colors ${rule.probation_restriction ? 'bg-amber-500 border-amber-500' : 'border-gray-300 dark:border-gray-500'}`}>
                                                                     {rule.probation_restriction && <Check className="w-3 h-3 text-white" />}
                                                                 </div>
                                                                 <input
                                                                     type="checkbox"
+                                                                    id={`probation_restriction_${lt.id}`}
                                                                     className="hidden"
                                                                     checked={rule.probation_restriction ?? false}
                                                                     onChange={e => handleRuleChange(idx, 'probation_restriction', e.target.checked)}

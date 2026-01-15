@@ -84,7 +84,7 @@ Route::middleware(['auth:sanctum', 'role:1,2,3', 'permission:can_view_employees'
 // =========================
 // ONLY Admin + SuperAdmin can CREATE / UPDATE / DELETE employee
 // =========================
-Route::middleware(['auth:sanctum', 'role:1,2,3', 'permission:can_manage_employees'])->group(function () {
+Route::middleware(['auth:sanctum', 'role:1,2,3'])->group(function () {
     Route::post('/employees', [EmployeeController::class, 'store']);
     Route::put('/employees/{id}', [EmployeeController::class, 'update']);
     Route::delete('/employees/{id}', [EmployeeController::class, 'destroy']);

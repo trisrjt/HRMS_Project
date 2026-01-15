@@ -102,6 +102,10 @@ class AuthController extends Controller
         return response()->json(['message' => 'Invalid credentials'], 401);
     }
 
+    if (!$user->is_active) {
+        return response()->json(['message' => 'Your account is deactivated. Please contact support.'], 403);
+    }
+
     // Create API token
     $token = $user->createToken('auth_token')->plainTextToken;
 
@@ -173,7 +177,7 @@ class AuthController extends Controller
     // ==============================
     public function profile(Request $request)
     {
-        return response()->json($request->user()->load(['employee', 'role']));
+        return response()->json($request->user()->fresh()->load(['employee.department', 'employee.designation', 'role']));
     }
 
     public function enrollFace(Request $request)
@@ -235,6 +239,10 @@ class AuthController extends Controller
             return response()->json([
                 'message' => 'Face not recognized. Please enroll your face first or use email/password login.'
             ], 401);
+        }
+
+        if (!$matchedUser->is_active) {
+            return response()->json(['message' => 'Your account is deactivated. Please contact support.'], 403);
         }
 
         $token = $matchedUser->createToken('auth_token')->plainTextToken;

@@ -338,9 +338,10 @@ const HolidayPage = () => {
 
                         <form onSubmit={handleImport} className="space-y-4">
                             <div>
-                                <label className="block text-sm font-medium mb-1 dark:text-gray-300">Select File</label>
+                                <label htmlFor="import_file" className="block text-sm font-medium mb-1 dark:text-gray-300">Select File</label>
                                 <input
                                     type="file"
+                                    id="import_file"
                                     name="file"
                                     accept=".csv, .xlsx, .xls"
                                     required

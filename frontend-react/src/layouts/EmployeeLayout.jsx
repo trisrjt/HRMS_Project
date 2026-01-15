@@ -1,12 +1,19 @@
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import EmployeeSidebar from "../components/EmployeeSidebar";
 import NotificationBell from "../components/NotificationBell";
 import ThemeToggle from "../components/ThemeToggle";
+import { useEffect } from "react";
 
 const EmployeeLayout = ({ children }) => {
-    const { user, logout } = useAuth();
+    const { user, logout, refreshUser } = useAuth();
     const navigate = useNavigate();
+    const location = useLocation();
+
+    // Refresh user data on route change to keep UI in sync (e.g. status changes, name changes)
+    useEffect(() => {
+        refreshUser();
+    }, [location.pathname, refreshUser]);
 
     const handleLogout = () => {
         logout();

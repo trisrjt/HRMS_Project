@@ -163,6 +163,9 @@ const EmployeeAttendancePage = () => {
                 </button>
                 <input
                     type="month"
+                    id="month"
+                    name="month"
+                    aria-label="Filter by Month"
                     value={month}
                     onChange={(e) => setMonth(e.target.value)}
                     className="px-4 py-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-white border border-gray-300 dark:border-gray-600 rounded-lg text-sm font-medium outline-none focus:ring-2 focus:ring-blue-500 transition-colors"

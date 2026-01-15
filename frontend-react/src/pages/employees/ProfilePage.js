@@ -12,6 +12,7 @@ const ProfilePage = () => {
                 // Using /user to get the authenticated user's details
                 // This typically returns { id, name, email, role_id, employee: {...}, ... }
                 const { data } = await api.get("/user");
+                console.log("Profile Data Raw:", data);
                 setProfile(data);
             } catch (err) {
                 setError("Failed to load profile.");

@@ -75,7 +75,7 @@ import SuperAdminSalaries from "../pages/superadmin/payroll/SalariesPage";
 import SuperAdminPayslips from "../pages/superadmin/payroll/PayslipsPage";
 import SuperAdminPerformanceReviews from "../pages/superadmin/employees/PerformanceReviewsPage";
 import SuperAdminAnnouncements from "../pages/superadmin/communication/AnnouncementsPage";
-import SuperAdminActivityLog from "../pages/superadmin/system/ActivityLogPage";
+
 import SuperAdminUserManagement from "../pages/superadmin/users/UserManagementPage";
 
 // --- LAZY LOADED EMPLOYEE PAGES ---
@@ -773,16 +773,7 @@ const AppRouter = () => (
             </ProtectedRoute>
           }
         />
-        <Route
-          path="/superadmin/activity-log"
-          element={
-            <ProtectedRoute roles={[1]}>
-              <SuperAdminLayout>
-                <SuperAdminActivityLog />
-              </SuperAdminLayout>
-            </ProtectedRoute>
-          }
-        />
+
         <Route
           path="/superadmin/users"
           element={

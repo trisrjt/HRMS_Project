@@ -212,7 +212,7 @@ const DashboardPage = () => {
                 attendanceRes,
                 leavesRes,
 
-                activityRes,
+                recentActivityRes,
                 todayAttendanceRes
             ] = await Promise.all([
                 api.get('/superadmin/stats'),
@@ -231,7 +231,7 @@ const DashboardPage = () => {
             setAttendanceTrends(attendanceRes.data);
             setLeavesSummary(leavesRes.data);
 
-            setActivityLog(activityRes.data);
+            setActivityLog(recentActivityRes.data);
             setTodayAttendance(todayAttendanceRes.data);
             setLastUpdated(new Date());
         } catch (error) {
