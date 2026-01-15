@@ -249,6 +249,7 @@ Route::middleware(['role:1,2,3'])->group(function () {
 Route::middleware('role:4')->group(function () {
     Route::get('/payslips/{id}', [PayslipController::class, 'show']);
     Route::get('/my-payslips', [PayslipController::class, 'myPayslips']);
+    Route::get('/my-payslips/download', [PayslipController::class, 'download']); // Employee download own payslip
 });
 
 

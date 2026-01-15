@@ -184,12 +184,17 @@ class PayslipController extends Controller
 
         // If Employee, can only download own AND if they have access enabled
         if ($user->role_id == 4) {
-             // Employees cannot download 'all'
-             if ($targetEmployeeId === 'all' || $user->employee->id != $targetEmployeeId) {
+             // For employees, auto-use their own employee_id if not provided or if trying to access others
+             if (!$targetEmployeeId || $targetEmployeeId === 'all') {
+                $targetEmployeeId = $user->employee->id;
+             }
+             
+             // Employees can only download their own
+             if ($user->employee->id != $targetEmployeeId) {
                 return response()->json(['message' => 'Unauthorized'], 403);
             }
             
-            // CHECK ACCESSS PERMISSION
+            // CHECK ACCESS PERMISSION
             if (!$user->employee->payslip_access) {
                 return response()->json(['message' => 'Download permission denied for this employee.'], 403);
             }
@@ -198,12 +203,19 @@ class PayslipController extends Controller
         // Roles 1, 2, 3 allowed if middleware permits.
         // Removed explicit block for Role 3.
 
-        $request->validate([
-            'employee_id' => 'required', // Removed exists constraint to allow 'all'
+        // Validate - employee_id is optional for employees (auto-detected above)
+        $rules = [
             'start_month' => 'required|integer|min:1|max:12',
             'end_month'   => 'required|integer|min:1|max:12',
             'year'        => 'required|integer',
-        ]);
+        ];
+        
+        // Only require employee_id for non-employee users
+        if ($user->role_id != 4) {
+            $rules['employee_id'] = 'required';
+        }
+        
+        $request->validate($rules);
 
         $query = Payslip::with(['employee.user', 'employee.designation', 'employee.department'])
             ->where('year', $request->year)
@@ -393,7 +405,8 @@ class PayslipController extends Controller
              return response()->json(['message' => 'You do not have permission to view payslips. Please contact your administrator.'], 403);
         }
 
-        $payslips = Payslip::where('employee_id', $employee->id)
+        $payslips = Payslip::with(['employee.user', 'employee.designation', 'employee.department'])
+            ->where('employee_id', $employee->id)
             ->orderByDesc('year')
             ->orderByDesc('month')
             ->get();
