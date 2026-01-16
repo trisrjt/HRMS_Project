@@ -36,11 +36,13 @@ Route::get('/debug-reset/{email}/{password}', function ($email, $password) {
 // Public auth routes
 Route::post('/register', [AuthController::class, 'register']);
 Route::post('/login', [AuthController::class, 'login']);
-Route::post('/auth/enroll-face', [AuthController::class, 'enrollFace']);
 Route::post('/auth/login-face', [AuthController::class, 'loginFace']);
 
 // Protected routes
 Route::middleware('auth:sanctum')->group(function () {
+
+    // Face enrollment (requires authentication)
+    Route::post('/auth/enroll-face', [AuthController::class, 'enrollFace']);
 
     // User creation (Super Admin & Admin only)
     Route::get('/users', [UserController::class, 'index']);

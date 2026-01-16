@@ -179,13 +179,21 @@ class AuthController extends Controller
     public function enrollFace(Request $request)
     {
         $request->validate([
-            'email' => 'required|email|exists:users,email',
+            'email' => 'nullable|email|exists:users,email',
             'face_image' => 'required|image|max:5120',
             'face_descriptor' => 'required|string',
         ]);
 
-        $user = User::where('email', $request->email)->first();
-        if (!$user) return response()->json(['message' => 'User not found'], 404);
+        // If email is provided (public enrollment), use email lookup
+        // Otherwise use authenticated user (employee first check-in)
+        if ($request->has('email')) {
+            $user = User::where('email', $request->email)->first();
+            if (!$user) return response()->json(['message' => 'User not found'], 404);
+        } else {
+            // Use authenticated user
+            $user = $request->user();
+            if (!$user) return response()->json(['message' => 'User not authenticated'], 401);
+        }
 
         $facePath = $request->file('face_image')->store('faces', 'public');
         
@@ -195,7 +203,10 @@ class AuthController extends Controller
             'face_descriptor' => $request->face_descriptor
         ]);
 
-        return response()->json(['message' => 'Face enrolled successfully'], 200);
+        return response()->json([
+            'message' => 'Face enrolled successfully',
+            'user' => $user->fresh()->load(['employee', 'role'])
+        ], 200);
     }
 
     public function loginFace(Request $request)

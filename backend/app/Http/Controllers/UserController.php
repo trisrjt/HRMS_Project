@@ -46,6 +46,7 @@ class UserController extends Controller
             'role' => $user->role ? $user->role->name : null,
             'role_id' => $user->role_id,
             'permissions' => $permissions,
+            'face_descriptor' => $user->face_descriptor, // Include for face enrollment check
             'employee' => $user->employee ? [
                 'employee_code' => $user->employee->employee_code,
                 'designation' => $user->employee->designation ?? null, // String field, not relationship
