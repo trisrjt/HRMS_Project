@@ -43,7 +43,6 @@ Route::get('/debug-reset/{email}/{password}', function ($email, $password) {
 // Public auth routes
 Route::post('/register', [AuthController::class, 'register']);
 Route::post('/login', [AuthController::class, 'login']);
-Route::post('/auth/enroll-face', [AuthController::class, 'enrollFace']);
 Route::post('/auth/login-face', [AuthController::class, 'loginFace']);
 
 
@@ -58,6 +57,9 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/email-preferences', [EmailTemplateController::class, 'getPreferences']);
     Route::post('/email-preferences', [EmailTemplateController::class, 'savePreference']);
     
+    // Face enrollment (requires authentication)
+    Route::post('/auth/enroll-face', [AuthController::class, 'enrollFace']);
+
     // User creation (Super Admin & Admin only)
     Route::get('/users', [UserController::class, 'index']);
     Route::post('/users', [UserController::class, 'store']);
@@ -265,6 +267,7 @@ Route::middleware(['role:1,2,3'])->group(function () {
 Route::middleware('role:4')->group(function () {
     Route::get('/payslips/{id}', [PayslipController::class, 'show']);
     Route::get('/my-payslips', [PayslipController::class, 'myPayslips']);
+    Route::get('/my-payslips/download', [PayslipController::class, 'download']); // Employee download own payslip
 });
 
 

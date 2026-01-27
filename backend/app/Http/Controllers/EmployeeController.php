@@ -137,8 +137,8 @@ class EmployeeController extends Controller
         'aadhar_number' => 'nullable|digits:12',
         'pan_number' => 'nullable|regex:/^[A-Z]{5}[0-9]{4}[A-Z]{1}$/i',
         'profile_photo' => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
-        'face_image' => 'required|image|max:5120',
-        'face_descriptor' => 'required|string',
+        'face_image' => 'nullable|image|max:5120',
+        'face_descriptor' => 'nullable|string',
         'aadhar_file' => 'nullable|mimes:pdf,jpg,jpeg,png|max:2048',
         'pan_file' => 'nullable|mimes:pdf,jpg,jpeg,png|max:2048',
         'probation_months' => 'nullable|integer|min:0',
@@ -291,7 +291,8 @@ class EmployeeController extends Controller
     return response()->json([
         'message' => 'Employee created successfully',
         'user' => $user,
-        'employee' => $employee
+        'employee' => $employee,
+        'temp_password' => $plainPassword  // Include for admin to see
     ], 201);
 }
 
@@ -501,11 +502,15 @@ class EmployeeController extends Controller
             return response()->json(['message' => 'Unauthorized'], 403);
         }
         
-        $employee = Employee::findOrFail($id);
+        $employee = Employee::with(['user:id,name,email', 'designation:id,name'])->findOrFail($id);
         $employee->payslip_access = $request->boolean('payslip_access');
         $employee->save();
         
-        return response()->json(['message' => 'Payslip access updated', 'payslip_access' => $employee->payslip_access]);
+        return response()->json([
+            'message' => 'Payslip access updated', 
+            'payslip_access' => $employee->payslip_access,
+            'employee' => $employee
+        ]);
     }
 
     // ==============================

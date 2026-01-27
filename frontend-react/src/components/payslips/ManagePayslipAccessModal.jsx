@@ -8,10 +8,18 @@ const ManagePayslipAccessModal = ({ onClose }) => {
     const [search, setSearch] = useState('');
     const [loading, setLoading] = useState(true);
     const [processingId, setProcessingId] = useState(null);
+    const [successMessage, setSuccessMessage] = useState('');
 
     useEffect(() => {
         fetchEmployees();
     }, []);
+
+    useEffect(() => {
+        if (successMessage) {
+            const timer = setTimeout(() => setSuccessMessage(''), 3000);
+            return () => clearTimeout(timer);
+        }
+    }, [successMessage]);
 
     const fetchEmployees = async () => {
         try {
@@ -46,17 +54,28 @@ const ManagePayslipAccessModal = ({ onClose }) => {
         setProcessingId(employeeId);
         try {
             const newStatus = !currentStatus;
-            await axios.patch(`/employees/${employeeId}/payslip-access`, {
+            const response = await axios.patch(`/employees/${employeeId}/payslip-access`, {
                 payslip_access: newStatus
             });
 
-            // Update local state
-            setEmployees(prev => prev.map(emp =>
-                emp.id === employeeId ? { ...emp, payslip_access: newStatus } : emp
-            ));
+            // Update local state with the returned employee data or fallback to updating just the status
+            setEmployees(prev => prev.map(emp => {
+                if (emp.id === employeeId) {
+                    // If backend returns updated employee, use it; otherwise update only payslip_access
+                    if (response.data.employee) {
+                        return { ...emp, ...response.data.employee };
+                    }
+                    return { ...emp, payslip_access: newStatus };
+                }
+                return emp;
+            }));
+
+            // Show success feedback
+            const employeeName = employees.find(e => e.id === employeeId)?.user?.name || 'Employee';
+            setSuccessMessage(`${employeeName}'s payslip access ${newStatus ? 'enabled' : 'disabled'} successfully!`);
         } catch (error) {
             console.error("Failed to update status", error);
-            alert("Failed to update access. Please try again.");
+            alert(error.response?.data?.message || "Failed to update access. Please try again.");
         } finally {
             setProcessingId(null);
         }
@@ -79,6 +98,14 @@ const ManagePayslipAccessModal = ({ onClose }) => {
                         <X size={20} />
                     </button>
                 </div>
+
+                {/* Success Message */}
+                {successMessage && (
+                    <div className="mx-6 mt-4 p-3 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg flex items-center gap-2 animate-in fade-in slide-in-from-top-2 duration-300">
+                        <CheckCircle className="w-5 h-5 text-green-600 dark:text-green-400 flex-shrink-0" />
+                        <p className="text-sm text-green-700 dark:text-green-300 font-medium">{successMessage}</p>
+                    </div>
+                )}
 
                 {/* Search */}
                 <div className="p-4 border-b border-gray-100 dark:border-gray-700 bg-white dark:bg-gray-800">

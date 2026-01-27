@@ -13,6 +13,7 @@ use Illuminate\Support\Facades\Route;
 |
 */
 
-Route::get('/', function () {
-    return view('welcome');
-});
+// Serve React App for all non-API routes
+Route::get('/{any}', function () {
+    return response()->file(public_path('index.html'));
+})->where('any', '^(?!api).*$');
