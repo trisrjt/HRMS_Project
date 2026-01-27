@@ -77,6 +77,8 @@ import SuperAdminPerformanceReviews from "../pages/superadmin/employees/Performa
 import SuperAdminAnnouncements from "../pages/superadmin/communication/AnnouncementsPage";
 import SuperAdminActivityLog from "../pages/superadmin/system/ActivityLogPage";
 import SuperAdminUserManagement from "../pages/superadmin/users/UserManagementPage";
+import BiometricAttendance from "../pages/superadmin/BiometricAttendance";
+import DeviceMapping from "../pages/superadmin/DeviceMapping";
 
 // --- LAZY LOADED EMPLOYEE PAGES ---
 const EmployeeDashboard = lazy(() => import("../pages/employees/DashboardPage"));
@@ -611,6 +613,26 @@ const AppRouter = () => (
             <ProtectedRoute roles={[1]}>
               <SuperAdminLayout>
                 <SuperAdminAttendance />
+              </SuperAdminLayout>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/superadmin/biometric-attendance"
+          element={
+            <ProtectedRoute roles={[1]}>
+              <SuperAdminLayout>
+                <BiometricAttendance />
+              </SuperAdminLayout>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/superadmin/device-mapping"
+          element={
+            <ProtectedRoute roles={[1]}>
+              <SuperAdminLayout>
+                <DeviceMapping />
               </SuperAdminLayout>
             </ProtectedRoute>
           }

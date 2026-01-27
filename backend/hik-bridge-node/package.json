@@ -1,0 +1,15 @@
+{
+  "name": "hik-bridge-node",
+  "version": "0.1.0",
+  "description": "Simple Hikvision webhook/events mock bridge for local testing",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "body-parser": "^1.20.2",
+    "cors": "^2.8.5",
+    "fs-extra": "^11.1.1"
+  }
+}

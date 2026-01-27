@@ -29,7 +29,15 @@ class Attendance extends Model
         'checkout_type',
         'overtime_start',
         'overtime_end',
-        'overtime_hours'
+        'overtime_hours',
+        'biometric_method',
+        'face_snapshot_url',
+        'device_event_id',
+        'device_metadata'
+    ];
+
+    protected $casts = [
+        'device_metadata' => 'array',
     ];
 
     public function employee()

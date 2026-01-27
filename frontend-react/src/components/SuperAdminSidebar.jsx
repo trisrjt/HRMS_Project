@@ -12,6 +12,8 @@ const SuperAdminSidebar = () => {
         { key: "departments", label: "Departments", to: "/superadmin/departments" },
         { key: "designations", label: "Designations", to: "/superadmin/designations" },
         { key: "attendance", label: "Attendance", to: "/superadmin/attendance" },
+        { key: "biometric-attendance", label: "Biometric Attendance", to: "/superadmin/biometric-attendance" },
+        { key: "device-mapping", label: "Device Mapping", to: "/superadmin/device-mapping" },
         { key: "leaves", label: "Leaves (Approvals)", to: "/superadmin/leaves" },
         { key: "holidays", label: "Holiday Calendar", to: "/superadmin/holidays" },
         { key: "leave-policies", label: "Leave Policies", to: "/superadmin/leave-policies" },

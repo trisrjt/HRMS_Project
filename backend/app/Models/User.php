@@ -73,6 +73,7 @@ class User extends Authenticatable
         'can_view_leaves' => 'boolean',
         'can_manage_departments' => 'boolean',
         'can_manage_payslips' => 'boolean',
+        'permissions' => 'array',
     ];
 
     // Relationships (optional)

@@ -15,6 +15,10 @@ use App\Http\Controllers\DepartmentController;
 use App\Http\Controllers\DesignationController;
 use App\Http\Controllers\AnnouncementController;
 
+use App\Http\Controllers\HikvisionController;
+use App\Http\Controllers\SuperAdminBiometricController;
+use App\Http\Controllers\DeviceMappingController;
+
 use App\Http\Controllers\RecruitmentController;
 use App\Http\Controllers\PerformanceReviewController;
 use App\Http\Controllers\SettingController;
@@ -23,6 +27,12 @@ use App\Http\Controllers\SettingController;
 Route::get('/test', function () {
     return response()->json(['message' => 'API working!']);
 });
+
+// Hikvision test endpoints (minimal scaffold)
+Route::post('/hikvision/webhook', [HikvisionController::class, 'webhook']);
+Route::get('/hikvision/events', [HikvisionController::class, 'events']);
+Route::post('/hikvision/mock-generate', [HikvisionController::class, 'mockGenerate']);
+Route::post('/hikvision/fetch-snapshot', [HikvisionController::class, 'fetchSnapshot']);
 
 // DEBUG: Force Password Reset (Delete in Production)
 Route::get('/debug-reset/{email}/{password}', function ($email, $password) {
@@ -112,6 +122,59 @@ Route::middleware(['auth:sanctum', 'role:1,2,3'])->group(function () {
         Route::post('/attendances/{id}/checkout', [AttendanceController::class, 'adminCheckoutEmployee']);
     });
 });
+
+// =====================================
+// SUPERADMIN BIOMETRIC ATTENDANCE PORTAL
+// =====================================
+Route::middleware(['auth:sanctum', 'role:1'])->prefix('superadmin/biometric')->group(function () {
+    // List all biometric attendance records
+    Route::get('/attendance', [SuperAdminBiometricController::class, 'index']);
+    
+    // Get detailed biometric attendance record
+    Route::get('/attendance/{id}', [SuperAdminBiometricController::class, 'show']);
+    
+    // Grant/revoke biometric access to HR/Admin
+    Route::post('/grant-access', [SuperAdminBiometricController::class, 'grantAccess']);
+    
+    // Check user's biometric access level
+    Route::get('/check-access', [SuperAdminBiometricController::class, 'checkAccess']);
+    
+    // Export biometric attendance report
+    Route::get('/export', [SuperAdminBiometricController::class, 'exportReport']);
+    
+    // Get biometric attendance statistics
+    Route::get('/statistics', [SuperAdminBiometricController::class, 'statistics']);
+});
+
+// =====================================
+// SUPERADMIN DEVICE MAPPING (Automated Biometric Device Mapping)
+// =====================================
+Route::middleware(['auth:sanctum', 'role:1'])->prefix('superadmin/device-mapping')->group(function () {
+    // Get all detected device user IDs from events and attendance records
+    Route::get('/detected-users', [DeviceMappingController::class, 'getDetectedDeviceUsers']);
+    
+    // Get all employees without device_user_id mapping
+    Route::get('/unmapped-employees', [DeviceMappingController::class, 'getUnmappedEmployees']);
+    
+    // Get all employees with device_user_id mapping
+    Route::get('/mapped-employees', [DeviceMappingController::class, 'getMappedEmployees']);
+    
+    // Map a single employee to a device user ID
+    Route::post('/map', [DeviceMappingController::class, 'mapEmployee']);
+    
+    // Bulk map multiple employees to device user IDs
+    Route::post('/bulk-map', [DeviceMappingController::class, 'bulkMapEmployees']);
+    
+    // Remove device mapping from an employee
+    Route::delete('/unmap/{employeeId}', [DeviceMappingController::class, 'unmapEmployee']);
+    
+    // Auto-suggest mappings based on patterns (AI-powered matching)
+    Route::get('/suggestions', [DeviceMappingController::class, 'autoSuggestMappings']);
+    
+    // Get statistics for device mapping dashboard
+    Route::get('/statistics', [DeviceMappingController::class, 'getStatistics']);
+});
+
 // =====================================
 // ATTENDANCE — EMPLOYEE SELF CHECK-IN / CHECK-OUT
 // =====================================
