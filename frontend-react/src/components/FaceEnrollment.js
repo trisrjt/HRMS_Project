@@ -24,7 +24,7 @@ const FaceEnrollment = ({ email, onFaceEnrolled, onClose }) => {
         }
       }
     };
-    
+
     if (window.faceapi) {
       loadModels();
     } else {
@@ -34,7 +34,7 @@ const FaceEnrollment = ({ email, onFaceEnrolled, onClose }) => {
           loadModels();
         }
       }, 100);
-      
+
       return () => clearInterval(checkInterval);
     }
   }, [modelsLoaded]);
@@ -43,11 +43,11 @@ const FaceEnrollment = ({ email, onFaceEnrolled, onClose }) => {
   useEffect(() => {
     const startWebcam = async () => {
       try {
-        const mediaStream = await navigator.mediaDevices.getUserMedia({ 
-          video: { width: 640, height: 480 } 
+        const mediaStream = await navigator.mediaDevices.getUserMedia({
+          video: { width: 640, height: 480 }
         });
         setStream(mediaStream);
-        
+
         // Attach stream to video element
         const video = document.getElementById('enrollFaceVideo');
         if (video) {
@@ -76,8 +76,26 @@ const FaceEnrollment = ({ email, onFaceEnrolled, onClose }) => {
   }, [stream]);
 
   const handleCapture = async () => {
-    if (!stream || !modelsLoaded) {
-      setError('Face recognition system is still loading. Please wait...');
+    // Validate face-api is loaded
+    if (!window.faceapi) {
+      setError('Face recognition library not loaded. Please refresh the page.');
+      return;
+    }
+
+    // Validate face-api methods exist
+    if (!window.faceapi.detectSingleFace || !window.faceapi.TinyFaceDetectorOptions) {
+      setError('Face recognition library is incomplete. Please refresh the page.');
+      console.error('face-api methods missing');
+      return;
+    }
+
+    if (!modelsLoaded) {
+      setError('Face recognition models are still loading. Please wait a moment...');
+      return;
+    }
+
+    if (!stream) {
+      setError('Camera is not ready. Please ensure camera permissions are granted.');
       return;
     }
 
@@ -86,29 +104,44 @@ const FaceEnrollment = ({ email, onFaceEnrolled, onClose }) => {
 
     try {
       const video = document.getElementById('enrollFaceVideo');
-      
+
+      if (!video) {
+        throw new Error('Video element not found');
+      }
+
+      // Wait for video to be ready
+      if (video.readyState !== video.HAVE_ENOUGH_DATA) {
+        setError('Video is loading... Please wait and try again.');
+        setIsLoading(false);
+        return;
+      }
+
+      console.log('Attempting face detection...');
+
       // Detect face and extract descriptor
       const detection = await window.faceapi
         .detectSingleFace(video, new window.faceapi.TinyFaceDetectorOptions())
         .withFaceLandmarks()
         .withFaceDescriptor();
-      
+
       if (!detection) {
-        setError('No face detected. Please position your face in the center.');
+        setError('No face detected. Please position your face clearly in the center of the camera.');
         setIsLoading(false);
         return;
       }
-      
+
+      console.log('Face detected successfully!');
+
       // Get face descriptor (128-dimensional vector)
       const descriptor = Array.from(detection.descriptor);
-      
+
       // Capture image for visual verification
       const canvas = document.createElement('canvas');
       canvas.width = video.videoWidth;
       canvas.height = video.videoHeight;
       const ctx = canvas.getContext('2d');
       ctx.drawImage(video, 0, 0);
-      
+
       // Convert canvas to blob
       const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/jpeg', 0.95));
 
@@ -116,7 +149,7 @@ const FaceEnrollment = ({ email, onFaceEnrolled, onClose }) => {
       onFaceEnrolled(descriptor, blob);
     } catch (err) {
       console.error('Face enrollment error:', err);
-      setError('Failed to capture face. Please try again.');
+      setError(`Failed to capture face: ${err.message || 'Unknown error'}. Please try again.`);
     } finally {
       setIsLoading(false);
     }
@@ -204,7 +237,7 @@ const FaceEnrollment = ({ email, onFaceEnrolled, onClose }) => {
               objectFit: 'cover',
             }}
           />
-          
+
           {/* Face Detection Overlay */}
           <div style={{
             position: 'absolute',
@@ -251,7 +284,7 @@ const FaceEnrollment = ({ email, onFaceEnrolled, onClose }) => {
                 padding: '14px 24px',
                 borderRadius: '10px',
                 border: 'none',
-                background: isLoading || !modelsLoaded 
+                background: isLoading || !modelsLoaded
                   ? 'linear-gradient(135deg, #9ca3af, #9ca3af)'
                   : 'linear-gradient(135deg, #8b5cf6, #7c3aed)',
                 color: '#fff',

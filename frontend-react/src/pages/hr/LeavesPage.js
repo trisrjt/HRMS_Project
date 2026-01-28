@@ -537,6 +537,7 @@ const LeavesPage = () => {
                     ) : (
                         // Force sort by most recent leave in group
                         Object.values(groupedLeaves)
+                            .filter(group => group.employee && group.employee.id) // Filter out null employees
                             .sort((a, b) => {
                                 const dateA = new Date(a.leaves[0]?.created_at || 0);
                                 const dateB = new Date(b.leaves[0]?.created_at || 0);

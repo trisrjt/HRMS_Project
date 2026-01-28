@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import api from "../../api/axios";
 import { useAuth } from "../../context/AuthContext";
 import { formatTime, calculateHours, calculateWeeklyStats, calculateMonthlyStats } from "../../utils/dateUtils";
+import FaceEnrollment from "../../components/FaceEnrollment";
 import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
@@ -202,6 +203,10 @@ const DashboardPage = () => {
     const [currentLocation, setCurrentLocation] = useState(null);
     const [showLocationModal, setShowLocationModal] = useState(false);
     const [pendingAction, setPendingAction] = useState(null); // 'check-in' or 'check-out'
+
+    // Face Enrollment State
+    const [showFaceEnrollment, setShowFaceEnrollment] = useState(false);
+    const [faceEnrollmentSuccess, setFaceEnrollmentSuccess] = useState(false);
 
     const isSecureContext = typeof window !== 'undefined' ? window.isSecureContext : false;
 
@@ -458,6 +463,31 @@ const DashboardPage = () => {
         }
     };
 
+    // Face Enrollment Handler
+    const handleFaceEnrolled = async (descriptor, blob) => {
+        try {
+            setActionLoading(true);
+
+            // Send face descriptor to backend
+            const response = await api.post('/employee/enroll-face', {
+                face_descriptor: JSON.stringify(descriptor)
+            });
+
+            // Success!
+            setFaceEnrollmentSuccess(true);
+            setShowFaceEnrollment(false);
+            alert(response.data.message || 'Face enrolled successfully! You can now use face authentication for quick sign-in.');
+
+            // Refresh profile to update face enrollment status
+            await fetchDashboardData();
+        } catch (err) {
+            console.error('Face enrollment error:', err);
+            alert(err.response?.data?.message || 'Failed to enroll face. Please try again.');
+        } finally {
+            setActionLoading(false);
+        }
+    };
+
     if (isLoading) {
         return (
             <div className="flex justify-center items-center h-screen text-gray-500 dark:text-gray-400 bg-gray-50 dark:bg-gray-900 transition-colors">
@@ -486,6 +516,38 @@ const DashboardPage = () => {
                 onCheckOut={() => handleAttendanceAction("check-out")}
                 loading={actionLoading}
             />
+
+            {/* Face Enrollment Button - Show only if not enrolled */}
+            {data.profile?.employee &&
+                // Check both user-level and employee-level face_descriptor (for legacy data compatibility)
+                // Show button if BOTH are null/empty
+                (() => {
+                    const userFace = data.profile.face_descriptor;
+                    const empFace = data.profile.employee.face_descriptor;
+
+                    // Helper: check if value is truly empty
+                    const isEmpty = (val) => !val || val === 'null' || val === '' || val === 'undefined';
+
+                    return isEmpty(userFace) && isEmpty(empFace);
+                })() &&
+                !faceEnrollmentSuccess && (
+                    <div className="bg-gradient-to-r from-purple-600 to-indigo-600 rounded-2xl p-6 text-white mb-8 shadow-lg">
+                        <div className="flex items-center justify-between flex-wrap gap-4">
+                            <div>
+                                <h3 className="text-xl font-bold mb-2">🎯 Quick Sign-In Setup</h3>
+                                <p className="text-sm opacity-90">
+                                    Enroll your face for faster and more secure authentication. This only takes a moment!
+                                </p>
+                            </div>
+                            <button
+                                onClick={() => setShowFaceEnrollment(true)}
+                                className="px-6 py-3 bg-white text-purple-700 font-semibold rounded-xl hover:bg-purple-50 transition-colors shadow-lg"
+                            >
+                                Enroll Face
+                            </button>
+                        </div>
+                    </div>
+                )}
 
             {/* Recent Activity */}
             <RecentActivitySection
@@ -566,8 +628,8 @@ const DashboardPage = () => {
                                 onClick={proceedWithAction}
                                 disabled={actionLoading}
                                 className={`px-4 py-2 rounded-lg font-medium text-sm transition-all duration-200 ${pendingAction === 'check-in'
-                                        ? 'bg-emerald-600 hover:bg-emerald-700'
-                                        : 'bg-rose-600 hover:bg-rose-700'
+                                    ? 'bg-emerald-600 hover:bg-emerald-700'
+                                    : 'bg-rose-600 hover:bg-rose-700'
                                     } text-white shadow-md hover:shadow-lg disabled:opacity-50`}
                             >
                                 {actionLoading ? 'Processing...' : `Confirm ${pendingAction === 'check-in' ? 'Check In' : 'Check Out'}`}
@@ -575,6 +637,14 @@ const DashboardPage = () => {
                         </div>
                     </div>
                 </div>
+            )}
+
+            {/* Face Enrollment Modal */}
+            {showFaceEnrollment && (
+                <FaceEnrollment
+                    onFaceEnrolled={handleFaceEnrolled}
+                    onClose={() => setShowFaceEnrollment(false)}
+                />
             )}
         </div>
     );
