@@ -3,7 +3,10 @@
     "type": "module",
     "scripts": {
         "dev": "vite",
-        "build": "vite build"
+        "build": "vite build",
+        "build:frontend": "cd ../frontend-react && npm run build:laravel",
+        "serve": "npm run build:frontend && php artisan serve",
+        "serve:quick": "php artisan serve"
     },
     "devDependencies": {
         "axios": "^1.6.4",

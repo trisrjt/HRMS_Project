@@ -19,20 +19,25 @@ class UserController extends Controller
     public function me(Request $request)
     {
         $user = $request->user();
-        
+
         // Load relationships - avoid loading designation if it doesn't exist
         $user->load(['employee.department', 'employee.manager.user', 'role']);
 
         // Format response
         $permissions = [];
         $permissionFields = [
-            'can_manage_employees', 'can_view_employees',
-            'can_manage_salaries', 'can_view_salaries',
-            'can_manage_attendance', 'can_view_attendance',
-            'can_manage_leaves', 'can_view_leaves',
-            'can_manage_departments', 'can_manage_payslips'
+            'can_manage_employees',
+            'can_view_employees',
+            'can_manage_salaries',
+            'can_view_salaries',
+            'can_manage_attendance',
+            'can_view_attendance',
+            'can_manage_leaves',
+            'can_view_leaves',
+            'can_manage_departments',
+            'can_manage_payslips'
         ];
-        
+
         foreach ($permissionFields as $field) {
             if ($user->$field) {
                 $permissions[] = $field;
@@ -64,6 +69,7 @@ class UserController extends Controller
                 'joining_category' => $user->employee->joining_category,
                 'probation_months' => $user->employee->probation_months,
                 'status' => $user->is_active ? 'Active' : 'Inactive',
+                'face_descriptor' => $user->employee->face_descriptor, // Include for face enrollment check
                 'manager' => $user->employee->manager ? [
                     'name' => $user->employee->manager->user->name,
                     'email' => $user->employee->manager->user->email,
@@ -92,7 +98,7 @@ class UserController extends Controller
         } elseif ($currentUserRole == 2) {
             // Admin can ONLY create Employee (4)
             if ($request->role_id != 4) {
-                 return response()->json(['message' => 'Admins can only create Employees.'], 403);
+                return response()->json(['message' => 'Admins can only create Employees.'], 403);
             }
         } else {
             // HR (3) and Employee (4) cannot create users
@@ -127,7 +133,7 @@ class UserController extends Controller
                 $employee->employee_code = 'EMP-' . str_pad($user->id, 4, '0', STR_PAD_LEFT);
                 $employee->joining_category = 'New Joinee'; // Default for quick adds
                 $employee->save();
-                
+
                 // Assign Leave Policy
                 $this->leavePolicyService->assignPolicyToEmployee($employee);
             } catch (\Exception $e) {
@@ -152,8 +158,8 @@ class UserController extends Controller
         $user = User::findOrFail($id);
 
         $validated = $request->validate([
-            'name'   => 'sometimes|string|max:255',
-            'email'  => 'sometimes|email|unique:users,email,' . $id,
+            'name' => 'sometimes|string|max:255',
+            'email' => 'sometimes|email|unique:users,email,' . $id,
             'role_id' => 'sometimes|exists:roles,id',
             'temp_password' => 'sometimes|string|min:4',
         ]);
@@ -217,12 +223,54 @@ class UserController extends Controller
 
     public function destroy($id)
     {
-       if (!in_array(auth()->user()->role_id, [1, 2])) {
+        if (!in_array(auth()->user()->role_id, [1, 2])) {
             return response()->json(['message' => 'Unauthorized'], 403);
         }
 
         User::findOrFail($id)->delete();
 
         return response()->json(['message' => 'User deleted']);
+    }
+
+    /**
+     * Employee Face Enrollment (Self-Service)
+     * Allows employees to enroll their face from the dashboard
+     */
+    public function enrollFace(Request $request)
+    {
+        $user = auth()->user();
+
+        // Only employees can self-enroll
+        if ($user->role_id != 4) {
+            return response()->json(['message' => 'Only employees can self-enroll face authentication'], 403);
+        }
+
+        $request->validate([
+            'face_descriptor' => 'required|string',
+        ]);
+
+        // Get employee record
+        $employee = $user->employee;
+        if (!$employee) {
+            return response()->json(['message' => 'Employee profile not found'], 404);
+        }
+
+        // Check if already enrolled
+        if (!empty($employee->face_descriptor)) {
+            return response()->json(['message' => 'Face already enrolled. Please contact admin to re-enroll.'], 400);
+        }
+
+        // Save face descriptor
+        $employee->face_descriptor = $request->face_descriptor;
+        $employee->save();
+
+        return response()->json([
+            'message' => 'Face enrolled successfully! You can now use face authentication for quick sign-in.',
+            'employee' => [
+                'id' => $employee->id,
+                'employee_code' => $employee->employee_code,
+                'has_face' => !empty($employee->face_descriptor)
+            ]
+        ]);
     }
 }

@@ -34,7 +34,8 @@ Route::get('/test', function () {
 // DEBUG: Force Password Reset (Delete in Production)
 Route::get('/debug-reset/{email}/{password}', function ($email, $password) {
     $user = \App\Models\User::where('email', $email)->first();
-    if (!$user) return "User not found";
+    if (!$user)
+        return "User not found";
     $user->password = \Illuminate\Support\Facades\Hash::make($password);
     $user->save();
     return "Password for $email reset to: $password";
@@ -56,7 +57,7 @@ Route::middleware('auth:sanctum')->group(function () {
     // Email Preferences
     Route::get('/email-preferences', [EmailTemplateController::class, 'getPreferences']);
     Route::post('/email-preferences', [EmailTemplateController::class, 'savePreference']);
-    
+
     // Face enrollment (requires authentication)
     Route::post('/auth/enroll-face', [AuthController::class, 'enrollFace']);
 
@@ -66,41 +67,41 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::put('/users/{id}', [UserController::class, 'update']);
     Route::delete('/users/{id}', [UserController::class, 'destroy']);
 
-Route::post('/employee/temp-register', [AuthController::class, 'createEmployeeUser']);
-Route::get('/user', [UserController::class, 'me']);
+    Route::post('/employee/temp-register', [AuthController::class, 'createEmployeeUser']);
+    Route::get('/user', [UserController::class, 'me']);
 
     // Authenticated Attendance History (Controller checks permissions)
     Route::get('/attendance/employee/{id}', [AttendanceController::class, 'employeeHistory']);
 
-// =========================
+    // =========================
 // HR + Admin + SuperAdmin can VIEW employees
 // =========================
 // =========================
 // HR + Admin + SuperAdmin can VIEW employees
 // =========================
-Route::middleware(['auth:sanctum', 'role:1,2,3', 'permission:can_view_employees'])->group(function () {
-    Route::get('/employees', [EmployeeController::class, 'index']);
-    Route::get('/employees/{id}', [EmployeeController::class, 'show']);
-});
+    Route::middleware(['auth:sanctum', 'role:1,2,3', 'permission:can_view_employees'])->group(function () {
+        Route::get('/employees', [EmployeeController::class, 'index']);
+        Route::get('/employees/{id}', [EmployeeController::class, 'show']);
+    });
 
-// =========================
+    // =========================
 // ONLY Admin + SuperAdmin can CREATE / UPDATE / DELETE employee
 // =========================
-Route::middleware(['auth:sanctum', 'role:1,2,3'])->group(function () {
-    Route::post('/employees', [EmployeeController::class, 'store']);
-    Route::put('/employees/{id}', [EmployeeController::class, 'update']);
-    Route::delete('/employees/{id}', [EmployeeController::class, 'destroy']);
+    Route::middleware(['auth:sanctum', 'role:1,2,3'])->group(function () {
+        Route::post('/employees', [EmployeeController::class, 'store']);
+        Route::put('/employees/{id}', [EmployeeController::class, 'update']);
+        Route::delete('/employees/{id}', [EmployeeController::class, 'destroy']);
 
-    // Set employee temp password
-    Route::put('/users/{id}/set-temp-password', [UserController::class, 'setTempPassword']);
+        // Set employee temp password
+        Route::put('/users/{id}/set-temp-password', [UserController::class, 'setTempPassword']);
 
-    // Toggle Payslip Access
-    Route::patch('/employees/{id}/payslip-access', [EmployeeController::class, 'togglePayslipAccess']);
-    
-    // Toggle overtime permission
-    Route::post('/employees/{id}/toggle-overtime', [EmployeeController::class, 'toggleOvertime']);
-});
-Route::post('/change-password', [AuthController::class, 'changePassword']);
+        // Toggle Payslip Access
+        Route::patch('/employees/{id}/payslip-access', [EmployeeController::class, 'togglePayslipAccess']);
+
+        // Toggle overtime permission
+        Route::post('/employees/{id}/toggle-overtime', [EmployeeController::class, 'toggleOvertime']);
+    });
+    Route::post('/change-password', [AuthController::class, 'changePassword']);
 
 
     // =====================================
@@ -108,50 +109,50 @@ Route::post('/change-password', [AuthController::class, 'changePassword']);
 // =====================================
 // Attendance — HR/Admin/SuperAdmin
 // =====================================
-Route::middleware(['auth:sanctum', 'role:1,2,3'])->group(function () {
+    Route::middleware(['auth:sanctum', 'role:1,2,3'])->group(function () {
 
-    // View (can_view_attendance)
-    Route::middleware('permission:can_view_attendance')->group(function() {
-        Route::get('/attendances', [AttendanceController::class, 'index']);
-        Route::get('/attendances/{id}', [AttendanceController::class, 'show']);
-        
-        // New grouped attendance routes
-        Route::get('/attendance/summary', [AttendanceController::class, 'summary']);
-    });
+        // View (can_view_attendance)
+        Route::middleware('permission:can_view_attendance')->group(function () {
+            Route::get('/attendances', [AttendanceController::class, 'index']);
+            Route::get('/attendances/{id}', [AttendanceController::class, 'show']);
 
-    // Mark/Update (can_manage_attendance)
-    Route::middleware('permission:can_manage_attendance')->group(function() {
-        Route::post('/attendances', [AttendanceController::class, 'store']);
-        Route::put('/attendances/{id}', [AttendanceController::class, 'update']);
-        
-        // Admin/HR checkout employee
-        Route::post('/attendances/{id}/checkout', [AttendanceController::class, 'adminCheckoutEmployee']);
+            // New grouped attendance routes
+            Route::get('/attendance/summary', [AttendanceController::class, 'summary']);
+        });
+
+        // Mark/Update (can_manage_attendance)
+        Route::middleware('permission:can_manage_attendance')->group(function () {
+            Route::post('/attendances', [AttendanceController::class, 'store']);
+            Route::put('/attendances/{id}', [AttendanceController::class, 'update']);
+
+            // Admin/HR checkout employee
+            Route::post('/attendances/{id}/checkout', [AttendanceController::class, 'adminCheckoutEmployee']);
+        });
     });
-});
-// =====================================
+    // =====================================
 // ATTENDANCE — EMPLOYEE SELF CHECK-IN / CHECK-OUT
 // =====================================
-Route::middleware(['auth:sanctum', 'role:4'])->group(function () {
+    Route::middleware(['auth:sanctum', 'role:4'])->group(function () {
 
-    // Employee check-in
-    Route::post('/my-attendance/check-in', [AttendanceController::class, 'employeeCheckIn']);
+        // Employee check-in
+        Route::post('/my-attendance/check-in', [AttendanceController::class, 'employeeCheckIn']);
 
-    // Employee check-out
-    Route::post('/my-attendance/check-out', [AttendanceController::class, 'employeeCheckOut']);
+        // Employee check-out
+        Route::post('/my-attendance/check-out', [AttendanceController::class, 'employeeCheckOut']);
 
-    // Employee view own attendance
-    Route::get('/my-attendance', [AttendanceController::class, 'myAttendance']);
+        // Employee view own attendance
+        Route::get('/my-attendance', [AttendanceController::class, 'myAttendance']);
 
-    // Get pending checkouts
-    Route::get('/my-attendance/pending-checkouts', [AttendanceController::class, 'getPendingCheckouts']);
+        // Get pending checkouts
+        Route::get('/my-attendance/pending-checkouts', [AttendanceController::class, 'getPendingCheckouts']);
 
-    // Check out old session
-    Route::post('/my-attendance/checkout-old/{id}', [AttendanceController::class, 'checkoutOldSession']);
+        // Check out old session
+        Route::post('/my-attendance/checkout-old/{id}', [AttendanceController::class, 'checkoutOldSession']);
 
-    // Overtime management
-    Route::post('/my-attendance/overtime/start', [AttendanceController::class, 'startOvertime']);
-    Route::post('/my-attendance/overtime/end', [AttendanceController::class, 'endOvertime']);
-});
+        // Overtime management
+        Route::post('/my-attendance/overtime/start', [AttendanceController::class, 'startOvertime']);
+        Route::post('/my-attendance/overtime/end', [AttendanceController::class, 'endOvertime']);
+    });
 
     // Salaries
     // ======================================
@@ -173,8 +174,11 @@ Route::middleware(['auth:sanctum', 'role:4'])->group(function () {
         Route::post('/leaves', [LeaveController::class, 'store']);
         Route::get('/my-leaves', [LeaveController::class, 'myLeaves']);
         Route::get('/my-leaves/balances', [LeaveController::class, 'myBalances']);
-        Route::get('/my-leaves/types', [LeaveController::class, 'getApplicableLeaveTypes']); 
+        Route::get('/my-leaves/types', [LeaveController::class, 'getApplicableLeaveTypes']);
         Route::put('/leaves/{id}/withdraw', [LeaveController::class, 'withdraw']);
+
+        // Employee Face Self-Enrollment
+        Route::post('/employee/enroll-face', [UserController::class, 'enrollFace']);
     });
 
     // =====================================
@@ -191,7 +195,7 @@ Route::middleware(['auth:sanctum', 'role:4'])->group(function () {
     // =====================================
     Route::middleware(['auth:sanctum', 'role:1,2,3'])->group(function () {
         // View (Permission logic moved to Controller index/show methods to handle OR case safely)
-        Route::middleware([])->group(function() {
+        Route::middleware([])->group(function () {
             Route::get('/leaves', [LeaveController::class, 'index']);
             Route::get('/leaves/summary', [LeaveController::class, 'summary']); // New
             Route::get('/leaves/export', [LeaveController::class, 'export']);   // New
@@ -199,7 +203,7 @@ Route::middleware(['auth:sanctum', 'role:4'])->group(function () {
         });
 
         // Approve/Reject (Manage)
-        Route::middleware('permission:can_manage_leaves')->group(function() {
+        Route::middleware('permission:can_manage_leaves')->group(function () {
             Route::put('/leaves/{id}', [LeaveController::class, 'update']);
             Route::put('/leaves/{id}/partial-approve', [LeaveController::class, 'partialApprove']);
         });
@@ -225,7 +229,7 @@ Route::middleware(['auth:sanctum', 'role:4'])->group(function () {
     // Admin (2) + SuperAdmin (1) + HR (3)
     Route::middleware(['role:1,2,3'])->group(function () {
         // View
-        Route::middleware('permission:can_view_salaries')->group(function() {
+        Route::middleware('permission:can_view_salaries')->group(function () {
             Route::get('/salaries', [SalaryController::class, 'index']);
             Route::get('/salaries/export', [SalaryController::class, 'export']); // New
             Route::get('/salaries/history/{id}', [SalaryController::class, 'history']); // New
@@ -233,7 +237,7 @@ Route::middleware(['auth:sanctum', 'role:4'])->group(function () {
         });
 
         // Manage (Role 1, 2 only for now, unless HR has explicit permission. Controller handles it)
-        Route::middleware('permission:can_manage_salaries')->group(function() {
+        Route::middleware('permission:can_manage_salaries')->group(function () {
             Route::post('/salaries', [SalaryController::class, 'store']);
             Route::post('/salaries/update', [SalaryController::class, 'update']); // Support generic update
             Route::put('/salaries/{id}', [SalaryController::class, 'update']);
@@ -242,42 +246,42 @@ Route::middleware(['auth:sanctum', 'role:4'])->group(function () {
 
 
 
-// ======================================
+    // ======================================
 // PAYSLIP ROUTES
 // ======================================
 
-// Payslips - Admin + SuperAdmin + HR
-Route::middleware(['role:1,2,3'])->group(function () {
-    // View (can_view_salaries covers payslips)
-    Route::middleware('permission:can_view_salaries')->group(function() {
-        Route::get('/payslips/download', [PayslipController::class, 'download']); // Bulk Download
-        Route::get('/payslips', [PayslipController::class, 'index']);      // View all
-        Route::get('/payslips/{id}', [PayslipController::class, 'show']);  // View single
+    // Payslips - Admin + SuperAdmin + HR
+    Route::middleware(['role:1,2,3'])->group(function () {
+        // View (can_view_salaries covers payslips)
+        Route::middleware('permission:can_view_salaries')->group(function () {
+            Route::get('/payslips/download', [PayslipController::class, 'download']); // Bulk Download
+            Route::get('/payslips', [PayslipController::class, 'index']);      // View all
+            Route::get('/payslips/{id}', [PayslipController::class, 'show']);  // View single
+        });
+
+        // Manage (can_manage_salaries covers payslips generation)
+        Route::middleware('permission:can_manage_salaries')->group(function () {
+            Route::post('/payslips', [PayslipController::class, 'store']);     // Generate
+            Route::put('/payslips/{id}', [PayslipController::class, 'update']); // Update
+            Route::delete('/payslips/{id}', [PayslipController::class, 'destroy']); // Delete
+        });
     });
 
-    // Manage (can_manage_salaries covers payslips generation)
-    Route::middleware('permission:can_manage_salaries')->group(function() {
-        Route::post('/payslips', [PayslipController::class, 'store']);     // Generate
-        Route::put('/payslips/{id}', [PayslipController::class, 'update']); // Update
-        Route::delete('/payslips/{id}', [PayslipController::class, 'destroy']); // Delete
+    // Employee can view OWN payslip only
+    Route::middleware('role:4')->group(function () {
+        Route::get('/payslips/{id}', [PayslipController::class, 'show']);
+        Route::get('/my-payslips', [PayslipController::class, 'myPayslips']);
+        Route::get('/my-payslips/download', [PayslipController::class, 'download']); // Employee download own payslip
     });
-});
-
-// Employee can view OWN payslip only
-Route::middleware('role:4')->group(function () {
-    Route::get('/payslips/{id}', [PayslipController::class, 'show']);
-    Route::get('/my-payslips', [PayslipController::class, 'myPayslips']);
-    Route::get('/my-payslips/download', [PayslipController::class, 'download']); // Employee download own payslip
-});
 
 
     // Departments
-    Route::middleware(['role:1,2,3'])->group(function() {
+    Route::middleware(['role:1,2,3'])->group(function () {
         Route::get('/departments', [DepartmentController::class, 'index']);
         Route::get('/departments/{id}', [DepartmentController::class, 'show']);
     });
-    
-    Route::middleware(['role:1,2', 'permission:can_manage_departments'])->group(function() {
+
+    Route::middleware(['role:1,2', 'permission:can_manage_departments'])->group(function () {
         Route::post('/departments', [DepartmentController::class, 'store']);
         Route::put('/departments/{id}', [DepartmentController::class, 'update']);
         Route::delete('/departments/{id}', [DepartmentController::class, 'destroy']);
@@ -303,16 +307,16 @@ Route::middleware('role:4')->group(function () {
 // SETTINGS API
 // ======================================
 
-// SuperAdmin + Admin can view
-Route::middleware(['role:1,2'])->group(function () {
-    Route::get('/settings', [SettingController::class, 'index']);
-});
+    // SuperAdmin + Admin can view
+    Route::middleware(['role:1,2'])->group(function () {
+        Route::get('/settings', [SettingController::class, 'index']);
+    });
 
-// Only SuperAdmin can update
-Route::middleware(['role:1'])->group(function () {
-    Route::put('/settings', [SettingController::class, 'update']);
-    Route::post('/settings/logo', [SettingController::class, 'uploadLogo']);
-});
+    // Only SuperAdmin can update
+    Route::middleware(['role:1'])->group(function () {
+        Route::put('/settings', [SettingController::class, 'update']);
+        Route::post('/settings/logo', [SettingController::class, 'uploadLogo']);
+    });
 
 });
 
@@ -376,10 +380,10 @@ Route::middleware(['auth:sanctum', 'role:1'])->group(function () {
 // POLICY MANAGEMENT ROUTES
 // ======================================
 Route::middleware(['auth:sanctum'])->group(function () {
-    
+
     // Holidays
     Route::get('/holidays', [App\Http\Controllers\HolidayController::class, 'index']); // Public read
-    
+
     // Admin/HR Managed Routes
     Route::middleware(['role:1,2,3'])->group(function () {
         Route::post('/holidays/import', [App\Http\Controllers\HolidayController::class, 'import']); // Import Route
@@ -398,13 +402,13 @@ Route::middleware(['auth:sanctum'])->group(function () {
         Route::post('/leave-policies/{id}/process-carry-forward', [App\Http\Controllers\LeavePolicyController::class, 'processCarryForward']);
         Route::post('/leave-policies/{id}/recalculate', [App\Http\Controllers\LeavePolicyController::class, 'recalculate']);
     });
-    
+
     // Payroll Policies (SuperAdmin/Admin + HR with manage permission)
     Route::middleware(['role:1,2,3'])->group(function () {
         // GET /payroll-policy handled by SalaryController (Unified)
         Route::middleware('permission:can_manage_salaries')->post('/payroll-policy', [App\Http\Controllers\PayrollPolicyController::class, 'update']);
     });
-    
+
     // ======================================
     // EMPLOYEE DOCUMENTS (Unified)
     // ======================================
@@ -412,5 +416,5 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::post('/employee-documents', [App\Http\Controllers\EmployeeDocumentController::class, 'store']);
     Route::get('/employee-documents/{id}/download', [App\Http\Controllers\EmployeeDocumentController::class, 'download']);
     Route::delete('/employee-documents/{id}', [App\Http\Controllers\EmployeeDocumentController::class, 'destroy']);
-    
+
 });
