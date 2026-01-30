@@ -36,6 +36,7 @@ class User extends Authenticatable
         'can_view_leaves',
         'can_manage_departments',
         'can_manage_payslips',
+        'can_manage_payroll_settings',
     ];
 
     /**
@@ -73,6 +74,7 @@ class User extends Authenticatable
         'can_view_leaves' => 'boolean',
         'can_manage_departments' => 'boolean',
         'can_manage_payslips' => 'boolean',
+        'can_manage_payroll_settings' => 'boolean',
     ];
 
     // Relationships (optional)
@@ -82,9 +84,9 @@ class User extends Authenticatable
     }
 
     public function employee()
-{
-    return $this->hasOne(Employee::class, 'user_id');
-}
+    {
+        return $this->hasOne(Employee::class, 'user_id');
+    }
 
     public function department()
     {

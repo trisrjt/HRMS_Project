@@ -182,7 +182,7 @@ const EmployeeDetailPanel = ({ employeeId, onReview, onClose }) => {
     const [history, setHistory] = useState([]);
     const [loading, setLoading] = useState(false);
     const { user } = useAuth();
-    const canApprove = user?.role_id === 1 || user?.permissions?.includes("can_approve_leaves");
+    const canApprove = user?.role_id === 1 || user?.can_manage_leaves === true;
 
     useEffect(() => {
         if (employeeId) {

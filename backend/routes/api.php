@@ -374,6 +374,12 @@ Route::middleware("auth:sanctum")->group(function () {
 // Permission Management
 Route::middleware(['auth:sanctum', 'role:1'])->group(function () {
     Route::put('/superadmin/users/{id}/permissions', [App\Http\Controllers\PermissionController::class, 'update']);
+
+    // Role-based permissions management
+    Route::get('/role-permissions', [App\Http\Controllers\RolePermissionController::class, 'getRolePermissions']);
+    Route::put('/role-permissions/{roleId}', [App\Http\Controllers\RolePermissionController::class, 'updateRolePermissions']);
+    Route::get('/permissions/available', [App\Http\Controllers\RolePermissionController::class, 'getAvailablePermissions']);
+    Route::get('/users/by-role/{roleId}', [App\Http\Controllers\RolePermissionController::class, 'getUsersByRole']);
 });
 
 // ======================================
@@ -406,7 +412,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
     // Payroll Policies (SuperAdmin/Admin + HR with manage permission)
     Route::middleware(['role:1,2,3'])->group(function () {
         // GET /payroll-policy handled by SalaryController (Unified)
-        Route::middleware('permission:can_manage_salaries')->post('/payroll-policy', [App\Http\Controllers\PayrollPolicyController::class, 'update']);
+        Route::middleware('permission:can_manage_payroll_settings')->post('/payroll-policy', [App\Http\Controllers\PayrollPolicyController::class, 'update']);
     });
 
     // ======================================

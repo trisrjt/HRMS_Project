@@ -51,6 +51,18 @@ class UserController extends Controller
             'role' => $user->role ? $user->role->name : null,
             'role_id' => $user->role_id,
             'permissions' => $permissions,
+            // Individual permission flags for frontend
+            'can_manage_employees' => (bool) $user->can_manage_employees,
+            'can_view_employees' => (bool) $user->can_view_employees,
+            'can_manage_salaries' => (bool) $user->can_manage_salaries,
+            'can_view_salaries' => (bool) $user->can_view_salaries,
+            'can_manage_attendance' => (bool) $user->can_manage_attendance,
+            'can_view_attendance' => (bool) $user->can_view_attendance,
+            'can_manage_leaves' => (bool) $user->can_manage_leaves,
+            'can_view_leaves' => (bool) $user->can_view_leaves,
+            'can_manage_departments' => (bool) $user->can_manage_departments,
+            'can_manage_payslips' => (bool) $user->can_manage_payslips,
+            'can_manage_payroll_settings' => (bool) $user->can_manage_payroll_settings,
             'face_descriptor' => $user->face_descriptor, // Include for face enrollment check
             'employee' => $user->employee ? [
                 'employee_code' => $user->employee->employee_code,

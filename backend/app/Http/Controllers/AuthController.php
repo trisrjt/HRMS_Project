@@ -132,7 +132,8 @@ class AuthController extends Controller
             'can_manage_leaves',
             'can_view_leaves',
             'can_manage_departments',
-            'can_manage_payslips'
+            'can_manage_payslips',
+            'can_manage_payroll_settings'
         ];
 
         foreach ($permissionFields as $field) {
@@ -337,7 +338,7 @@ class AuthController extends Controller
         }
 
         $permissions = [];
-        foreach (['can_manage_employees', 'can_view_employees', 'can_manage_salaries', 'can_view_salaries', 'can_manage_attendance', 'can_view_attendance', 'can_manage_leaves', 'can_view_leaves', 'can_manage_departments', 'can_manage_payslips'] as $field) {
+        foreach (['can_manage_employees', 'can_view_employees', 'can_manage_salaries', 'can_view_salaries', 'can_manage_attendance', 'can_view_attendance', 'can_manage_leaves', 'can_view_leaves', 'can_manage_departments', 'can_manage_payslips', 'can_manage_payroll_settings'] as $field) {
             if ($matchedUser->$field)
                 $permissions[] = $field;
         }

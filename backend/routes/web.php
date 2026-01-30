@@ -13,7 +13,7 @@ use Illuminate\Support\Facades\Route;
 |
 */
 
-// Serve React App for all non-API routes
+// Serve React App for all non-API and non-storage routes
 Route::get('/{any}', function () {
     return response()->file(public_path('index.html'));
-})->where('any', '^(?!api).*$');
+})->where('any', '^(?!api|storage).*$');

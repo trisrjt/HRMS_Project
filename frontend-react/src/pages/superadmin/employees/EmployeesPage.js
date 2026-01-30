@@ -605,6 +605,7 @@ const EmployeesPage = () => {
                                         Joined {sortConfig.key === "date_of_joining" && (sortConfig.direction === "asc" ? "↑" : "↓")}
                                     </th>
                                     <th className="px-6 py-3 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Status</th>
+                                    <th className="px-6 py-3 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Face Enrollment</th>
                                     <th className="px-6 py-3 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider text-right">Actions</th>
                                 </tr>
                             </thead>
@@ -632,6 +633,21 @@ const EmployeesPage = () => {
                                                 <span className={`px-3 py-1 rounded-full text-xs font-medium ${emp.user?.is_active ? "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400" : "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400"}`}>
                                                     {emp.user?.is_active ? "Active" : "Inactive"}
                                                 </span>
+                                            </td>
+                                            <td className="px-6 py-4 whitespace-nowrap">
+                                                {(() => {
+                                                    const hasFaceData = emp.face_descriptor || emp.user?.face_descriptor;
+                                                    const isEnrolled = hasFaceData && hasFaceData !== 'null' && hasFaceData.trim() !== '';
+                                                    return isEnrolled ? (
+                                                        <span className="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400">
+                                                            ✅ Face Enrolled
+                                                        </span>
+                                                    ) : (
+                                                        <span className="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-400">
+                                                            ⏳ Enrollment Pending
+                                                        </span>
+                                                    );
+                                                })()}
                                             </td>
                                             <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                                                 <div className="flex justify-end gap-3">

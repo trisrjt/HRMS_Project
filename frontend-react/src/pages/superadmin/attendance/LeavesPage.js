@@ -184,7 +184,7 @@ const EmployeeDetailPanel = ({ employeeId, onReview, onClose }) => {
     const [history, setHistory] = useState([]);
     const [loading, setLoading] = useState(false);
     const { user } = useAuth();
-    const canApprove = user?.role_id === 1 || user?.permissions?.includes("can_approve_leaves");
+    const canApprove = user?.role_id === 1 || user?.can_manage_leaves === true;
 
     useEffect(() => {
         if (employeeId) {
@@ -542,6 +542,7 @@ const LeavesPage = () => {
                     ) : (
                         // Force sort by most recent leave in group
                         Object.values(groupedLeaves)
+                            .filter(group => group.employee && group.employee.id) // Filter out null employees
                             .sort((a, b) => {
                                 const dateA = new Date(a.leaves[0]?.created_at || 0);
                                 const dateB = new Date(b.leaves[0]?.created_at || 0);
@@ -551,7 +552,7 @@ const LeavesPage = () => {
                                 <EmployeeSummaryCard
                                     key={group.employee.id}
                                     group={group}
-                                    isSelected={selectedEmployeeId == group.employee.id}
+                                    isSelected={selectedEmployeeId === group.employee.id} //
                                     onClick={() => setSelectedEmployeeId(group.employee.id)}
                                 />
                             ))
