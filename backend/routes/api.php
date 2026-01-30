@@ -52,6 +52,9 @@ Route::post('/auth/login-face', [AuthController::class, 'loginFace']);
 
 
 // Protected routes
+// Database Test Route
+require __DIR__ . '/db-test.php';
+
 Route::middleware('auth:sanctum')->group(function () {
 
     // Email Preferences
