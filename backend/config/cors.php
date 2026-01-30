@@ -19,11 +19,13 @@ return [
 
     'allowed_methods' => ['*'],
 
-    'allowed_origins' => explode(',', env('CORS_ALLOWED_ORIGINS', '*')),
-
-    'allowed_origins_patterns' => [
-        '#^https://.*\.onrender\.com$#',  // Allow all Render subdomains
+    'allowed_origins' => [
+        env('FRONTEND_URL', 'http://localhost:3000'),
+        'https://hrms-p1demo.onrender.com',
+        'http://localhost:3000'
     ],
+
+    'allowed_origins_patterns' => [],
 
     'allowed_headers' => ['*'],
 
