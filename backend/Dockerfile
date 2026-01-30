@@ -50,6 +50,11 @@ RUN php artisan storage:link || true
 # Expose port
 EXPOSE 10000
 
-# Start supervisor
-CMD ["/usr/bin/supervisord", "-c", "/etc/supervisor/conf.d/supervisord.conf"]
+# Copy deploy script
+COPY backend/deploy.sh /usr/local/bin/deploy.sh
+RUN sed -i 's/\r$//' /usr/local/bin/deploy.sh
+RUN chmod +x /usr/local/bin/deploy.sh
+
+# Start using deploy script
+CMD ["/usr/local/bin/deploy.sh"]
 
