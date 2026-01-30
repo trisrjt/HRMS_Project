@@ -16,17 +16,34 @@ Route::get('/test-db', function () {
     $results['ca_file_exists'] = file_exists($caPath);
     $results['ca_file_size'] = file_exists($caPath) ? filesize($caPath) : 0;
 
-    // Strategies to try
+    // Check standard CA path too
+    $systemCa = '/etc/ssl/certs/ca-certificates.crt';
+
+    // Debug Environment
+    $results['env_check'] = [
+        'host' => $host,
+        'user' => $user,
+        'pass_len' => strlen($pass),
+        'ca_path_from_env' => $caPath,
+    ];
+
     $strategies = [
-        'default_with_verify_false' => [
-            PDO::MYSQL_ATTR_SSL_CA => $caPath,
-            PDO::MYSQL_ATTR_SSL_VERIFY_SERVER_CERT => false,
-        ],
-        'default_with_verify_true' => [
-            PDO::MYSQL_ATTR_SSL_CA => $caPath,
+        'system_ca_verify_true' => [
+            PDO::MYSQL_ATTR_SSL_CA => $systemCa,
             PDO::MYSQL_ATTR_SSL_VERIFY_SERVER_CERT => true,
         ],
-        'no_options' => [], // Rely on system CA
+        'system_ca_verify_false' => [
+            PDO::MYSQL_ATTR_SSL_CA => $systemCa,
+            PDO::MYSQL_ATTR_SSL_VERIFY_SERVER_CERT => false,
+        ],
+        'downloaded_ca_verify_true' => [
+            PDO::MYSQL_ATTR_SSL_CA => '/usr/local/share/ca-certificates/tidb-ca.crt',
+            PDO::MYSQL_ATTR_SSL_VERIFY_SERVER_CERT => true,
+        ],
+        'downloaded_ca_verify_false' => [
+            PDO::MYSQL_ATTR_SSL_CA => '/usr/local/share/ca-certificates/tidb-ca.crt',
+            PDO::MYSQL_ATTR_SSL_VERIFY_SERVER_CERT => false,
+        ],
     ];
 
     foreach ($strategies as $name => $options) {
