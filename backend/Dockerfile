@@ -13,7 +13,11 @@ RUN apt-get update && apt-get install -y \
     unzip \
     nginx \
     supervisor \
-    ca-certificates
+    ca-certificates \
+    default-mysql-client
+
+# Download TiDB CA Certificate
+RUN curl -o /usr/local/share/ca-certificates/tidb-ca.crt https://ti-db-cloud-docs.s3.us-east-1.amazonaws.com/root.crt && update-ca-certificates
 
 # Clear cache
 RUN apt-get clean && rm -rf /var/lib/apt/lists/*
