@@ -6,7 +6,6 @@ services:
     dockerfilePath: ./backend/Dockerfile
     dockerContext: ./backend
     region: singapore
-    plan: free
     envVars:
       - key: APP_NAME
         value: HRMS
@@ -49,7 +48,6 @@ services:
     runtime: static
     buildCommand: cd frontend-react && npm install && npm run build
     staticPublishPath: ./frontend-react/build
-    plan: free
     routes:
       - type: rewrite
         source: /*
