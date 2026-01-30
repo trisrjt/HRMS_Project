@@ -33,10 +33,10 @@ COPY . .
 RUN composer install --optimize-autoloader --no-dev
 
 # Copy nginx configuration
-COPY docker/nginx.conf /etc/nginx/sites-available/default
+COPY nginx.conf /etc/nginx/sites-available/default
 
 # Copy supervisor configuration
-COPY docker/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
+COPY supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 
 # Set permissions
 RUN chown -R www-data:www-data /var/www/html \
