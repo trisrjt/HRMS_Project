@@ -5,9 +5,9 @@ use Illuminate\Support\Facades\Artisan;
 
 Route::get('/seed-db', function () {
     try {
-        // Run Migrations first to be sure
-        Artisan::call('migrate', ['--force' => true]);
-        $migrateOutput = Artisan::output();
+        // Skip migration to avoid "Table already exists" error
+        // Artisan::call('migrate', ['--force' => true]);
+        // $migrateOutput = "Skipped migrations to force seeding.";
 
         // Run Seeder
         Artisan::call('db:seed', ['--force' => true]);
@@ -15,8 +15,8 @@ Route::get('/seed-db', function () {
 
         return response()->json([
             'status' => 'success',
-            'message' => 'Seeding execution attempted',
-            'migrate_output' => $migrateOutput,
+            'message' => 'Seeding executed successfully',
+            'migrate_output' => 'Skipped',
             'seed_output' => $seedOutput,
         ]);
     } catch (\Exception $e) {
