@@ -26,6 +26,7 @@ const AttendanceSummaryTable = ({ summary, loading, onEmployeeClick }) => {
                         <th className="px-6 py-3 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase">Employee</th>
                         <th className="px-6 py-3 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase">Today's Status</th>
                         <th className="px-6 py-3 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase">Working Days</th>
+                        <th className="px-6 py-3 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase">Pending Checkout</th>
                         <th className="px-6 py-3 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase">Total Hours</th>
 
                         <th className="px-6 py-3 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase text-right">Actions</th>
@@ -52,6 +53,22 @@ const AttendanceSummaryTable = ({ summary, loading, onEmployeeClick }) => {
                             </td>
                             <td className="px-6 py-4 text-sm text-gray-700 dark:text-gray-300">
                                 {employee.total_working_days} Days
+                            </td>
+                            <td className="px-6 py-4 text-sm">
+                                {employee.pending_checkout_dates && employee.pending_checkout_dates.length > 0 ? (
+                                    <div className="flex flex-col gap-1">
+                                        <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-orange-100 text-orange-800">
+                                            Checkout Pending ({employee.pending_checkout_dates.length})
+                                        </span>
+                                        <div className="text-[10px] text-gray-500 dark:text-gray-400 pl-1">
+                                            {employee.pending_checkout_dates.map(date => (
+                                                <div key={date}>{new Date(date).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}</div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                ) : (
+                                    <span className="text-gray-400">-</span>
+                                )}
                             </td>
                             <td className="px-6 py-4 text-sm text-gray-700 dark:text-gray-300">
                                 {formatDuration(employee.total_hours)}

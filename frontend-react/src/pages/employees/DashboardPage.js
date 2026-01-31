@@ -389,14 +389,9 @@ const DashboardPage = () => {
     const handleAttendanceAction = async (type) => {
         console.log(type === "check-in" ? "🔵 Check-in clicked from dashboard" : "🔴 Check-out clicked from dashboard");
 
-        // Check if current time is after 9:00 PM for checkout
-        if (type === "check-out") {
-            const currentHour = new Date().getHours();
-            if (currentHour >= 21) { // 21:00 = 9:00 PM
-                alert("Checkout is not allowed after 9:00 PM. Please contact HR/Admin/SuperAdmin for assistance.");
-                return;
-            }
-        }
+        // Check if current time is after 9:00 PM for checkout - REMOVED PERMISSION CHECK
+        // Managers/Admins can now checkout employees anytime, and employees can checkout late without prompt (or we can add a warning instead of block)
+        // For now, removing the block entirely as requested.
 
         try {
             setPendingAction(type);

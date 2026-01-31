@@ -35,7 +35,9 @@ class UserController extends Controller
             'can_manage_leaves',
             'can_view_leaves',
             'can_manage_departments',
-            'can_manage_payslips'
+            'can_manage_payslips',
+            'can_manage_payroll_settings',
+            'can_force_checkout'
         ];
 
         foreach ($permissionFields as $field) {
@@ -63,6 +65,7 @@ class UserController extends Controller
             'can_manage_departments' => (bool) $user->can_manage_departments,
             'can_manage_payslips' => (bool) $user->can_manage_payslips,
             'can_manage_payroll_settings' => (bool) $user->can_manage_payroll_settings,
+            'can_force_checkout' => (bool) $user->can_force_checkout,
             'face_descriptor' => $user->face_descriptor, // Include for face enrollment check
             'employee' => $user->employee ? [
                 'employee_code' => $user->employee->employee_code,

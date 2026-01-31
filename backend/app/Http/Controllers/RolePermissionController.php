@@ -82,6 +82,7 @@ class RolePermissionController extends Controller
                 'can_manage_departments' => false,
                 'can_manage_payslips' => false,
                 'can_manage_payroll_settings' => false,
+                'can_force_checkout' => false,
             ];
         }
 
@@ -98,6 +99,7 @@ class RolePermissionController extends Controller
             'can_manage_departments' => $users->every(fn($u) => $u->can_manage_departments),
             'can_manage_payslips' => $users->every(fn($u) => $u->can_manage_payslips),
             'can_manage_payroll_settings' => $users->every(fn($u) => $u->can_manage_payroll_settings),
+            'can_force_checkout' => $users->every(fn($u) => $u->can_force_checkout),
         ];
     }
 
@@ -123,6 +125,7 @@ class RolePermissionController extends Controller
             'can_manage_departments' => 'boolean',
             'can_manage_payslips' => 'boolean',
             'can_manage_payroll_settings' => 'boolean',
+            'can_force_checkout' => 'boolean',
         ]);
 
         // Update all users of this role
@@ -207,6 +210,12 @@ class RolePermissionController extends Controller
                 'name' => 'Manage Payroll Settings',
                 'description' => 'Configure payroll policies and settings',
                 'category' => 'Payroll'
+            ],
+            [
+                'key' => 'can_force_checkout',
+                'name' => 'Force Checkout',
+                'description' => 'Allow admin/HR to forcefully checkout employees',
+                'category' => 'Attendance'
             ],
         ]);
     }

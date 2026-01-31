@@ -26,7 +26,7 @@ class AttendanceController extends Controller
     // =====================================
     public function index(Request $request)
     {
-        if (!in_array(auth()->user()->role_id, [1,2,3])) {
+        if (!in_array(auth()->user()->role_id, [1, 2, 3])) {
             return response()->json(['message' => 'Unauthorized'], 403);
         }
 
@@ -37,10 +37,10 @@ class AttendanceController extends Controller
             $search = $request->search;
             $query->whereHas('employee', function ($q) use ($search) {
                 $q->where('employee_code', 'like', "%{$search}%")
-                  ->orWhereHas('user', function ($u) use ($search) {
-                      $u->where('name', 'like', "%{$search}%")
-                        ->orWhere('email', 'like', "%{$search}%");
-                  });
+                    ->orWhereHas('user', function ($u) use ($search) {
+                        $u->where('name', 'like', "%{$search}%")
+                            ->orWhere('email', 'like', "%{$search}%");
+                    });
             });
         }
 
@@ -78,14 +78,14 @@ class AttendanceController extends Controller
     // =====================================
     public function store(Request $request)
     {
-        if (!in_array(auth()->user()->role_id, [1,2,3])) {
+        if (!in_array(auth()->user()->role_id, [1, 2, 3])) {
             return response()->json(['message' => 'Unauthorized'], 403);
         }
 
         $validated = $request->validate([
             'employee_id' => 'required|exists:employees,id',
-            'date'        => 'required|date',
-            'check_in'    => 'required|date_format:H:i:s',
+            'date' => 'required|date',
+            'check_in' => 'required|date_format:H:i:s',
         ]);
 
         // Prevent duplicate entries
@@ -99,9 +99,9 @@ class AttendanceController extends Controller
 
         $attendance = Attendance::create([
             'employee_id' => $validated['employee_id'],
-            'date'        => $validated['date'],
-            'check_in'    => $validated['check_in'],
-            'status'      => 'Present',
+            'date' => $validated['date'],
+            'check_in' => $validated['check_in'],
+            'status' => 'Present',
         ]);
 
         return response()->json([
@@ -116,7 +116,7 @@ class AttendanceController extends Controller
     // =====================================
     public function show($id)
     {
-        if (!in_array(auth()->user()->role_id, [1,2,3])) {
+        if (!in_array(auth()->user()->role_id, [1, 2, 3])) {
             return response()->json(['message' => 'Unauthorized'], 403);
         }
 
@@ -192,9 +192,9 @@ class AttendanceController extends Controller
         try {
             $attendance = Attendance::create([
                 'employee_id' => $employee->id,
-                'date'        => $today,
-                'check_in'    => now()->format('H:i:s'),
-                'status'      => 'Present',
+                'date' => $today,
+                'check_in' => now()->format('H:i:s'),
+                'status' => 'Present',
                 'check_in_latitude' => $validated['latitude'] ?? null,
                 'check_in_longitude' => $validated['longitude'] ?? null,
                 'device_id' => $validated['device_id'] ?? null,
@@ -326,7 +326,7 @@ class AttendanceController extends Controller
                 ->map(function ($record) use ($user) {
                     // Add remarks field
                     $remarks = '-';
-                    
+
                     if ($record->check_out) {
                         if (is_numeric($record->checked_out_by)) {
                             // Any numeric value is treated as a self-checkout to avoid showing raw IDs
@@ -337,7 +337,7 @@ class AttendanceController extends Controller
                             $remarks = 'Checked out by system';
                         }
                     }
-                    
+
                     $record->remarks = $remarks;
                     return $record;
                 });
@@ -379,9 +379,15 @@ class AttendanceController extends Controller
     {
         $user = auth()->user();
 
-        // Only HR (3), Admin (2), and SuperAdmin (1) can checkout employees
-        if (!in_array($user->role_id, [1, 2, 3])) {
-            return response()->json(['message' => 'Unauthorized'], 403);
+        // Check permissions:
+        // 1. SuperAdmin (1) - Always allowed
+        // 2. Admin (2) / HR (3) - Allowed if they have 'can_force_checkout' permission
+
+        $isSuperAdmin = $user->role_id == 1;
+        $hasPermission = $user->can_force_checkout;
+
+        if (!$isSuperAdmin && !$hasPermission) {
+            return response()->json(['message' => 'Unauthorized - You do not have permission to force checkout employees'], 403);
         }
 
         // Find the attendance record
@@ -396,12 +402,13 @@ class AttendanceController extends Controller
         }
 
         // Determine who is checking out
-        $checkedOutBy = 'hr';
-        if ($user->role_id == 1) {
+        $checkedOutBy = 'system';
+        if ($user->role_id == 1)
             $checkedOutBy = 'superadmin';
-        } elseif ($user->role_id == 2) {
+        elseif ($user->role_id == 2)
             $checkedOutBy = 'admin';
-        }
+        elseif ($user->role_id == 3)
+            $checkedOutBy = 'hr';
 
         // Update the attendance record with checkout time
         $attendance->update([
@@ -436,13 +443,13 @@ class AttendanceController extends Controller
         $user = auth()->user();
 
         if ($user->role_id != 4) {
-             // Or allow Admin/HR to view specific teams later? For now, this is for Managers.
+            // Or allow Admin/HR to view specific teams later? For now, this is for Managers.
             return response()->json(['message' => 'Unauthorized'], 403);
         }
 
         $manager = $user->employee;
         if (!$manager) {
-             return response()->json(['message' => 'Employee profile not found'], 404);
+            return response()->json(['message' => 'Employee profile not found'], 404);
         }
 
         $subordinateIds = $manager->getAllSubordinateIds();
@@ -454,22 +461,26 @@ class AttendanceController extends Controller
         // One row per member logic: Query Employees, not Attendance
         $date = $request->input('date', now()->toDateString());
 
-        $query = Employee::with(['user:id,name,email', 'department', 'attendances' => function($q) use ($date) {
+        $query = Employee::with([
+            'user:id,name,email',
+            'department',
+            'attendances' => function ($q) use ($date) {
                 $q->where('date', $date);
-            }])
+            }
+        ])
             ->whereIn('id', $subordinateIds);
 
         if ($request->has('search') && $request->search) {
-             $search = $request->search;
-             $query->whereHas('user', function($q) use ($search) {
-                 $q->where('name', 'like', "%{$search}%");
-             });
+            $search = $request->search;
+            $query->whereHas('user', function ($q) use ($search) {
+                $q->where('name', 'like', "%{$search}%");
+            });
         }
 
         $employees = $query->paginate(15);
 
         // Transform to include attendance status flatly
-        $data = collect($employees->items())->map(function($emp) {
+        $data = collect($employees->items())->map(function ($emp) {
             $att = $emp->attendances->first();
             return [
                 'id' => $emp->id,
@@ -490,7 +501,7 @@ class AttendanceController extends Controller
         // If we return Employees, `record` IS the employee. `record.check_in` won't exist directly.
         // It's safer to transform on backend to match expected shape or update frontend.
         // Updating frontend is planned. So let's return a clean "Daily Status" object list.
-        
+
         return response()->json([
             'data' => $data,
             'current_page' => $employees->currentPage(),
@@ -576,18 +587,19 @@ class AttendanceController extends Controller
             if ($todayRecord) {
                 $todayStatus = $todayRecord->check_out ? 'Present' : 'Checked In';
             } else {
-                 // Check if Holiday
-                 if ($this->holidayService->getHolidayForEmployee(now()->toDateString(), $employee)) {
-                     $todayStatus = 'Holiday';
-                 }
+                // Check if Holiday
+                if ($this->holidayService->getHolidayForEmployee(now()->toDateString(), $employee)) {
+                    $todayStatus = 'Holiday';
+                }
             }
 
             // Stats
             $totalDays = $records->count();
-            
+
             // Calculate total hours (assuming we have working_hours or calculate from check_in/out)
             $totalHours = 0;
             $missingPunches = 0;
+            $pendingCheckoutDates = []; // NEW: Array to store dates
             $lateDays = 0; // Logic for late days can be added if we have shift times
 
             foreach ($records as $record) {
@@ -598,6 +610,7 @@ class AttendanceController extends Controller
                     $totalHours += round($out->diffInMinutes($in) / 60, 2);
                 } elseif ($record->check_in && !$record->check_out) {
                     $missingPunches++;
+                    $pendingCheckoutDates[] = $record->date; // NEW: Add date
                 }
             }
 
@@ -610,6 +623,7 @@ class AttendanceController extends Controller
                 'total_working_days' => $totalDays,
                 'total_hours' => round($totalHours, 1),
                 'missing_punches' => $missingPunches,
+                'pending_checkout_dates' => $pendingCheckoutDates, // NEW: Return dates
             ];
         });
 
@@ -630,30 +644,30 @@ class AttendanceController extends Controller
     public function employeeHistory(Request $request, $id)
     {
         $user = auth()->user();
-        
+
         $canAccess = false;
         // 1=Admin, 2=HR, 3=SuperAdmin
         if (in_array($user->role_id, [1, 2, 3])) {
             $canAccess = true;
-        } 
+        }
         // 4=Employee (Manager)
         elseif ($user->role_id == 4 && $user->employee) {
             // Check if target employee is a subordinate
             $subordinates = $user->employee->getAllSubordinateIds();
-            if ($subordinates->contains((int)$id) || $user->employee->id == $id) {
-                 $canAccess = true;
+            if ($subordinates->contains((int) $id) || $user->employee->id == $id) {
+                $canAccess = true;
             }
         }
 
         if (!$canAccess) {
-             $debug = [
-                 'user_id' => $user->id,
-                 'role_id' => $user->role_id,
-                 'user_emp_id' => $user->employee ? $user->employee->id : 'null',
-                 'target_id' => $id,
-                 'target_id_type' => gettype($id),
-                 'subordinates' => isset($subordinates) ? $subordinates->values()->all() : 'not_fetched',
-             ];
+            $debug = [
+                'user_id' => $user->id,
+                'role_id' => $user->role_id,
+                'user_emp_id' => $user->employee ? $user->employee->id : 'null',
+                'target_id' => $id,
+                'target_id_type' => gettype($id),
+                'subordinates' => isset($subordinates) ? $subordinates->values()->all() : 'not_fetched',
+            ];
             return response()->json(['message' => 'Unauthorized', 'debug' => $debug], 403);
         }
 
@@ -685,7 +699,7 @@ class AttendanceController extends Controller
 
         while ($currentDate->lte($endDate)) {
             $dateString = $currentDate->toDateString();
-            
+
             if (isset($attendanceRecords[$dateString])) {
                 $record = $attendanceRecords[$dateString];
                 $totalHours = 0;
@@ -837,7 +851,7 @@ class AttendanceController extends Controller
         }
 
         $overtimeEnd = now()->format('H:i:s');
-        
+
         // Calculate overtime hours
         $start = \Carbon\Carbon::parse($attendance->overtime_start);
         $end = \Carbon\Carbon::parse($overtimeEnd);

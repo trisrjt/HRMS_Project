@@ -1,7 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import api from '../../api/axios';
+import { useAuth } from '../../context/AuthContext';
 
 const AttendanceHistoryDrawer = ({ employee, isOpen, onClose, month }) => {
+    const { user } = useAuth();
     const [history, setHistory] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
@@ -72,9 +74,12 @@ const AttendanceHistoryDrawer = ({ employee, isOpen, onClose, month }) => {
                                     </button>
                                 </div>
                                 <div className="mt-4 flex flex-col gap-3">
-                                    <div>
-                                        <p className="text-sm font-semibold text-white">{employee?.name}</p>
-                                        <p className="text-xs text-blue-200">{employee?.code}</p>
+                                    <div className="flex justify-between items-start">
+                                        <div>
+                                            <p className="text-sm font-semibold text-white">{employee?.name}</p>
+                                            <p className="text-xs text-blue-200">{employee?.code}</p>
+                                        </div>
+                                        {/* Checkout Button: removed from here to move to individual rows */}
                                     </div>
 
                                     <div className="flex gap-2">
@@ -172,7 +177,7 @@ const AttendanceHistoryDrawer = ({ employee, isOpen, onClose, month }) => {
                                                         </div>
                                                     )}
                                                     {/* Location and Device Information */}
-                                                    {(record.check_in_latitude || record.device_id) && (
+                                                    {(record.check_in_latitude || record.device_id || (!record.check_out && record.check_in)) && (
                                                         <div className="mt-3 pt-3 border-t border-gray-200 dark:border-gray-600 space-y-2">
                                                             {/* Check-in Location */}
                                                             {record.check_in_latitude && record.check_in_longitude && (
@@ -186,7 +191,7 @@ const AttendanceHistoryDrawer = ({ employee, isOpen, onClose, month }) => {
                                                                         <p className="text-xs text-gray-600 dark:text-gray-400 truncate">
                                                                             {record.check_in_latitude}, {record.check_in_longitude}
                                                                         </p>
-                                                                        <a 
+                                                                        <a
                                                                             href={`https://www.google.com/maps?q=${record.check_in_latitude},${record.check_in_longitude}`}
                                                                             target="_blank"
                                                                             rel="noopener noreferrer"
@@ -209,7 +214,7 @@ const AttendanceHistoryDrawer = ({ employee, isOpen, onClose, month }) => {
                                                                         <p className="text-xs text-gray-600 dark:text-gray-400 truncate">
                                                                             {record.check_out_latitude}, {record.check_out_longitude}
                                                                         </p>
-                                                                        <a 
+                                                                        <a
                                                                             href={`https://www.google.com/maps?q=${record.check_out_latitude},${record.check_out_longitude}`}
                                                                             target="_blank"
                                                                             rel="noopener noreferrer"
@@ -244,6 +249,37 @@ const AttendanceHistoryDrawer = ({ employee, isOpen, onClose, month }) => {
                                                                     </div>
                                                                 </div>
                                                             )}
+
+                                                            {/* Force Checkout Action */}
+                                                            {/* Permission Check: SuperAdmin OR can_force_checkout */}
+                                                            {(user?.role_id === 1 || user?.can_force_checkout) && !record.check_out && record.check_in && (
+                                                                <div className="mt-3 flex justify-end border-t border-gray-100 dark:border-gray-700 pt-2">
+                                                                    <button
+                                                                        onClick={async (e) => {
+                                                                            e.stopPropagation();
+                                                                            if (!window.confirm(`Force checkout for ${new Date(record.date).toLocaleDateString()}?`)) return;
+                                                                            try {
+                                                                                setLoading(true);
+                                                                                await api.post(`/attendances/${record.id}/checkout`);
+                                                                                alert("Employee checked out successfully");
+                                                                                fetchHistory();
+                                                                            } catch (err) {
+                                                                                console.error("Checkout failed", err);
+                                                                                alert(err.response?.data?.message || "Failed to checkout employee");
+                                                                                setLoading(false);
+                                                                            }
+                                                                        }}
+                                                                        className="group flex items-center gap-1 px-2 py-1 bg-white hover:bg-red-50 text-red-600 border border-red-200 rounded-md text-[10px] font-medium transition-all shadow-sm hover:shadow-md hover:border-red-300"
+                                                                        title="Force Checkout"
+                                                                    >
+                                                                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-3 h-3 group-hover:scale-110 transition-transform">
+                                                                            <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15m3 0l3-3m0 0l-3-3m3 3H9" />
+                                                                        </svg>
+                                                                        Force Out
+                                                                    </button>
+                                                                </div>
+                                                            )}
+
                                                         </div>
                                                     )}
                                                 </div>
@@ -256,7 +292,7 @@ const AttendanceHistoryDrawer = ({ employee, isOpen, onClose, month }) => {
                     </div>
                 </div>
             </div>
-        </div>
+        </div >
     );
 };
 
